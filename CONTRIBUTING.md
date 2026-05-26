@@ -1,22 +1,32 @@
 # Contributing to Artiline
 
-Thanks for your interest in improving Artiline. This document covers how to set
-up the project, the conventions we follow, and how contributions are licensed.
+Thanks for your interest in Artiline. Bug reports and feature ideas are very
+welcome.
 
-## Licensing of contributions
+## Contribution status
+
+**Artiline does not currently accept external code contributions.** We develop
+in-house to keep the codebase and intellectual property under single ownership
+while the product is young, so external pull requests are politely closed.
+
+What you *can* do:
+
+- **Open an issue** — bug reports, feature requests, and questions are welcome
+  and genuinely useful.
+- **Fork and self-host** under the [LICENSE](./LICENSE) (FSL-1.1-ALv2).
+
+We may open code contributions later as the project matures.
+
+## Licensing
 
 Artiline is licensed under **FSL-1.1-ALv2** (see [LICENSE](./LICENSE)). It is an
 open-core product: we may also offer commercial licenses, and each release
-converts to Apache 2.0 over time.
+converts to Apache 2.0 over time. All code is owned by Aurora33.
 
-To keep that model viable, we require a **Contributor License Agreement (CLA)**.
-You **retain copyright** of your contributions, but you grant us the rights to
-relicense and sublicense them (including under commercial terms). Full text:
-[CLA.md](./CLA.md).
-
-Signing is a one-time step — the **CLA Assistant** bot comments on your first
-pull request with a link to sign. PRs cannot be merged until the CLA is signed.
-There is no per-commit sign-off requirement.
+If we open external code contributions in the future, they will require a
+**Contributor License Agreement** ([CLA.md](./CLA.md)): you would retain
+copyright while granting us the right to relicense and sublicense (including
+under commercial terms).
 
 ## Development setup
 
@@ -74,9 +84,8 @@ Follow [Conventional Commits](https://www.conventionalcommits.org):
 `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`. Keep the subject
 under ~50 characters; explain the "why" in the body when it isn't obvious.
 
-### PR checklist
+### PR checklist (maintainers)
 
-- CLA signed (the CLA Assistant bot prompts on your first PR)
 - `tsc`, `lint`, and `build` pass
 - Migrations generated + committed if the schema changed
 - New cloud features are dynamic-imported behind a feature flag
