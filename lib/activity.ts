@@ -1,0 +1,39 @@
+import "server-only";
+import { db, schema } from "@/lib/db";
+
+export type EventType =
+  | "artifact.created"
+  | "version.published"
+  | "version.approved"
+  | "version.changes_requested"
+  | "version.rolled_back"
+  | "visibility.changed"
+  | "member.invited"
+  | "member.removed"
+  | "invitation.revoked"
+  | "comment.created";
+
+export async function recordEvent({
+  workspaceId,
+  actorUserId,
+  type,
+  subjectType,
+  subjectId,
+  payload,
+}: {
+  workspaceId: string;
+  actorUserId: string | null;
+  type: EventType;
+  subjectType: string;
+  subjectId: string | null;
+  payload: Record<string, unknown>;
+}): Promise<void> {
+  await db.insert(schema.events).values({
+    workspaceId,
+    actorUserId,
+    type,
+    subjectType,
+    subjectId,
+    payload,
+  });
+}

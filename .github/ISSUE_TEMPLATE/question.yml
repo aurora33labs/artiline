@@ -1,0 +1,21 @@
+name: Question
+description: Ask about usage, setup, or self-hosting
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking, check the [README](../blob/main/README.md),
+        [self-hosting guide](../blob/main/docs/self-hosting.md), and
+        [architecture doc](../blob/main/docs/architecture.md).
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to accomplish? What have you tried?

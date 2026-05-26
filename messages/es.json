@@ -1,0 +1,311 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "error": "Error",
+    "anonymous": "Anónimo",
+    "email": "Email",
+    "password": "Password",
+    "copyLink": "Copiar link",
+    "signIn": "Iniciar sesión"
+  },
+  "metadata": {
+    "title": "Artiline — Comparte artifacts de IA con tu equipo",
+    "description": "HTML, Markdown, código. Workspaces privados, links públicos, password opcional. Exporta a imagen lista para postear."
+  },
+  "landing": {
+    "edition": "CATÁLOGO 2026 · EDICIÓN PRIVADA",
+    "heroLine1": "Sube lo",
+    "heroLine2": "que la IA",
+    "heroLine3": "escupe. Da",
+    "heroLine4": "un link.",
+    "drop": "DROP",
+    "dropSub": "HTML · MD · CODE",
+    "link": "LINK",
+    "linkSub": "4 NIVELES",
+    "ship": "SHIP",
+    "shipSub": "PNG EXPORT",
+    "ctaCreate": "Crear workspace",
+    "ctaLogin": "Ya tengo cuenta",
+    "noCard": "SIN TARJETA · MAGIC LINK · 30 SEG PARA PRIMER SHARE",
+    "multiTenantTitle": "Multi-tenant",
+    "multiTenantBody": "Workspaces aislados. Cada equipo, su catálogo. Invitación por magic link.",
+    "visibilityTitle": "Visibilidad granular",
+    "visibilityBody": "Solo equipo · equipo + password · público · público + password. 4 niveles, sin gradientes.",
+    "exportTitle": "Export PNG",
+    "exportBody": "HTML rendereado a imagen 1200×630. Lista para Slack, Twitter, deck.",
+    "footerTagline": "ARTILINE · 2026 · ARTIFACT HOSTING",
+    "panelHeader": "AURORA-33 · CATÁLOGO",
+    "panelCount": "47 ARTIFACTS",
+    "panelMock": "↑ MOCK · DATA REAL EN TU WORKSPACE",
+    "headerLogin": "Iniciar sesión"
+  },
+  "authShell": {
+    "edition": "EDICIÓN 2026 · CATÁLOGO PRIVADO",
+    "quote": "Sube lo que la IA genera. Recibe un link. Ciérralo con password o ábrelo al mundo.",
+    "drop": "Drop",
+    "link": "Link",
+    "ship": "Ship",
+    "tagline": "ARTILINE · MULTI-TENANT ARTIFACT HOSTING"
+  },
+  "auth": {
+    "loginTitle": "Bienvenido de vuelta",
+    "loginSubtitle": "Te enviamos un magic link al correo. Sin passwords, sin fricción.",
+    "firstTime": "¿Primera vez?",
+    "createWorkspaceLink": "Crea un workspace",
+    "signupTitle": "Crea tu cuenta",
+    "signupSubtitle": "30 segundos. Magic link al correo, sin passwords.",
+    "alreadyHave": "¿Ya tienes cuenta?",
+    "workEmailLabel": "Email del trabajo",
+    "emailPlaceholder": "tu@email.com",
+    "workEmailPlaceholder": "tu@empresa.com",
+    "sendMagicLink": "Enviar magic link",
+    "continueLink": "Continuar con magic link",
+    "checkEmailTitle": "Revisa tu correo",
+    "checkEmailSubtitle": "Te enviamos un magic link.",
+    "linkSent": "Link enviado",
+    "linkInfo": "Haz clic en el botón del correo para entrar. El link expira en 24h.",
+    "devMode": "MODO DEV · SI NO LLEGA, REVISA LA CONSOLA",
+    "workspaceTitle": "Nombra tu workspace",
+    "workspaceSubtitle": "Es donde tu equipo guardará y compartirá los artifacts.",
+    "workspaceLabel": "Nombre del workspace",
+    "workspacePlaceholder": "Acme Corp",
+    "inviteAfter": "Puedes invitar a tu equipo después.",
+    "createWorkspaceBtn": "Crear workspace"
+  },
+  "invite": {
+    "invalidTitle": "Invitación inválida",
+    "invalidSubtitle": "El link no existe o fue revocado.",
+    "expiredTitle": "Invitación expirada",
+    "expiredSubtitle": "Pide al equipo que te envíe una nueva.",
+    "joinTitle": "Únete a {workspace}",
+    "joinSubtitle": "Te enviaremos un magic link para confirmar.",
+    "magicLinkBtn": "Recibir magic link",
+    "mismatchTitle": "Email no coincide",
+    "mismatchSubtitle": "Esta invitación es para {email}.",
+    "loggedAs": "Estás logueado como <strong>{email}</strong>. Cierra sesión y vuelve a entrar con el correo correcto."
+  },
+  "dashboard": {
+    "emptyTitle": "CATÁLOGO VACÍO",
+    "emptyHeadingLine1": "Suelta un archivo.",
+    "emptyHeadingLine2": "Compártelo en segundos.",
+    "emptyBody": "HTML, Markdown, código. Lo detectamos y queda con link, password opcional y export a imagen.",
+    "createFirst": "Crear primer artifact",
+    "inviteTeam": "Invitar al equipo",
+    "catalogLabel": "CATÁLOGO · {name}",
+    "artifactsCount": "{count} ARTIFACTS"
+  },
+  "navTop": {
+    "artifacts": "Artifacts",
+    "team": "Equipo",
+    "new": "Nuevo"
+  },
+  "userMenu": {
+    "label": "Menú de usuario",
+    "profileSoon": "Perfil (próximamente)",
+    "signOut": "Cerrar sesión"
+  },
+  "workspaceSwitcher": {
+    "label": "WORKSPACES",
+    "createWorkspace": "Crear workspace"
+  },
+  "new": {
+    "dropFile": "Suelta un archivo",
+    "dropBody": "HTML, Markdown o código. Lo detectamos. Configuras visibilidad después.",
+    "previewLabel": "02 PREVIEW",
+    "detailsLabel": "03 DETALLES",
+    "configure": "Configura",
+    "titleLabel": "Título",
+    "visibility": "Visibilidad",
+    "passwordHint": "Mínimo 4 caracteres",
+    "publish": "Publicar artifact",
+    "publishing": "Creando…",
+    "fileMeta": "{kb} KB · {lines} LÍNEAS",
+    "firstStepMeta": "NUEVO · 01 DROP"
+  },
+  "dropzone": {
+    "label": "DROP ZONE · 01",
+    "dragFile": "Arrastra un archivo",
+    "dragHere": "Suelta aquí",
+    "subtype": "HTML · Markdown · Código. Lo detectamos solo.",
+    "maxSize": "MÁX 10MB · 1 ARCHIVO",
+    "fileMeta": "{kb} KB · {lines} LÍNEAS · DETECTADO",
+    "removeFile": "Quitar archivo",
+    "ariaLabel": "Suelta o selecciona un archivo"
+  },
+  "viewer": {
+    "notFoundTitle": "No existe",
+    "notFoundMsg": "Este link no es válido o el artifact fue eliminado.",
+    "expiredTitle": "Expirado",
+    "expiredMsg": "Este artifact ya no está disponible.",
+    "teamOnlyTitle": "Solo equipo",
+    "teamOnlyMsg": "Este artifact es interno. Inicia sesión con tu cuenta de equipo.",
+    "noAccessTitle": "Sin acceso",
+    "noAccessMsg": "No perteneces al workspace que comparte este artifact.",
+    "loginBtn": "Iniciar sesión",
+    "accessDenied": "ACCESS DENIED · 403",
+    "passwordRequiredMeta": "REQUIERE PASSWORD · ACCESO RESTRINGIDO",
+    "passwordRequiredTitle": "Introduce la clave",
+    "passwordAsk": "Pide la clave a quien te compartió este link.",
+    "passwordWrong": "PASSWORD INCORRECTO · INTENTA DE NUEVO",
+    "enter": "Entrar",
+    "back": "Volver",
+    "comments": "Comentarios",
+    "react": "Reaccionar",
+    "copyPublic": "Copiar link público",
+    "copied": "¡Copiado!",
+    "exportPng": "Exportar PNG",
+    "info": "Info",
+    "visibility": "Visibilidad",
+    "viewsLabel": "VISTAS",
+    "commentsLabel": "COMENTARIOS",
+    "accessLabel": "ACCESO"
+  },
+  "settings": {
+    "title": "Miembros",
+    "subtitle": "Quién puede ver y editar artifacts en este workspace.",
+    "teamHeader": "EQUIPO · {name}",
+    "inviteTitle": "Invitar miembro",
+    "inviteSubtitle": "MAGIC LINK AL CORREO",
+    "emailPlaceholder": "nuevo@miembro.com",
+    "roleLabel": "Rol",
+    "memberRole": "Member",
+    "adminRole": "Admin",
+    "inviteBtn": "Invitar",
+    "membersLabel": "MIEMBROS · {count}",
+    "removeBtn": "Quitar miembro",
+    "pendingLabel": "INVITACIONES PENDIENTES · {count}",
+    "pendingBadge": "PENDIENTE · ROL {role}",
+    "revokeBtn": "Revocar",
+    "roles": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "member": "MEMBER"
+    }
+  },
+  "visibility": {
+    "internal": "Solo equipo",
+    "internalPw": "Equipo + password",
+    "public": "Público",
+    "publicPw": "Público + password",
+    "modalTitle": "Visibilidad",
+    "modalDesc": "Controla quién puede ver este artifact.",
+    "levelLabel": "Nivel",
+    "changePassword": "Cambiar password actual",
+    "keepPassword": "Déjalo vacío para mantener el password actual.",
+    "updated": "Visibilidad actualizada",
+    "options": {
+      "internal": "Solo equipo",
+      "internalHint": "Miembros del workspace",
+      "internalPwForm": "Solo equipo + password",
+      "internalPwHint": "Miembros + password adicional",
+      "internalPwHintShort": "Miembros + password",
+      "publicOpen": "Público abierto",
+      "publicHint": "Cualquiera con el link",
+      "publicPw": "Público + password",
+      "publicPwHint": "Link público con password"
+    }
+  },
+  "comments": {
+    "title": "Comentarios ({count})",
+    "yourName": "Tu nombre",
+    "body": "Comentario",
+    "submit": "Comentar",
+    "modalTitle": "Comentarios"
+  },
+  "reactions": {
+    "modalTitle": "Reacciones",
+    "modalDesc": "Toca un emoji para reaccionar.",
+    "signInToReact": "Inicia sesión para reaccionar"
+  },
+  "toasts": {
+    "linkCopied": "Link copiado",
+    "pngGenerated": "PNG generado",
+    "pngError": "Error generando PNG",
+    "noFileFirst": "Suelta un archivo primero.",
+    "generic": "Error"
+  },
+  "errors": {
+    "ERR_NAME_REQUIRED": "Nombre requerido",
+    "ERR_PASSWORD_TOO_SHORT": "Password mínimo 4 caracteres",
+    "ERR_CANNOT_REMOVE_OWNER": "No se puede remover al owner",
+    "ERR_FILE_TEXT_ONLY": "Solo archivos de texto (HTML, MD, código).",
+    "ERR_FILE_EMPTY": "Archivo vacío.",
+    "ERR_FILE_MAX_SIZE": "Máximo {maxMB} MB.",
+    "ERR_FILE_READ": "No se pudo leer el archivo",
+    "ERR_EXPORT_HTML_ONLY": "Solo HTML soporta export PNG",
+    "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage no configurado. Avisa al admin.",
+    "UNAUTH": "No autenticado",
+    "FORBIDDEN": "Sin permisos",
+    "NOT_FOUND": "No encontrado",
+    "generic": "Error"
+  },
+  "artifact": {
+    "now": "AHORA",
+    "minutesShort": "M",
+    "hoursShort": "H",
+    "daysShort": "D"
+  },
+  "publicFooter": {
+    "hosted": "Hosted on Artiline"
+  },
+  "localeSwitcher": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "themeSwitcher": {
+    "label": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "versions": {
+    "crumb": "ARTIFACT · {slug}",
+    "title": "Versiones",
+    "description": "{count, plural, =0 {Sin versiones} one {Una versión} other {# versiones}} en historial",
+    "view": "Ver",
+    "diff": "Diff",
+    "diffHeading": "Diff V{from} → V{to}",
+    "closeDiff": "Cerrar diff",
+    "currentPill": "ACTUAL",
+    "rollback": "Rollback",
+    "approve": "Aprobar",
+    "requestChanges": "Pedir cambios",
+    "publish": "Publicar versión",
+    "publishTitle": "Nueva versión",
+    "publishDesc": "Sube los cambios, deja un mensaje opcional. Cliente verá la nueva versión solo al aprobarla.",
+    "messagePlaceholder": "Resumen del cambio (opcional)",
+    "publishing": "Publicando…",
+    "status": {
+      "draft": "DRAFT",
+      "pending": "PENDIENTE",
+      "approved": "APROBADA",
+      "changes_requested": "CAMBIOS PEDIDOS"
+    }
+  },
+  "emails": {
+    "magicLink": {
+      "subject": "Inicia sesión en Artiline",
+      "body": "Haz clic para entrar:"
+    },
+    "invitation": {
+      "subject": "Invitación a {workspace} en Artiline",
+      "body": "Te invitaron a unirte a {workspace}.",
+      "acceptCta": "Aceptar invitación"
+    }
+  },
+  "sso": {
+    "startTitle": "Entrar a {workspace}",
+    "startSubtitle": "Inicia sesión con la cuenta de tu empresa.",
+    "continue": "Continuar con SSO",
+    "error": {
+      "disabled": "El SSO no está habilitado para este espacio.",
+      "invalid": "Solicitud inválida. Intenta de nuevo.",
+      "assertion": "No se pudo verificar la respuesta de tu proveedor de identidad.",
+      "domain": "Tu dominio de correo no tiene acceso a este espacio.",
+      "generic": "No se pudo iniciar sesión. Intenta de nuevo."
+    }
+  }
+}

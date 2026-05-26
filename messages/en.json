@@ -1,0 +1,311 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "error": "Error",
+    "anonymous": "Anonymous",
+    "email": "Email",
+    "password": "Password",
+    "copyLink": "Copy link",
+    "signIn": "Sign in"
+  },
+  "metadata": {
+    "title": "Artiline — Share AI artifacts with your team",
+    "description": "HTML, Markdown, code. Private workspaces, public links, optional passwords. Export to share-ready images."
+  },
+  "landing": {
+    "edition": "CATALOG 2026 · PRIVATE EDITION",
+    "heroLine1": "Upload",
+    "heroLine2": "what AI",
+    "heroLine3": "spits out.",
+    "heroLine4": "Get a link.",
+    "drop": "DROP",
+    "dropSub": "HTML · MD · CODE",
+    "link": "LINK",
+    "linkSub": "4 LEVELS",
+    "ship": "SHIP",
+    "shipSub": "PNG EXPORT",
+    "ctaCreate": "Create workspace",
+    "ctaLogin": "I have an account",
+    "noCard": "NO CARD · MAGIC LINK · 30 SEC TO FIRST SHARE",
+    "multiTenantTitle": "Multi-tenant",
+    "multiTenantBody": "Isolated workspaces. One catalog per team. Magic-link invites.",
+    "visibilityTitle": "Granular visibility",
+    "visibilityBody": "Team only · team + password · public · public + password. 4 levels, no gradients.",
+    "exportTitle": "PNG Export",
+    "exportBody": "HTML rendered to 1200×630 image. Ready for Slack, Twitter, decks.",
+    "footerTagline": "ARTILINE · 2026 · ARTIFACT HOSTING",
+    "panelHeader": "AURORA-33 · CATALOG",
+    "panelCount": "47 ARTIFACTS",
+    "panelMock": "↑ MOCK · REAL DATA IN YOUR WORKSPACE",
+    "headerLogin": "Sign in"
+  },
+  "authShell": {
+    "edition": "EDITION 2026 · PRIVATE CATALOG",
+    "quote": "Upload what AI generates. Get a link. Lock it with a password or open it to the world.",
+    "drop": "Drop",
+    "link": "Link",
+    "ship": "Ship",
+    "tagline": "ARTILINE · MULTI-TENANT ARTIFACT HOSTING"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "We sent a magic link to your inbox. No passwords, no friction.",
+    "firstTime": "First time here?",
+    "createWorkspaceLink": "Create a workspace",
+    "signupTitle": "Create your account",
+    "signupSubtitle": "30 seconds. Magic link to your inbox, no passwords.",
+    "alreadyHave": "Already have an account?",
+    "workEmailLabel": "Work email",
+    "emailPlaceholder": "you@email.com",
+    "workEmailPlaceholder": "you@company.com",
+    "sendMagicLink": "Send magic link",
+    "continueLink": "Continue with magic link",
+    "checkEmailTitle": "Check your inbox",
+    "checkEmailSubtitle": "We sent you a magic link.",
+    "linkSent": "Link sent",
+    "linkInfo": "Click the button in the email to sign in. The link expires in 24h.",
+    "devMode": "DEV MODE · IF IT DOESN'T ARRIVE, CHECK THE CONSOLE",
+    "workspaceTitle": "Name your workspace",
+    "workspaceSubtitle": "This is where your team will store and share artifacts.",
+    "workspaceLabel": "Workspace name",
+    "workspacePlaceholder": "Acme Corp",
+    "inviteAfter": "You can invite your team later.",
+    "createWorkspaceBtn": "Create workspace"
+  },
+  "invite": {
+    "invalidTitle": "Invalid invitation",
+    "invalidSubtitle": "The link doesn't exist or was revoked.",
+    "expiredTitle": "Invitation expired",
+    "expiredSubtitle": "Ask the team to send you a new one.",
+    "joinTitle": "Join {workspace}",
+    "joinSubtitle": "We'll send a magic link to confirm.",
+    "magicLinkBtn": "Get magic link",
+    "mismatchTitle": "Email mismatch",
+    "mismatchSubtitle": "This invitation is for {email}.",
+    "loggedAs": "You're signed in as <strong>{email}</strong>. Sign out and come back with the correct email."
+  },
+  "dashboard": {
+    "emptyTitle": "EMPTY CATALOG",
+    "emptyHeadingLine1": "Drop a file.",
+    "emptyHeadingLine2": "Share it in seconds.",
+    "emptyBody": "HTML, Markdown, code. We detect it and ship a link, optional password, and image export.",
+    "createFirst": "Create first artifact",
+    "inviteTeam": "Invite your team",
+    "catalogLabel": "CATALOG · {name}",
+    "artifactsCount": "{count} ARTIFACTS"
+  },
+  "navTop": {
+    "artifacts": "Artifacts",
+    "team": "Team",
+    "new": "New"
+  },
+  "userMenu": {
+    "label": "User menu",
+    "profileSoon": "Profile (coming soon)",
+    "signOut": "Sign out"
+  },
+  "workspaceSwitcher": {
+    "label": "WORKSPACES",
+    "createWorkspace": "Create workspace"
+  },
+  "new": {
+    "dropFile": "Drop a file",
+    "dropBody": "HTML, Markdown, or code. We detect it. Configure visibility after.",
+    "previewLabel": "02 PREVIEW",
+    "detailsLabel": "03 DETAILS",
+    "configure": "Configure",
+    "titleLabel": "Title",
+    "visibility": "Visibility",
+    "passwordHint": "Min 4 characters",
+    "publish": "Publish artifact",
+    "publishing": "Creating…",
+    "fileMeta": "{kb} KB · {lines} LINES",
+    "firstStepMeta": "NEW · 01 DROP"
+  },
+  "dropzone": {
+    "label": "DROP ZONE · 01",
+    "dragFile": "Drag a file",
+    "dragHere": "Drop here",
+    "subtype": "HTML · Markdown · Code. Auto-detected.",
+    "maxSize": "MAX 10MB · 1 FILE",
+    "fileMeta": "{kb} KB · {lines} LINES · DETECTED",
+    "removeFile": "Remove file",
+    "ariaLabel": "Drop or select a file"
+  },
+  "viewer": {
+    "notFoundTitle": "Not found",
+    "notFoundMsg": "This link isn't valid or the artifact was deleted.",
+    "expiredTitle": "Expired",
+    "expiredMsg": "This artifact is no longer available.",
+    "teamOnlyTitle": "Team only",
+    "teamOnlyMsg": "This artifact is internal. Sign in with your team account.",
+    "noAccessTitle": "No access",
+    "noAccessMsg": "You don't belong to the workspace sharing this artifact.",
+    "loginBtn": "Sign in",
+    "accessDenied": "ACCESS DENIED · 403",
+    "passwordRequiredMeta": "PASSWORD REQUIRED · RESTRICTED ACCESS",
+    "passwordRequiredTitle": "Enter the password",
+    "passwordAsk": "Ask whoever shared this link for the password.",
+    "passwordWrong": "WRONG PASSWORD · TRY AGAIN",
+    "enter": "Enter",
+    "back": "Back",
+    "comments": "Comments",
+    "react": "React",
+    "copyPublic": "Copy public link",
+    "copied": "Copied!",
+    "exportPng": "Export PNG",
+    "info": "Info",
+    "visibility": "Visibility",
+    "viewsLabel": "VIEWS",
+    "commentsLabel": "COMMENTS",
+    "accessLabel": "ACCESS"
+  },
+  "settings": {
+    "title": "Members",
+    "subtitle": "Who can view and edit artifacts in this workspace.",
+    "teamHeader": "TEAM · {name}",
+    "inviteTitle": "Invite member",
+    "inviteSubtitle": "MAGIC LINK TO EMAIL",
+    "emailPlaceholder": "new@member.com",
+    "roleLabel": "Role",
+    "memberRole": "Member",
+    "adminRole": "Admin",
+    "inviteBtn": "Invite",
+    "membersLabel": "MEMBERS · {count}",
+    "removeBtn": "Remove member",
+    "pendingLabel": "PENDING INVITATIONS · {count}",
+    "pendingBadge": "PENDING · ROLE {role}",
+    "revokeBtn": "Revoke",
+    "roles": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "member": "MEMBER"
+    }
+  },
+  "visibility": {
+    "internal": "Team only",
+    "internalPw": "Team + password",
+    "public": "Public",
+    "publicPw": "Public + password",
+    "modalTitle": "Visibility",
+    "modalDesc": "Control who can see this artifact.",
+    "levelLabel": "Level",
+    "changePassword": "Change current password",
+    "keepPassword": "Leave empty to keep the current password.",
+    "updated": "Visibility updated",
+    "options": {
+      "internal": "Team only",
+      "internalHint": "Workspace members",
+      "internalPwForm": "Team only + password",
+      "internalPwHint": "Members + extra password",
+      "internalPwHintShort": "Members + password",
+      "publicOpen": "Public open",
+      "publicHint": "Anyone with the link",
+      "publicPw": "Public + password",
+      "publicPwHint": "Public link with password"
+    }
+  },
+  "comments": {
+    "title": "Comments ({count})",
+    "yourName": "Your name",
+    "body": "Comment",
+    "submit": "Post",
+    "modalTitle": "Comments"
+  },
+  "reactions": {
+    "modalTitle": "Reactions",
+    "modalDesc": "Tap an emoji to react.",
+    "signInToReact": "Sign in to react"
+  },
+  "toasts": {
+    "linkCopied": "Link copied",
+    "pngGenerated": "PNG generated",
+    "pngError": "Error generating PNG",
+    "noFileFirst": "Drop a file first.",
+    "generic": "Error"
+  },
+  "errors": {
+    "ERR_NAME_REQUIRED": "Name required",
+    "ERR_PASSWORD_TOO_SHORT": "Password must be at least 4 characters",
+    "ERR_CANNOT_REMOVE_OWNER": "Cannot remove the owner",
+    "ERR_FILE_TEXT_ONLY": "Text files only (HTML, MD, code).",
+    "ERR_FILE_EMPTY": "Empty file.",
+    "ERR_FILE_MAX_SIZE": "Maximum {maxMB} MB.",
+    "ERR_FILE_READ": "Could not read the file",
+    "ERR_EXPORT_HTML_ONLY": "Only HTML supports PNG export",
+    "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage not configured. Contact your admin.",
+    "UNAUTH": "Not authenticated",
+    "FORBIDDEN": "No permission",
+    "NOT_FOUND": "Not found",
+    "generic": "Error"
+  },
+  "artifact": {
+    "now": "NOW",
+    "minutesShort": "M",
+    "hoursShort": "H",
+    "daysShort": "D"
+  },
+  "publicFooter": {
+    "hosted": "Hosted on Artiline"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "themeSwitcher": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "versions": {
+    "crumb": "ARTIFACT · {slug}",
+    "title": "Versions",
+    "description": "{count, plural, =0 {No versions yet} one {One version} other {# versions}} in history",
+    "view": "View",
+    "diff": "Diff",
+    "diffHeading": "Diff V{from} → V{to}",
+    "closeDiff": "Close diff",
+    "currentPill": "CURRENT",
+    "rollback": "Rollback",
+    "approve": "Approve",
+    "requestChanges": "Request changes",
+    "publish": "Publish version",
+    "publishTitle": "New version",
+    "publishDesc": "Push changes with an optional message. The client only sees the new version once you approve it.",
+    "messagePlaceholder": "Change summary (optional)",
+    "publishing": "Publishing…",
+    "status": {
+      "draft": "DRAFT",
+      "pending": "PENDING",
+      "approved": "APPROVED",
+      "changes_requested": "CHANGES REQUESTED"
+    }
+  },
+  "emails": {
+    "magicLink": {
+      "subject": "Sign in to Artiline",
+      "body": "Click to enter:"
+    },
+    "invitation": {
+      "subject": "Invitation to {workspace} on Artiline",
+      "body": "You've been invited to join {workspace}.",
+      "acceptCta": "Accept invitation"
+    }
+  },
+  "sso": {
+    "startTitle": "Sign in to {workspace}",
+    "startSubtitle": "Continue with your company account.",
+    "continue": "Continue with SSO",
+    "error": {
+      "disabled": "SSO is not enabled for this workspace.",
+      "invalid": "Invalid request. Please try again.",
+      "assertion": "We couldn't verify the response from your identity provider.",
+      "domain": "Your email domain doesn't have access to this workspace.",
+      "generic": "Sign-in failed. Please try again."
+    }
+  }
+}
