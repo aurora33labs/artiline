@@ -1,6 +1,6 @@
 # Contributor License Agreement
 
-Thank you for contributing to Artiline (the "Project"), a product of Aurora33
+Thank you for contributing to Artiline (the "Project"), a product of aurora33.org
 ("we", "us", the "Licensor"). This Contributor License Agreement ("Agreement")
 clarifies the intellectual-property rights granted with Contributions from any
 person or entity. It protects both you and us; it does **not** change your

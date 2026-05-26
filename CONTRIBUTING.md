@@ -21,7 +21,7 @@ We may open code contributions later as the project matures.
 
 Artiline is licensed under **FSL-1.1-ALv2** (see [LICENSE](./LICENSE)). It is an
 open-core product: we may also offer commercial licenses, and each release
-converts to Apache 2.0 over time. All code is owned by Aurora33.
+converts to Apache 2.0 over time. All code is owned by aurora33.org.
 
 If we open external code contributions in the future, they will require a
 **Contributor License Agreement** ([CLA.md](./CLA.md)): you would retain
