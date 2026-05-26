@@ -10,7 +10,7 @@
 
 ## Checklist
 
-- [ ] Commits are signed off (`git commit -s`) per the DCO
+- [ ] CLA signed (the CLA Assistant bot prompts on your first PR)
 - [ ] `pnpm tsc --noEmit`, `pnpm lint`, and `pnpm build` pass
 - [ ] Schema changes include generated migrations (`pnpm db:generate`, committed)
 - [ ] New cloud/paid features are dynamic-imported behind `isFeatureEnabled()`

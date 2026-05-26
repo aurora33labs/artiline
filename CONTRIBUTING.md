@@ -5,20 +5,18 @@ up the project, the conventions we follow, and how contributions are licensed.
 
 ## Licensing of contributions
 
-Artiline is licensed under **FSL-1.1-ALv2** (see [LICENSE](./LICENSE)). By
-contributing, you agree your contribution is licensed under the same terms.
+Artiline is licensed under **FSL-1.1-ALv2** (see [LICENSE](./LICENSE)). It is an
+open-core product: we may also offer commercial licenses, and each release
+converts to Apache 2.0 over time.
 
-We use the **Developer Certificate of Origin (DCO)** instead of a CLA. Every
-commit must be signed off, certifying you wrote the code or have the right to
-submit it under the project license:
+To keep that model viable, we require a **Contributor License Agreement (CLA)**.
+You **retain copyright** of your contributions, but you grant us the rights to
+relicense and sublicense them (including under commercial terms). Full text:
+[CLA.md](./CLA.md).
 
-```bash
-git commit -s -m "feat: your change"
-```
-
-The `-s` adds a `Signed-off-by: Your Name <you@example.com>` trailer. PRs with
-unsigned commits will be asked to amend. Read the full DCO at
-<https://developercertificate.org>.
+Signing is a one-time step — the **CLA Assistant** bot comments on your first
+pull request with a link to sign. PRs cannot be merged until the CLA is signed.
+There is no per-commit sign-off requirement.
 
 ## Development setup
 
@@ -78,7 +76,7 @@ under ~50 characters; explain the "why" in the body when it isn't obvious.
 
 ### PR checklist
 
-- Commits are signed off (`-s`)
+- CLA signed (the CLA Assistant bot prompts on your first PR)
 - `tsc`, `lint`, and `build` pass
 - Migrations generated + committed if the schema changed
 - New cloud features are dynamic-imported behind a feature flag
