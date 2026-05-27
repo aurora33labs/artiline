@@ -3,6 +3,7 @@ import { Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMember } from "@/lib/tenant";
+import { planLimitsForWorkspace } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,6 +84,10 @@ export default async function SettingsPage({
       ),
     );
 
+  const seatLimit = (await planLimitsForWorkspace(workspace.id)).members;
+  const seatsUsed = members.length + pendingInvites.length;
+  const atSeatCap = seatLimit >= 0 && seatsUsed >= seatLimit;
+
   return (
     <div className="space-y-10 max-w-4xl">
       <header className="space-y-2">
@@ -103,9 +108,17 @@ export default async function SettingsPage({
               <h2 className="text-sm font-sans font-semibold normal-case tracking-normal">
                 {t("inviteTitle")}
               </h2>
-              <p className="meta">{t("inviteSubtitle")}</p>
+              <p className="meta">
+                {t("inviteSubtitle")}
+                {seatLimit >= 0 && ` · ${seatsUsed}/${seatLimit}`}
+              </p>
             </div>
           </div>
+          {atSeatCap ? (
+            <div className="meta text-warning border border-warning px-3 py-2">
+              {t("seatCap", { limit: seatLimit })}
+            </div>
+          ) : (
           <form
             action={inviteMember}
             className="flex flex-col sm:flex-row gap-2 sm:items-end"
@@ -138,6 +151,7 @@ export default async function SettingsPage({
               {t("inviteBtn")}
             </Button>
           </form>
+          )}
         </section>
       )}
 

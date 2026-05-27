@@ -26,7 +26,7 @@ export const PRICING_PLANS = {
     description: "SSO/SAML + audit retention extendido + priority SLA.",
   },
 } satisfies Record<
-  Exclude<LicenseTier, "oss">,
+  Exclude<LicenseTier, "oss" | "free">,
   {
     tier: LicenseTier;
     name: string;
@@ -39,7 +39,9 @@ export const PRICING_PLANS = {
 
 export type PricingPlan = (typeof PRICING_PLANS)[keyof typeof PRICING_PLANS];
 
-export function stripePriceId(tier: Exclude<LicenseTier, "oss">): string | null {
+export function stripePriceId(
+  tier: Exclude<LicenseTier, "oss" | "free">,
+): string | null {
   const env = `STRIPE_PRICE_${tier.toUpperCase()}`;
   return process.env[env] ?? null;
 }

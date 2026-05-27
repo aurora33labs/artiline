@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMember, requireRole } from "@/lib/tenant";
+import { assertCanAddMember } from "@/lib/limits";
 import { defaultLocale } from "@/i18n/routing";
 
 const FROM = process.env.RESEND_FROM ?? "onboarding@resend.dev";
@@ -28,6 +29,7 @@ export async function inviteMember(formData: FormData) {
   });
   const { workspace, role } = await requireMember(data.workspaceSlug);
   requireRole(role, ["owner", "admin"]);
+  await assertCanAddMember(workspace.id);
 
   const token = nanoid(32);
   await db.insert(schema.invitations).values({

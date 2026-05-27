@@ -12,8 +12,8 @@ const ACTIVE_STATUSES = new Set([
 /**
  * Resolve current tier for a workspace based on its Stripe subscription record.
  *
- * Falls back to "studio" for cloud workspaces without a subscription row (e.g.
- * during onboarding). OSS edition never reaches this code path because
+ * Falls back to "free" for cloud workspaces without an active subscription
+ * (the limited hosted tier). OSS edition never reaches this code path because
  * `lib/license.ts` short-circuits before importing this module.
  */
 export async function tierForWorkspace(workspaceId: string): Promise<LicenseTier> {
@@ -23,7 +23,7 @@ export async function tierForWorkspace(workspaceId: string): Promise<LicenseTier
     .where(eq(schema.subscriptions.workspaceId, workspaceId))
     .limit(1);
 
-  if (!sub) return "studio";
-  if (!ACTIVE_STATUSES.has(sub.status)) return "studio";
+  if (!sub) return "free";
+  if (!ACTIVE_STATUSES.has(sub.status)) return "free";
   return sub.tier as LicenseTier;
 }

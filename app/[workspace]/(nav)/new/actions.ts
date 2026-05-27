@@ -9,6 +9,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireMember } from "@/lib/tenant";
 import { recordEvent } from "@/lib/activity";
+import { assertCanCreateArtifact } from "@/lib/limits";
 
 const schemaInput = z.object({
   workspaceSlug: z.string().min(1),
@@ -33,6 +34,7 @@ export async function createArtifact(formData: FormData) {
   const data = schemaInput.parse(raw);
 
   const { session, workspace } = await requireMember(data.workspaceSlug);
+  await assertCanCreateArtifact(workspace.id);
 
   const needsPw =
     data.visibility === "internal_pw" || data.visibility === "public_pw";

@@ -1,7 +1,32 @@
-export const TIER_ORDER = ["oss", "studio", "agency", "agency_plus"] as const;
+export const TIER_ORDER = [
+  "oss",
+  "free",
+  "studio",
+  "agency",
+  "agency_plus",
+] as const;
 export type LicenseTier = (typeof TIER_ORDER)[number];
 
 export type Edition = "oss" | "cloud";
+
+/**
+ * Per-tier quotas. `-1` means unlimited.
+ *
+ * Only enforced in the cloud edition (see lib/limits.ts). Self-host (oss
+ * edition) is never quota-limited — operators run their own infrastructure.
+ */
+export interface PlanLimits {
+  members: number;
+  artifacts: number;
+}
+
+export const TIER_LIMITS: Record<LicenseTier, PlanLimits> = {
+  oss: { members: -1, artifacts: -1 },
+  free: { members: 3, artifacts: 5 },
+  studio: { members: 10, artifacts: 100 },
+  agency: { members: 25, artifacts: -1 },
+  agency_plus: { members: -1, artifacts: -1 },
+};
 
 export type Feature =
   | "versioning"
