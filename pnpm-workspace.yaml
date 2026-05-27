@@ -1,11 +1,11 @@
-# pnpm 10.16+/11 read build-script policy from here (not package.json).
-# Approve scripts the build/runtime need; explicitly ignore dev-only ones so
-# pnpm doesn't error on undecided build scripts in CI/containers.
-onlyBuiltDependencies:
-  - "@swc/core"
-  - esbuild
-  - sharp
-  - unrs-resolver
-ignoredBuiltDependencies:
-  - "@parcel/watcher"
-  - msw
+# Build-script policy for pnpm v11+ (Railway uses pnpm 11 via corepack).
+# v11 removed onlyBuiltDependencies/ignoredBuiltDependencies in favor of
+# `allowBuilds` (name: true|false). Every dependency with a build script must
+# be listed, otherwise a clean/CI install errors with ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  "@swc/core": true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  "@parcel/watcher": false
+  msw: false
