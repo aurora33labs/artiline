@@ -47,12 +47,16 @@ async function getPublicKey(): Promise<CryptoKey> {
 /**
  * Verify a license JWT signed with ECDSA P-256 (ES256).
  *
- * Dev bypass: when `LICENSE_DEV_BYPASS=1`, any token of the form
- * `dev:<tier>` is accepted and the tier is returned without crypto verification.
- * This is for local development and CI only — never set in production.
+ * Dev bypass: a local-development and CI convenience so paid features can be
+ * exercised without a signed key. It is hard-disabled when NODE_ENV is
+ * "production", so it has no effect on a deployed instance — production always
+ * goes through full signature verification.
  */
 export async function verifyLicenseJWT(token: string): Promise<VerifyResult> {
-  if (process.env.LICENSE_DEV_BYPASS === "1") {
+  const devBypassAllowed =
+    process.env.LICENSE_DEV_BYPASS === "1" &&
+    process.env.NODE_ENV !== "production";
+  if (devBypassAllowed) {
     if (token.startsWith("dev:")) {
       const tier = token.slice(4);
       if (!isTier(tier)) return { ok: false, reason: "invalid_dev_tier" };

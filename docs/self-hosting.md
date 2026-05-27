@@ -47,7 +47,7 @@ you can sign in locally without configuring email.
 | `R2_PUBLIC_URL` | optional | Public base URL for exported assets |
 | `NEXT_PUBLIC_ARTILINE_EDITION` | no | `oss` (default) or `cloud` |
 | `LICENSE_KEY` | no | Activates paid features by tier (OSS edition) |
-| `LICENSE_DEV_BYPASS` | no | **Dev only.** With `=1`, accepts `dev:<tier>` tokens without crypto |
+| `LICENSE_DEV_BYPASS` | no | **Local dev only.** Ignored when `NODE_ENV=production` |
 | `ARTILINE_ENABLE_CUSTOM_DOMAIN` | no | Per-feature env override |
 | `CRON_SECRET` | prod | Bearer token guarding `/api/cron/*` endpoints |
 
@@ -104,12 +104,10 @@ The key encodes a tier (`studio`, `agency`, `agency_plus`); features unlock
 according to that tier. No phone-home: license verification is offline (ES256
 signature check), so airgapped deployments work.
 
-For local development without a real key:
-
-```bash
-LICENSE_DEV_BYPASS=1
-LICENSE_KEY=dev:agency_plus
-```
+> Contributors working locally can enable an unsigned dev token via
+> `LICENSE_DEV_BYPASS` to exercise paid features without a real key. It is a
+> development-only convenience and is ignored when `NODE_ENV=production`, so it
+> has no effect on a deployed instance. See CONTRIBUTING for details.
 
 > Note: some paid features additionally depend on external services you must
 > provide yourself (e.g. custom domains require a Cloudflare for SaaS account).
