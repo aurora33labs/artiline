@@ -1,6 +1,6 @@
 # Artiline
 
-[![CI](https://github.com/aurora33org/artiline/actions/workflows/ci.yml/badge.svg)](https://github.com/aurora33org/artiline/actions/workflows/ci.yml)
+[![CI](https://github.com/aurora33labs/artiline/actions/workflows/ci.yml/badge.svg)](https://github.com/aurora33labs/artiline/actions/workflows/ci.yml)
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/license-FSL--1.1--ALv2-blue.svg)](./LICENSE)
 
 Open-core SaaS para que agencias creativas entreguen AI artifacts a clientes — con versionado, URL persistente, password gating, tracking y white-label.
