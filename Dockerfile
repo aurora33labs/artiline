@@ -37,4 +37,7 @@ COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
 EXPOSE 3000
-CMD ["sh","-c","pnpm db:migrate && pnpm start -- -p ${PORT:-3000}"]
+# Invoke binaries directly (no pnpm wrapper): avoids pnpm 11's
+# verify-deps-before-run install check at startup, and `next start` binds to
+# the PORT env var that the platform provides (Railway sets PORT).
+CMD ["sh","-c","node_modules/.bin/drizzle-kit migrate && node_modules/.bin/next start"]
