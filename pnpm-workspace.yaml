@@ -1,3 +1,11 @@
-ignoredBuiltDependencies:
+# pnpm 10.16+/11 read build-script policy from here (not package.json).
+# Approve scripts the build/runtime need; explicitly ignore dev-only ones so
+# pnpm doesn't error on undecided build scripts in CI/containers.
+onlyBuiltDependencies:
+  - "@swc/core"
+  - esbuild
   - sharp
   - unrs-resolver
+ignoredBuiltDependencies:
+  - "@parcel/watcher"
+  - msw
