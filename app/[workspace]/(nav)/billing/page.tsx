@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import dynamic from "next/dynamic";
+import { getLocale } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { currentEdition } from "@/lib/license";
 import { requireMember, requireRole } from "@/lib/tenant";
@@ -49,8 +50,9 @@ export default async function BillingPage({
     .where(eq(schema.subscriptions.workspaceId, workspace.id))
     .limit(1);
 
-  const { PRICING_PLANS } = await import("@/lib/cloud/pricing");
+  const { PRICING_PLANS, planPrice } = await import("@/lib/cloud/pricing");
   const plans = Object.values(PRICING_PLANS);
+  const locale = await getLocale();
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -96,17 +98,27 @@ export default async function BillingPage({
                 <header className="space-y-1">
                   <div className="meta">{plan.name.toUpperCase()}</div>
                   <div className="font-display font-bold text-3xl">
-                    ${plan.price}
-                    <span className="meta align-middle"> /MO</span>
+                    {plan.available ? (
+                      <>
+                        {planPrice(plan, locale)}
+                        <span className="meta align-middle"> /MO</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </div>
                 </header>
                 <p className="text-muted-foreground text-sm flex-1">
                   {plan.description}
                 </p>
                 <div className="meta">
-                  {plan.seats} SEATS
+                  {plan.seats < 0 ? "∞" : plan.seats} SEATS
                 </div>
-                {isCurrent ? (
+                {!plan.available ? (
+                  <span className="meta border border-border text-muted-foreground px-3 py-2 text-center">
+                    {locale === "es" ? "PRÓXIMAMENTE" : "COMING SOON"}
+                  </span>
+                ) : isCurrent ? (
                   <span className="meta border border-primary text-primary px-3 py-2 text-center">
                     PLAN ACTUAL
                   </span>
