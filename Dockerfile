@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
+# pnpm-workspace.yaml carries the build-script policy (onlyBuiltDependencies);
+# pnpm 11 reads it from there, so it must be present before install.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 RUN pnpm exec playwright install chromium
 
