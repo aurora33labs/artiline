@@ -17,8 +17,8 @@ A high-level map of how Artiline is built. For setup, see
 Tenancy is path-based: `/[workspace]/...`. A workspace is resolved from the
 slug, and `requireMember()` (`lib/tenant.ts`) gates every workspace route by
 checking `workspace_members`. Custom domains are mapped to a workspace by
-`middleware.ts`, which rewrites the incoming host to the matching
-`/[workspace]` path (cloud feature).
+`proxy.ts` (the Next 16 Proxy convention, formerly Middleware), which rewrites
+the incoming host to the matching `/[workspace]` path (cloud feature).
 
 ## Rendering boundaries
 

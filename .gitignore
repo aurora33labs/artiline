@@ -44,6 +44,7 @@ next-env.d.ts
 # local tooling artifacts (never commit)
 .claude/
 .claude-stkr/
+.github/skills/
 skills-lock.json
 .agents/
 

@@ -6,8 +6,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * workspace slug as the first path segment. Production hosting must use the
  * canonical `app.artiline.app` domain for all non-custom-domain requests.
  *
- * Note (Next 16): middleware was renamed to "proxy" in some sources but
- * middleware.ts still works on the edge runtime for path rewrites.
+ * Next 16 renamed the Middleware convention to Proxy: this file is `proxy.ts`
+ * and exports a `proxy` function. It runs on the edge runtime for path rewrites.
  *
  * Lookup table is hydrated lazily via fetch to a small internal route to
  * avoid importing the full Drizzle bundle into the edge runtime.
@@ -29,7 +29,7 @@ function isAppHost(host: string): boolean {
   );
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const host = req.headers.get("host");
   if (!host) return NextResponse.next();
   if (isAppHost(host)) return NextResponse.next();

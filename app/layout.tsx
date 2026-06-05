@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Sora, Chivo, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { resolveLocale } from "@/i18n/request";
@@ -10,10 +10,18 @@ import "./globals.css";
 
 const THEME_INIT_SCRIPT = `(function(){try{var c=document.cookie.match(/(?:^|; )THEME=([^;]+)/);var t=c?decodeURIComponent(c[1]):'system';if(t==='system'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}var d=document.documentElement;if(t==='light'){d.classList.add('light');}else{d.classList.remove('light');}}catch(e){}})();`;
 
-const inter = Inter({
-  variable: "--font-inter",
+const sora = Sora({
+  variable: "--font-sora",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "600", "700", "800"],
+});
+
+const chivo = Chivo({
+  variable: "--font-chivo",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -44,7 +52,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${jetbrainsMono.variable} ${themeClass} h-full antialiased`}
+      className={`${sora.variable} ${chivo.variable} ${jetbrainsMono.variable} ${themeClass} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

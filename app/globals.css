@@ -7,10 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-chivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-  --font-display: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-  --font-heading: var(--font-display);
+  --font-display: var(--font-sora), ui-sans-serif, sans-serif;
+  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -52,40 +52,40 @@
   --radius-xl: 8px;
 }
 
-/* Dark default — Aurora33 brand palette */
+/* Dark default — Monolith palette */
 :root {
-  --background: oklch(0.1716 0.0097 255.6513);
-  --foreground: oklch(0.9203 0.0150 260.7292);
-  --surface: oklch(0.2081 0.0153 261.6011);
-  --surface-2: oklch(0.2501 0.0193 258.3593);
+  --background: oklch(0.09 0.006 250);
+  --foreground: oklch(0.93 0.006 260);
+  --surface: oklch(0.12 0.005 250);
+  --surface-2: oklch(0.16 0.007 250);
   --card: var(--surface);
   --card-foreground: var(--foreground);
   --popover: var(--surface);
   --popover-foreground: var(--foreground);
 
-  --primary: oklch(0.6992 0.1399 284.9900);
-  --primary-foreground: oklch(0.1716 0.0097 255.6513);
-  --secondary: oklch(0.2995 0.0301 260.5101);
-  --secondary-foreground: var(--foreground);
+  --primary: oklch(0.67 0.22 38);
+  --primary-foreground: oklch(0.09 0.006 250);
+  --secondary: oklch(0.16 0.007 250);
+  --secondary-foreground: oklch(0.93 0.006 260);
   --muted: var(--surface-2);
-  --muted-foreground: oklch(0.6999 0.0198 258.3637);
-  --accent: oklch(0.2995 0.0301 260.5101);
-  --accent-foreground: var(--foreground);
+  --muted-foreground: oklch(0.55 0.008 255);
+  --accent: oklch(0.16 0.007 250);
+  --accent-foreground: oklch(0.93 0.006 260);
 
   --destructive: oklch(60% 0.22 25);
   --success: oklch(70% 0.16 145);
   --warning: oklch(78% 0.16 80);
 
-  --border: oklch(0.2996 0.0161 259.7938);
-  --border-strong: oklch(0.42 0.018 260);
-  --input: oklch(0.2996 0.0161 259.7938);
-  --ring: oklch(0.6992 0.1399 284.9900 / 0.55);
+  --border: oklch(0.20 0.006 250);
+  --border-strong: oklch(0.28 0.008 250);
+  --input: oklch(0.20 0.006 250);
+  --ring: oklch(0.67 0.22 38 / 0.55);
 
-  --chart-1: oklch(0.6992 0.1399 284.9900);
-  --chart-2: oklch(0.6507 0.1194 249.4864);
-  --chart-3: oklch(0.7151 0.1216 201.6738);
-  --chart-4: oklch(0.6800 0.1800 267.0000);
-  --chart-5: oklch(0.6944 0.1966 19.6034);
+  --chart-1: oklch(0.67 0.22 38);
+  --chart-2: oklch(0.70 0.16 145);
+  --chart-3: oklch(0.70 0.18 200);
+  --chart-4: oklch(0.75 0.16 80);
+  --chart-5: oklch(0.60 0.22 25);
 
   --radius: 4px;
 
@@ -99,40 +99,40 @@
   --sidebar-ring: var(--ring);
 }
 
-/* Light theme — Aurora33 brand palette */
+/* Light theme — Monolith palette */
 .light {
-  --background: oklch(0.9849 0.0029 264.5421);
-  --foreground: oklch(0.2795 0.0204 260.6090);
+  --background: oklch(0.97 0.002 250);
+  --foreground: oklch(0.12 0.006 250);
   --surface: oklch(1.0000 0 0);
-  --surface-2: oklch(0.9642 0.0041 271.3692);
+  --surface-2: oklch(0.95 0.003 250);
   --card: var(--surface);
   --card-foreground: var(--foreground);
   --popover: var(--surface);
   --popover-foreground: var(--foreground);
 
-  --primary: oklch(0.5511 0.1602 284.9492);
-  --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.9409 0.0196 260.1696);
-  --secondary-foreground: var(--foreground);
+  --primary: oklch(0.58 0.22 38);
+  --primary-foreground: oklch(0.97 0.002 250);
+  --secondary: oklch(0.93 0.003 250);
+  --secondary-foreground: oklch(0.12 0.006 250);
   --muted: var(--surface-2);
-  --muted-foreground: oklch(0.5011 0.0196 259.4168);
-  --accent: oklch(0.9409 0.0196 260.1696);
-  --accent-foreground: var(--foreground);
+  --muted-foreground: oklch(0.44 0.008 255);
+  --accent: oklch(0.93 0.003 250);
+  --accent-foreground: oklch(0.12 0.006 250);
 
   --destructive: oklch(55% 0.22 25);
   --success: oklch(55% 0.16 145);
   --warning: oklch(65% 0.16 80);
 
-  --border: oklch(0.9206 0.0092 258.3368);
-  --border-strong: oklch(0.85 0.012 258);
-  --input: oklch(0.9206 0.0092 258.3368);
-  --ring: oklch(0.5511 0.1602 284.9492 / 0.55);
+  --border: oklch(0.88 0.004 250);
+  --border-strong: oklch(0.78 0.006 250);
+  --input: oklch(0.88 0.004 250);
+  --ring: oklch(0.58 0.22 38 / 0.55);
 
-  --chart-1: oklch(0.5511 0.1602 284.9492);
-  --chart-2: oklch(0.6495 0.1408 250.4113);
-  --chart-3: oklch(0.6351 0.1085 205.1732);
-  --chart-4: oklch(0.5800 0.1800 267.0000);
-  --chart-5: oklch(0.6194 0.1996 20.0616);
+  --chart-1: oklch(0.58 0.22 38);
+  --chart-2: oklch(0.55 0.16 145);
+  --chart-3: oklch(0.55 0.18 200);
+  --chart-4: oklch(0.65 0.16 80);
+  --chart-5: oklch(0.55 0.22 25);
 }
 
 @layer base {
@@ -141,28 +141,32 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "cv11";
   }
   html {
     @apply font-sans;
   }
-  /* Display = monospace UPPERCASE tracked. Catalog vibe. */
-  h1, h2, h3 {
-    font-family: var(--font-display);
+  h1, h2 {
+    font-family: var(--font-sans);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: -0.02em;
     line-height: 1.15;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
   }
   h4, h5, h6 {
     font-family: var(--font-sans);
     font-weight: 600;
     letter-spacing: -0.01em;
   }
-  /* Catalog metadata helper */
+  /* Metadata — mono uppercase tracked. Slugs, labels, catalog identifiers. */
   .meta {
-    font-family: var(--font-display);
-    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -187,6 +191,76 @@
   /* Soft accent tint for badges only */
   .bg-accent-tint {
     background-color: oklch(from var(--primary) l c h / 0.12);
+  }
+}
+
+/* Markdown preview (landing drop demo) — scoped, no typography plugin */
+@layer components {
+  .md-preview > * + * {
+    margin-top: 0.7em;
+  }
+  .md-preview h1,
+  .md-preview h2,
+  .md-preview h3 {
+    font-family: var(--font-sans);
+    text-transform: none;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .md-preview h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .md-preview h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .md-preview h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .md-preview ul,
+  .md-preview ol {
+    padding-left: 1.25rem;
+    list-style: revert;
+  }
+  .md-preview a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .md-preview code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--surface-2);
+    padding: 0.1em 0.3em;
+    border-radius: var(--radius-sm);
+  }
+  .md-preview pre {
+    background: var(--surface-2);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    overflow: auto;
+  }
+  .md-preview pre code {
+    background: none;
+    padding: 0;
+  }
+  .md-preview table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85em;
+  }
+  .md-preview th,
+  .md-preview td {
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+  }
+  .md-preview blockquote {
+    border-left: 1px solid var(--border-strong);
+    padding-left: 0.75rem;
+    color: var(--muted-foreground);
   }
 }
 

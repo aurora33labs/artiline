@@ -46,6 +46,7 @@ you can sign in locally without configuring email.
 | `R2_BUCKET` | optional | Export bucket name |
 | `R2_PUBLIC_URL` | optional | Public base URL for exported assets |
 | `NEXT_PUBLIC_ARTILINE_EDITION` | no | `oss` (default) or `cloud` |
+| `NEXT_PUBLIC_ARTILINE_LANDING` | no | Anonymous homepage at `/`: `marketing` or `app`. Defaults to `app` on self-host (a minimal sign-in / create-workspace entry, with first-run owner setup) and `marketing` on cloud |
 | `LICENSE_KEY` | no | Activates paid features by tier (OSS edition) |
 | `LICENSE_DEV_BYPASS` | no | **Local dev only.** Ignored when `NODE_ENV=production` |
 | `ARTILINE_ENABLE_CUSTOM_DOMAIN` | no | Per-feature env override |
