@@ -15,11 +15,13 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { resolveTheme } from "@/lib/theme.server";
-import { DropDemo, type DropDemoStrings } from "@/components/landing/drop-demo";
+import { type DropDemoStrings } from "@/components/landing/drop-demo";
 import {
   VisibilityDial,
   type VisibilityDialStrings,
 } from "@/components/landing/visibility-dial";
+import { Hero, type HeroStrings } from "@/components/landing/hero";
+import { SmoothScroll } from "@/components/landing/smooth-scroll";
 
 export async function MarketingHome() {
   const t = await getTranslations("landing");
@@ -56,7 +58,17 @@ export async function MarketingHome() {
     ],
   };
 
+  const heroStrings: HeroStrings = {
+    h1: t("heroH1"),
+    sub: t("heroSub"),
+    ctaCreate: t("ctaCreate"),
+    ctaLogin: t("ctaLogin"),
+    noCard: t("noCard"),
+    demoTag: t("demoTag"),
+  };
+
   return (
+    <SmoothScroll>
     <div className="flex flex-1 flex-col">
       {/* ── Header ── */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
@@ -70,47 +82,8 @@ export async function MarketingHome() {
         </div>
       </header>
 
-      {/* ── 1 · Hero — pain-first, left-aligned ── */}
-      <section className="mx-auto w-full max-w-6xl px-6 pt-10 lg:pt-16">
-        <div className="max-w-[46rem] space-y-5">
-          <h1
-            className="font-display font-extrabold leading-[1.04] tracking-[-0.03em]"
-            style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
-          >
-            {t("heroH1")}
-          </h1>
-          <p className="max-w-[54ch] text-base leading-relaxed text-muted-foreground">
-            {t("heroSub")}
-          </p>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Button asChild size="lg" className="gap-2">
-              <Link href="/signup">
-                {t("ctaCreate")}
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="ghost">
-              <Link href="/login">{t("ctaLogin")}</Link>
-            </Button>
-          </div>
-          <p className="meta">{t("noCard")}</p>
-        </div>
-
-        {/* Product mockup — window-framed live demo */}
-        <div className="mt-12 w-full">
-          <div className="flex h-9 items-center justify-between rounded-t-sm border border-b-0 border-border-strong bg-surface px-4">
-            <div className="flex items-center gap-1.5">
-              <span className="block h-2.5 w-2.5 rounded-full border border-border-strong" />
-              <span className="block h-2.5 w-2.5 rounded-full border border-border-strong" />
-              <span className="block h-2.5 w-2.5 rounded-full border border-border-strong" />
-            </div>
-            <span className="meta">{t("demoTag")}</span>
-          </div>
-          <div className="overflow-hidden rounded-b-sm border border-border-strong">
-            <DropDemo s={demoStrings} />
-          </div>
-        </div>
-      </section>
+      {/* ── 1 · Hero — animated (GSAP load timeline + catalog wall) ── */}
+      <Hero s={heroStrings} demo={demoStrings} />
 
       {/* ── 2 · The broken ritual ── */}
       <Section tag={t("s2Tag")}>
@@ -307,6 +280,7 @@ export async function MarketingHome() {
         </div>
       </footer>
     </div>
+    </SmoothScroll>
   );
 }
 

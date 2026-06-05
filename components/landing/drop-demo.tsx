@@ -341,11 +341,20 @@ const REFERENCES_EXTERNAL =
 
 const PREVIEW_HEIGHT = "clamp(360px, 58vh, 620px)";
 
-export function DropDemo({ s }: { s: DropDemoStrings }) {
-  const [value, setValue] = useState("");
-  const [filename, setFilename] = useState("");
+export function DropDemo({
+  s,
+  autoload,
+}: {
+  s: DropDemoStrings;
+  /** Index into EXAMPLES to load on mount (hero plays a pre-filled artifact). */
+  autoload?: number;
+}) {
+  // Hero can seed an example so the first paint shows a rendered artifact.
+  const seed = autoload != null ? EXAMPLES[autoload] : undefined;
+  const [value, setValue] = useState(seed?.body ?? "");
+  const [filename, setFilename] = useState(seed?.name ?? "");
   const [dragging, setDragging] = useState(false);
-  const [opened, setOpened] = useState(false); // left the dropzone
+  const [opened, setOpened] = useState(seed != null); // left the dropzone
   const [view, setView] = useState<"preview" | "code">("preview");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -558,7 +567,7 @@ export function DropDemo({ s }: { s: DropDemoStrings }) {
                   </Markdown>
                 </div>
               ) : (
-                <CodePreview code={value} lang={language} />
+                <CodePreview key={filename + value.length} code={value} lang={language} />
               )}
             </div>
           )}
@@ -668,7 +677,6 @@ function CodePreview({ code, lang }: { code: string; lang: string }) {
 
   useEffect(() => {
     let alive = true;
-    setHtml("");
     import("shiki")
       .then(({ codeToHtml }) =>
         codeToHtml(code, { lang, theme: "github-dark-default" }),
