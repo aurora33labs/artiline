@@ -616,33 +616,54 @@ export function DropDemo({
               if (text) pasteText(text);
             }}
             style={{ height: "clamp(320px, 40vh, 460px)" }}
-            className={`flex cursor-pointer flex-col items-center justify-center gap-4 px-6 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
-              dragging ? "bg-accent-tint ring-2 ring-inset ring-primary" : "hover:bg-surface"
-            }`}
+            className="group/drop flex cursor-pointer p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:p-6"
           >
-            <Upload className="size-8 text-primary" strokeWidth={1.5} aria-hidden />
-            <p className="max-w-[32ch] text-base font-medium">{s.dropTitle}</p>
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileRef.current?.click();
-                }}
+            {/* Dashed drop target */}
+            <div
+              className={`flex h-full w-full flex-col items-center justify-center gap-5 rounded-lg border-2 border-dashed px-6 text-center transition-colors duration-150 ${
+                dragging
+                  ? "border-primary bg-accent-tint"
+                  : "border-border-strong group-hover/drop:border-primary/60 group-hover/drop:bg-surface/60"
+              }`}
+            >
+              <span
+                className={`flex size-16 items-center justify-center rounded-lg border transition-colors duration-150 ${
+                  dragging
+                    ? "border-primary bg-primary/15"
+                    : "border-border-strong bg-surface group-hover/drop:border-primary/60"
+                }`}
               >
-                {s.dropBrowse}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEditor();
-                }}
-              >
-                {s.dropPaste}
-              </Button>
+                <Upload
+                  className={`size-7 text-primary transition-transform duration-150 ${dragging ? "-translate-y-0.5" : "group-hover/drop:-translate-y-0.5"}`}
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+              </span>
+              <div className="space-y-1.5">
+                <p className="max-w-[32ch] text-base font-medium">{s.dropTitle}</p>
+                <p className="meta">{s.drop}</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileRef.current?.click();
+                  }}
+                >
+                  {s.dropBrowse}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditor();
+                  }}
+                >
+                  {s.dropPaste}
+                </Button>
+              </div>
             </div>
           </div>
 

@@ -1,14 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Hash,
-  ShieldOff,
-  WifiOff,
-  Cookie,
-  Box,
-  Heart,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
@@ -85,48 +76,8 @@ export async function MarketingHome() {
       {/* ── 1 · Hero — animated (GSAP load timeline + catalog wall) ── */}
       <Hero s={heroStrings} demo={demoStrings} />
 
-      {/* ── 2 · The broken ritual ── */}
-      <Section tag={t("s2Tag")}>
-        <SectionHead title={t("s2H")} body={t("s2Body")} />
-        <div className="mt-8 grid gap-px overflow-hidden rounded border border-border bg-border md:grid-cols-2">
-          {/* Before — messy Slack thread */}
-          <div className="bg-background p-5">
-            <span className="meta">{t("s2BeforeLabel")}</span>
-            <ul className="mt-4 space-y-2.5">
-              <ChatBubble name="tú" muted>
-                {t("s2Msg1")}
-              </ChatBubble>
-              <ChatBubble name="CMO" muted>
-                {t("s2Msg2")}
-              </ChatBubble>
-              <ChatBubble name="cliente" muted>
-                {t("s2Msg3")}
-              </ChatBubble>
-            </ul>
-          </div>
-          {/* After — one clean catalog row */}
-          <div className="flex flex-col justify-center bg-surface p-5">
-            <span className="meta">{t("s2AfterLabel")}</span>
-            <div className="mt-4 flex items-center gap-3 rounded-sm border border-border bg-background px-3 py-3">
-              <Hash className="size-4 shrink-0 text-primary" aria-hidden />
-              <div className="min-w-0 flex-1">
-                <div className="font-mono text-xs text-muted-foreground">
-                  <span className="tabular-nums">047</span> · HTML · 2.4KB · 142 VIEWS
-                </div>
-                <div className="truncate font-mono text-sm">
-                  artiline.app/a/x7k2qd
-                </div>
-              </div>
-              <span className="rounded-xs border border-border-strong px-1.5 py-0.5 text-xs font-medium uppercase tracking-[0.06em] text-primary">
-                {t("s2Badge")}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── 3 · Artifact lifecycle ── */}
-      <Section tag={t("s3Tag")} surface>
+      {/* ── 2 · Artifact lifecycle (how it works) ── */}
+      <Section tag={t("s3Tag")} pad="pt-32 pb-16 lg:pt-40 lg:pb-20">
         <SectionHead title={t("s3H")} />
         <ol className="mt-8 grid gap-px overflow-hidden rounded border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
           <LifecycleStep n="1" title={t("s3Step1T")} body={t("s3Step1B")} />
@@ -136,7 +87,7 @@ export async function MarketingHome() {
         </ol>
       </Section>
 
-      {/* ── 4 · Visibility levels (interactive) ── */}
+      {/* ── 3 · Visibility levels (interactive) ── */}
       <Section tag={t("s4Tag")}>
         <SectionHead title={t("s4H")} body={t("s4Sub")} />
         <div className="mt-8">
@@ -144,8 +95,8 @@ export async function MarketingHome() {
         </div>
       </Section>
 
-      {/* ── 5 · Use cases ── */}
-      <Section tag={t("s5Tag")} surface>
+      {/* ── 4 · Use cases ── */}
+      <Section tag={t("s5Tag")}>
         <SectionHead title={t("s5H")} />
         <div className="mt-8 divide-y divide-border border-y border-border">
           <UseCase
@@ -166,88 +117,8 @@ export async function MarketingHome() {
         </div>
       </Section>
 
-      {/* ── 6 · Sandbox / security ── */}
-      <Section tag={t("s6Tag")}>
-        <div className="grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SectionHead title={t("s6H")} body={t("s6Body")} />
-          </div>
-          <ul className="grid gap-px self-start overflow-hidden rounded border border-border bg-border sm:grid-cols-2 lg:col-span-7">
-            <SandboxItem icon={ShieldOff} label={t("s6Item1L")} value={t("s6Item1V")} />
-            <SandboxItem icon={WifiOff} label={t("s6Item2L")} value={t("s6Item2V")} />
-            <SandboxItem icon={Cookie} label={t("s6Item3L")} value={t("s6Item3V")} />
-            <SandboxItem icon={Box} label={t("s6Item4L")} value={t("s6Item4V")} />
-          </ul>
-        </div>
-      </Section>
-
-      {/* ── 7 · The catalog ── */}
-      <Section tag={t("s7Tag")} surface>
-        <SectionHead title={t("s7H")} body={t("s7Body")} />
-        <div className="mt-8 overflow-hidden rounded border border-border-strong">
-          <div className="flex items-center justify-between border-b border-border bg-background px-4 py-2.5">
-            <span className="meta">{t("panelHeader")}</span>
-            <span className="meta">{t("panelCount")}</span>
-          </div>
-          <ul className="divide-y divide-border bg-background">
-            <CatalogRow n="047" name="campaign-hero.html" type="HTML" size="2.4KB" views="142" badge={t("lvlPublic")} />
-            <CatalogRow n="046" name="brief-q2.md" type="MD" size="1.1KB" views="38" badge={t("lvlTeam")} />
-            <CatalogRow n="045" name="pricing-table.html" type="HTML" size="6.7KB" views="91" badge={t("lvlPublicPw")} />
-            <CatalogRow n="044" name="slugify.ts" type="CODE" size="0.4KB" views="12" badge={t("lvlTeam")} />
-          </ul>
-        </div>
-      </Section>
-
-      {/* ── 8 · Feedback ── */}
-      <Section tag={t("s8Tag")}>
-        <div className="grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SectionHead title={t("s8H")} body={t("s8Body")} />
-          </div>
-          <div className="self-start overflow-hidden rounded border border-border bg-surface lg:col-span-7">
-            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-              <span className="meta">
-                <Hash className="mr-1 inline size-3 text-primary" aria-hidden />
-                047 · CAMPAIGN-HERO.HTML
-              </span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Heart className="size-3.5 text-primary" aria-hidden /> 9
-              </span>
-            </div>
-            <ul className="divide-y divide-border">
-              <Comment name={t("fbName1")} body={t("fbMsg1")} />
-              <Comment name={t("fbName2")} body={t("fbMsg2")} />
-            </ul>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── 9 · Open-core ── */}
-      <Section tag={t("s9Tag")} surface>
-        <SectionHead title={t("s9H")} body={t("s9Body")} />
-        <div className="mt-8 grid gap-px overflow-hidden rounded border border-border bg-border md:grid-cols-2">
-          <EditionCol title={t("ossTitle")} price={t("ossPrice")} desc={t("ossDesc")} />
-          <EditionCol title={t("cloudTitle")} price={t("cloudPrice")} desc={t("cloudDesc")} accent />
-        </div>
-        <p className="meta mt-4 flex items-center gap-2">
-          <Box className="size-3.5 text-primary" strokeWidth={1.5} aria-hidden />
-          {t("madeWith")} · {t("madeWithNote")}
-        </p>
-      </Section>
-
-      {/* ── 10 · FAQ ── */}
-      <Section tag={t("s10Tag")}>
-        <SectionHead title={t("s10H")} />
-        <dl className="mt-8 divide-y divide-border border-y border-border">
-          <Faq q={t("faqQ1")} a={t("faqA1")} />
-          <Faq q={t("faqQ2")} a={t("faqA2")} />
-          <Faq q={t("faqQ3")} a={t("faqA3")} />
-          <Faq q={t("faqQ4")} a={t("faqA4")} />
-        </dl>
-      </Section>
-
-      {/* ── 11 · Final CTA ── */}
-      <section className="border-t border-border-strong bg-surface">
+      {/* ── 5 · Final CTA ── */}
+      <section>
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
           <div className="max-w-[40rem] space-y-6">
             <h2
@@ -257,13 +128,13 @@ export async function MarketingHome() {
               {t("ctaFinalH")}
             </h2>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="gap-2">
+              <Button asChild size="lg" className="h-auto gap-2 px-7 py-3.5 text-lg">
                 <Link href="/signup">
                   {t("ctaCreate")}
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="ghost">
+              <Button asChild size="lg" variant="ghost" className="text-lg">
                 <Link href="/login">{t("ctaLogin")}</Link>
               </Button>
             </div>
@@ -288,18 +159,16 @@ export async function MarketingHome() {
 
 function Section({
   tag,
-  surface,
+  pad = "py-16 lg:py-20",
   children,
 }: {
   tag: string;
-  surface?: boolean;
+  pad?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section
-      className={`border-t border-border-strong ${surface ? "bg-surface" : ""}`}
-    >
-      <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
+    <section>
+      <div className={`mx-auto max-w-6xl px-6 ${pad}`}>
         <span className="meta text-primary">{tag}</span>
         <div className="mt-5">{children}</div>
       </div>
@@ -322,24 +191,6 @@ function SectionHead({ title, body }: { title: string; body?: string }) {
         </p>
       )}
     </div>
-  );
-}
-
-function ChatBubble({
-  name,
-  children,
-}: {
-  name: string;
-  muted?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="rounded-sm border border-border bg-surface px-3 py-2">
-      <span className="meta">{name}</span>
-      <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
-        {children}
-      </p>
-    </li>
   );
 }
 
@@ -391,112 +242,3 @@ function UseCase({
   );
 }
 
-function SandboxItem({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <li className="flex items-start gap-3 bg-background p-5">
-      <Icon className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.5} />
-      <div>
-        <div className="text-sm font-semibold">{label}</div>
-        <div className="meta mt-0.5">{value}</div>
-      </div>
-    </li>
-  );
-}
-
-function CatalogRow({
-  n,
-  name,
-  type,
-  size,
-  views,
-  badge,
-}: {
-  n: string;
-  name: string;
-  type: string;
-  size: string;
-  views: string;
-  badge: string;
-}) {
-  return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <span className="font-mono text-xs tabular-nums text-primary">#{n}</span>
-      <span className="min-w-0 flex-1 truncate font-mono text-sm">
-        {name}
-      </span>
-      <span className="meta hidden sm:inline">
-        {type} · {size} · {views} VIEWS
-      </span>
-      <span className="rounded-xs border border-border-strong px-1.5 py-0.5 text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">
-        {badge}
-      </span>
-    </li>
-  );
-}
-
-function Comment({ name, body }: { name: string; body: string }) {
-  return (
-    <li className="flex gap-3 px-4 py-3.5">
-      <MessageSquare
-        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-        strokeWidth={1.5}
-        aria-hidden
-      />
-      <div>
-        <span className="meta">{name}</span>
-        <p className="mt-0.5 text-sm leading-snug text-foreground">
-          {body}
-        </p>
-      </div>
-    </li>
-  );
-}
-
-function EditionCol({
-  title,
-  price,
-  desc,
-  accent,
-}: {
-  title: string;
-  price: string;
-  desc: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-background p-6">
-      <div className="flex items-baseline justify-between">
-        <h3 className="font-mono text-sm font-semibold uppercase tracking-[0.04em]">
-          {title}
-        </h3>
-        <span
-          className={`font-mono text-sm font-semibold ${accent ? "text-primary" : "text-muted-foreground"}`}
-        >
-          {price}
-        </span>
-      </div>
-      <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-muted-foreground">
-        {desc}
-      </p>
-    </div>
-  );
-}
-
-function Faq({ q, a }: { q: string; a: string }) {
-  return (
-    <div className="grid gap-2 py-5 lg:grid-cols-12 lg:gap-8">
-      <dt className="text-base font-semibold lg:col-span-5">{q}</dt>
-      <dd className="max-w-[60ch] text-base leading-relaxed text-muted-foreground lg:col-span-7">
-        {a}
-      </dd>
-    </div>
-  );
-}
