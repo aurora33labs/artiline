@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { BrandLogo } from "@/components/brand-logo";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 export async function AuthShell({
   title,
@@ -14,7 +15,10 @@ export async function AuthShell({
 }) {
   const t = await getTranslations("authShell");
   return (
-    <div className="flex-1 grid lg:grid-cols-[1fr_minmax(0,520px)] min-h-screen">
+    <div className="relative flex-1 grid lg:grid-cols-[1fr_minmax(0,520px)] min-h-screen">
+      <div className="absolute right-4 top-4 z-10">
+        <LocaleSwitcher variant="nav-inline" />
+      </div>
       <aside className="hidden lg:flex relative overflow-hidden bg-surface border-r border-border">
         <div className="relative flex flex-col justify-between p-12 w-full">
           <BrandLogo size="md" />
