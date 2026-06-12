@@ -101,11 +101,7 @@ export function FloatingActionCard({
   const te = useTranslations("errors");
 
   function translateError(code: string): string {
-    try {
-      return te(code);
-    } catch {
-      return tt("pngError");
-    }
+    return te.has(code) ? te(code) : tt("pngError");
   }
 
   async function exportPng() {
