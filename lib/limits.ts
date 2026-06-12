@@ -68,3 +68,17 @@ export async function assertCanAddMember(workspaceId: string): Promise<void> {
     throw new Error("LIMIT_MEMBERS");
   }
 }
+
+/**
+ * Max workspaces a self-hosted (oss) instance may hold. This is an
+ * instance-wide cap (not per-workspace), so an OSS deployment can't be run as a
+ * multi-tenant SaaS. The cloud edition manages tenancy itself and is unaffected.
+ */
+export const OSS_WORKSPACE_LIMIT = 3;
+
+/** Throws `LIMIT_WORKSPACES` when an oss instance is already at the cap. */
+export async function assertCanCreateWorkspace(): Promise<void> {
+  if (currentEdition() !== "oss") return;
+  const [w] = await db.select({ n: count() }).from(schema.workspaces);
+  if ((w?.n ?? 0) >= OSS_WORKSPACE_LIMIT) throw new Error("LIMIT_WORKSPACES");
+}

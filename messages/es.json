@@ -182,6 +182,8 @@
     "devMode": "MODO DEV · SI NO LLEGA, REVISA LA CONSOLA",
     "workspaceTitle": "Nombra tu workspace",
     "workspaceSubtitle": "Es donde tu equipo guardará y compartirá los artifacts.",
+    "workspaceCapTitle": "Límite de workspaces alcanzado",
+    "workspaceCapBody": "Esta instancia self-host (OSS) permite máximo 3 workspaces. Para más, el administrador necesita una licencia.",
     "workspaceLabel": "Nombre del workspace",
     "workspacePlaceholder": "Acme Corp",
     "inviteAfter": "Puedes invitar a tu equipo después.",

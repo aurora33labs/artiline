@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db, schema } from "@/lib/db";
 import { getMyWorkspaces, slugify } from "@/lib/tenant";
+import { assertCanCreateWorkspace } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,21 @@ export default async function CreateWorkspace() {
 
   const t = await getTranslations("auth");
 
+  // OSS instances are capped to a few workspaces (no multi-tenant SaaS). When
+  // the cap is reached, show a notice instead of the create form.
+  let capReached = false;
+  try {
+    await assertCanCreateWorkspace();
+  } catch (e) {
+    if ((e as Error).message === "LIMIT_WORKSPACES") capReached = true;
+    else throw e;
+  }
+  if (capReached) {
+    return (
+      <AuthShell title={t("workspaceCapTitle")} subtitle={t("workspaceCapBody")} />
+    );
+  }
+
   return (
     <AuthShell title={t("workspaceTitle")} subtitle={t("workspaceSubtitle")}>
       <form
@@ -25,6 +41,14 @@ export default async function CreateWorkspace() {
           "use server";
           const s = await auth();
           if (!s?.user?.id) throw new Error("UNAUTH");
+          // Enforce the OSS workspace cap (redirect back to the notice, no 500).
+          try {
+            await assertCanCreateWorkspace();
+          } catch (e) {
+            if ((e as Error).message === "LIMIT_WORKSPACES")
+              redirect("/signup/workspace");
+            throw e;
+          }
           const rawName = String(formData.get("name") ?? "").trim();
           if (!rawName) throw new Error("ERR_NAME_REQUIRED");
           let slug = slugify(rawName) || "team";
