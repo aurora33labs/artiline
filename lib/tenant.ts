@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
+import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
 
@@ -57,11 +58,14 @@ export function requireRole(
 }
 
 /**
- * Page/layout-context guards. Same checks as `requireMember` / `requireRole`,
- * but an unauthorized request becomes a clean redirect / 404 instead of an
- * uncaught 500. Use these ONLY in server components (pages, layouts). Server
- * actions and API routes MUST keep using the throwing `requireMember` /
- * `requireRole` so the defense-in-depth gating stays strict.
+ * Redirect-context guards. Same checks as `requireMember` / `requireRole`, but
+ * an unauthorized request becomes a clean redirect / 404 instead of an uncaught
+ * 500. Use in **pages, layouts, and server actions** (all support redirect /
+ * notFound control flow). API route handlers should catch the thrown guard
+ * errors with `guardErrorResponse` instead, since they return a `Response`.
+ *
+ * Denial is unchanged — the guarded code still never runs for an unauthorized
+ * caller; only the surfaced result changes (redirect/404 vs thrown 500).
  *
  * - Logged out → `/login`.
  * - Logged in but not a member → `notFound()`. 404 (not a redirect) avoids
@@ -78,12 +82,32 @@ export async function requireMemberPage(workspaceSlug: string) {
   }
 }
 
-/** Role guard for page/layout context: insufficient role → 404 (no leak). */
+/** Role guard for redirect context: insufficient role → 404 (no leak). */
 export function requireRolePage(
   role: WorkspaceRole,
   required: WorkspaceRole[],
 ): void {
   if (!required.includes(role)) notFound();
+}
+
+/**
+ * Maps a thrown guard error to a clean JSON `Response` for API route handlers,
+ * so an unauthorized request returns 401/403/404 instead of an uncaught 500.
+ * Returns `undefined` for anything that isn't a guard error, so the caller can
+ * re-throw it. Usage:
+ *
+ *   try { const { role } = await requireMember(slug); requireRole(role, [...]); }
+ *   catch (e) { const res = guardErrorResponse(e); if (res) return res; throw e; }
+ */
+export function guardErrorResponse(e: unknown): NextResponse | undefined {
+  const msg = (e as { message?: string } | null)?.message;
+  if (msg === "UNAUTHENTICATED")
+    return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+  if (msg === "NOT_A_MEMBER")
+    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+  if (msg === "FORBIDDEN")
+    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+  return undefined;
 }
 
 export function slugify(input: string): string {

@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { ALL_EVENTS } from "@/lib/webhooks/emit";
 
 const createSchema = z.object({
@@ -23,8 +23,8 @@ export async function createWebhook(formData: FormData) {
     events,
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   const validEvents = data.events.filter((e) =>
     (ALL_EVENTS as readonly string[]).includes(e),
@@ -55,8 +55,8 @@ export async function toggleWebhook(formData: FormData) {
     enabled: formData.get("enabled"),
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   await db
     .update(schema.webhooks)
@@ -82,8 +82,8 @@ export async function deleteWebhook(formData: FormData) {
     webhookId: formData.get("webhookId"),
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   await db
     .delete(schema.webhooks)

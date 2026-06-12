@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentEdition } from "@/lib/license";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMember, requireRole, guardErrorResponse } from "@/lib/tenant";
 
 export const runtime = "nodejs";
 
@@ -17,8 +17,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "BAD_REQUEST" }, { status: 400 });
   }
 
-  const { workspace, role } = await requireMember(body.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const guard = await requireMember(body.workspaceSlug)
+    .then((m) => {
+      requireRole(m.role, ["owner", "admin"]);
+      return m;
+    })
+    .catch((e: unknown) => guardErrorResponse(e) ?? Promise.reject(e));
+  if (guard instanceof NextResponse) return guard;
+  const { workspace } = guard;
 
   const { getStripe } = await import("@/lib/cloud/stripe");
   const { stripePriceId } = await import("@/lib/cloud/pricing");

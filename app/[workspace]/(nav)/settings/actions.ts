@@ -7,7 +7,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { assertCanAddMember } from "@/lib/limits";
 import { defaultLocale } from "@/i18n/routing";
 
@@ -27,8 +27,8 @@ export async function inviteMember(formData: FormData) {
     email: formData.get("email"),
     role: formData.get("role") || "member",
   });
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
   await assertCanAddMember(workspace.id);
 
   const token = nanoid(32);
@@ -69,8 +69,8 @@ export async function revokeInvitation(formData: FormData) {
     workspaceSlug: formData.get("workspaceSlug"),
     invitationId: formData.get("invitationId"),
   });
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
   await db
     .delete(schema.invitations)
     .where(
@@ -92,8 +92,8 @@ export async function removeMember(formData: FormData) {
     workspaceSlug: formData.get("workspaceSlug"),
     userId: formData.get("userId"),
   });
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
   if (data.userId === workspace.ownerUserId)
     throw new Error("ERR_CANNOT_REMOVE_OWNER");
   await db

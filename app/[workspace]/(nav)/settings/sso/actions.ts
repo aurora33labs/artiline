@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { isFeatureEnabled } from "@/lib/license";
 
 export async function updateSsoConfig(formData: FormData) {
   const workspaceSlug = String(formData.get("workspaceSlug") ?? "");
-  const { workspace, role } = await requireMember(workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   if (!(await isFeatureEnabled("sso_saml", { workspaceId: workspace.id }))) {
     throw new Error("FEATURE_DISABLED");

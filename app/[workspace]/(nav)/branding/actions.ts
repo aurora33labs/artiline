@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { isFeatureEnabled } from "@/lib/license";
 
 const updateSchema = z.object({
@@ -24,8 +24,8 @@ export async function updateBranding(formData: FormData) {
     hideFooterChip: formData.get("hideFooterChip"),
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   if (!(await isFeatureEnabled("white_label", { workspaceId: workspace.id }))) {
     throw new Error("FEATURE_DISABLED");
@@ -61,8 +61,8 @@ export async function addCustomDomain(formData: FormData) {
     hostname: String(formData.get("hostname") ?? "").toLowerCase().trim(),
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   if (!(await isFeatureEnabled("custom_domain", { workspaceId: workspace.id }))) {
     throw new Error("FEATURE_DISABLED");
@@ -94,8 +94,8 @@ export async function removeCustomDomain(formData: FormData) {
     domainId: formData.get("domainId"),
   });
 
-  const { workspace, role } = await requireMember(data.workspaceSlug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
 
   const [row] = await db
     .select()

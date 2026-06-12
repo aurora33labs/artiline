@@ -5,7 +5,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
 
@@ -26,7 +26,7 @@ export async function updateArtifactVisibility(formData: FormData) {
     changePassword: formData.get("changePassword"),
   });
 
-  const { session, workspace, role } = await requireMember(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
 
   const [artifact] = await db
     .select()
@@ -93,7 +93,7 @@ export async function publishNewVersion(formData: FormData) {
     message: formData.get("message") || null,
   });
 
-  const { session, workspace, role } = await requireMember(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
 
   const [artifact] = await db
     .select()
@@ -177,7 +177,7 @@ export async function rollbackToVersion(formData: FormData) {
     message: formData.get("message") || null,
   });
 
-  const { session, workspace, role } = await requireMember(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
 
   const [artifact] = await db
     .select()
@@ -247,7 +247,7 @@ export async function setReviewStatus(formData: FormData) {
     status: formData.get("status"),
   });
 
-  const { session, workspace, role } = await requireMember(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
 
   const [version] = await db
     .select({

@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { recordEvent } from "@/lib/activity";
 import { assertCanCreateArtifact } from "@/lib/limits";
 
@@ -33,7 +33,7 @@ export async function createArtifact(formData: FormData) {
   };
   const data = schemaInput.parse(raw);
 
-  const { session, workspace } = await requireMember(data.workspaceSlug);
+  const { session, workspace } = await requireMemberPage(data.workspaceSlug);
   await assertCanCreateArtifact(workspace.id);
 
   const needsPw =
