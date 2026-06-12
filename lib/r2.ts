@@ -6,9 +6,12 @@ const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 export const R2_BUCKET = process.env.R2_BUCKET ?? "";
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+// Optional override for any S3-compatible backend (MinIO, Garage, etc). When
+// unset, falls back to the Cloudflare R2 endpoint derived from R2_ACCOUNT_ID.
+const ENDPOINT = process.env.R2_ENDPOINT;
 
 export function r2Configured(): boolean {
-  return !!(accountId && accessKeyId && secretAccessKey && R2_BUCKET);
+  return !!((accountId || ENDPOINT) && accessKeyId && secretAccessKey && R2_BUCKET);
 }
 
 let _client: S3Client | null = null;
@@ -17,7 +20,9 @@ function client(): S3Client {
   if (!_client) {
     _client = new S3Client({
       region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      endpoint: ENDPOINT ?? `https://${accountId}.r2.cloudflarestorage.com`,
+      // MinIO and most self-hosted S3 servers require path-style addressing.
+      forcePathStyle: !!ENDPOINT,
       credentials: {
         accessKeyId: accessKeyId!,
         secretAccessKey: secretAccessKey!,
