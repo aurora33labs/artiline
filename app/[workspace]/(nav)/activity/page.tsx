@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { getFormatter } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 
 const TYPE_LABEL: Record<string, string> = {
   "artifact.created": "ARTIFACT CREATED",
@@ -31,7 +31,7 @@ export default async function ActivityPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace } = await requireMember(slug);
+  const { workspace } = await requireMemberPage(slug);
   const fmt = await getFormatter();
 
   const rows = await db

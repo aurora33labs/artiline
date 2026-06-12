@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +14,7 @@ export default async function SearchPage({
 }) {
   const { workspace: slug } = await params;
   const { q } = await searchParams;
-  const { workspace } = await requireMember(slug);
+  const { workspace } = await requireMemberPage(slug);
 
   const query = (q ?? "").trim();
   let results: Array<{

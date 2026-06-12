@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ export default async function WebhooksPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace } = await requireMember(slug);
+  const { workspace } = await requireMemberPage(slug);
 
   const list = await db
     .select()

@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { planLimitsForWorkspace } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export default async function SettingsPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace, role: myRole } = await requireMember(slug);
+  const { workspace, role: myRole } = await requireMemberPage(slug);
   const canManage = myRole === "owner" || myRole === "admin";
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");

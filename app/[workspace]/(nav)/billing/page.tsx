@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { getLocale } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { currentEdition } from "@/lib/license";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 
 const CheckoutButton = dynamic(() =>
   import("@/components/cloud/billing-buttons").then((m) => m.CheckoutButton),
@@ -18,7 +18,7 @@ export default async function BillingPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace, role } = await requireMember(slug);
+  const { workspace, role } = await requireMemberPage(slug);
 
   if (currentEdition() !== "cloud") {
     return (
@@ -42,7 +42,7 @@ export default async function BillingPage({
     );
   }
 
-  requireRole(role, ["owner", "admin"]);
+  requireRolePage(role, ["owner", "admin"]);
 
   const [sub] = await db
     .select()

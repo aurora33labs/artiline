@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { ArtifactCard } from "@/components/artifact-card";
 import { EmptyDashboard } from "@/components/empty-dashboard";
 
@@ -11,7 +11,7 @@ export default async function WorkspaceHome({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace } = await requireMember(slug);
+  const { workspace } = await requireMemberPage(slug);
 
   const list = await db
     .select({

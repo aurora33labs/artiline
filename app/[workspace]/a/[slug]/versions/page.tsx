@@ -3,7 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export default async function VersionsListPage({
 }) {
   const { workspace, slug } = await params;
   const { diff } = await searchParams;
-  const { workspace: ws, session, role } = await requireMember(workspace);
+  const { workspace: ws, session, role } = await requireMemberPage(workspace);
   const t = await getTranslations("versions");
   const fmt = await getFormatter();
 

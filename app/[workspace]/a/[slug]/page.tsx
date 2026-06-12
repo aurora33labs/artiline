@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { db, schema } from "@/lib/db";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { recordView, extractIp } from "@/lib/tracking";
 import { ArtifactViewer } from "@/components/artifact-viewer";
@@ -16,7 +16,7 @@ export default async function ArtifactInternalView({
   params: Promise<{ workspace: string; slug: string }>;
 }) {
   const { workspace, slug } = await params;
-  const { workspace: ws, session, role } = await requireMember(workspace);
+  const { workspace: ws, session, role } = await requireMemberPage(workspace);
 
   const resolved = await resolveCurrentArtifact(slug);
   if (!resolved || resolved.artifact.workspaceId !== ws.id) notFound();

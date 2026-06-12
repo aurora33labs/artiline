@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { resolveArtifactVersion } from "@/lib/artifact-resolve";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 
@@ -9,7 +9,7 @@ export default async function WorkspacePinnedVersionView({
   params: Promise<{ workspace: string; slug: string; n: string }>;
 }) {
   const { workspace, slug, n } = await params;
-  const { workspace: ws } = await requireMember(workspace);
+  const { workspace: ws } = await requireMemberPage(workspace);
 
   const versionNumber = Number.parseInt(n, 10);
   if (!Number.isFinite(versionNumber) || versionNumber <= 0) notFound();

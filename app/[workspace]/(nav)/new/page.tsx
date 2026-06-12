@@ -1,4 +1,4 @@
-import { requireMember } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { NewArtifactForm } from "./form";
 
 export default async function NewArtifact({
@@ -7,7 +7,7 @@ export default async function NewArtifact({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  await requireMember(slug);
+  await requireMemberPage(slug);
 
   return <NewArtifactForm workspaceSlug={slug} />;
 }

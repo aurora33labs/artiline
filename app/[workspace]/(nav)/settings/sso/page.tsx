@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { db, schema } from "@/lib/db";
-import { requireMember, requireRole } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { isFeatureEnabled, currentEdition } from "@/lib/license";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,8 @@ export default async function SsoSettingsPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace, role } = await requireMember(slug);
-  requireRole(role, ["owner", "admin"]);
+  const { workspace, role } = await requireMemberPage(slug);
+  requireRolePage(role, ["owner", "admin"]);
 
   const enabledFeature = await isFeatureEnabled("sso_saml", {
     workspaceId: workspace.id,
