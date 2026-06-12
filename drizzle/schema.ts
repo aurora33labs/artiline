@@ -43,6 +43,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   image: text("image"),
+  // bcrypt hash for email+password sign-in. Null for users created via magic
+  // link / SSO who never set one. Lets self-host instances onboard without email.
+  passwordHash: text("password_hash"),
   emailVerified: timestamp("email_verified", { withTimezone: true }),
   createdAt: createdAt(),
 });

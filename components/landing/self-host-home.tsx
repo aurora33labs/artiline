@@ -28,23 +28,19 @@ export async function SelfHostHome() {
     );
   }
 
+  // After first-run, signup is closed (invite-only) — only offer sign in.
   return (
     <AuthShell
       title={t("menuTitle")}
-      subtitle={t("menuSubtitle")}
+      subtitle={t("menuInviteOnlySubtitle")}
       footer={t("builtBy")}
     >
-      <div className="space-y-3">
-        <Button asChild className="h-11 w-full">
-          <Link href="/signup">
-            {t("createWorkspace")}
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-11 w-full">
-          <Link href="/login">{t("signIn")}</Link>
-        </Button>
-      </div>
+      <Button asChild className="h-11 w-full">
+        <Link href="/login">
+          {t("signIn")}
+          <ArrowRight className="size-4" />
+        </Link>
+      </Button>
     </AuthShell>
   );
 }

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { CopyLinkButton } from "@/components/copy-link-button";
 import {
   inviteMember,
   revokeInvitation,
@@ -250,17 +251,20 @@ export default async function SettingsPage({
                   </div>
                 </div>
                 {canManage && (
-                  <form action={revokeInvitation}>
-                    <input
-                      type="hidden"
-                      name="workspaceSlug"
-                      value={slug}
-                    />
-                    <input type="hidden" name="invitationId" value={i.id} />
-                    <Button variant="ghost" size="sm" type="submit">
-                      {t("revokeBtn")}
-                    </Button>
-                  </form>
+                  <div className="flex items-center gap-2">
+                    <CopyLinkButton path={`/invite/${i.token}`} />
+                    <form action={revokeInvitation}>
+                      <input
+                        type="hidden"
+                        name="workspaceSlug"
+                        value={slug}
+                      />
+                      <input type="hidden" name="invitationId" value={i.id} />
+                      <Button variant="ghost" size="sm" type="submit">
+                        {t("revokeBtn")}
+                      </Button>
+                    </form>
+                  </div>
                 )}
               </li>
             ))}
