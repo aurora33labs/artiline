@@ -17,6 +17,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verificationTokensTable: schema.authVerificationTokens,
   }),
   session: { strategy: "database" },
+  // Artiline always runs behind a reverse proxy (Railway, Nginx, etc), so trust
+  // the forwarded host. Without this NextAuth v5 throws UntrustedHost and login
+  // breaks on self-host deployments. AUTH_TRUST_HOST env can still override.
+  trustHost: true,
   pages: { signIn: "/login", verifyRequest: "/login/check-email" },
   providers: [
     Resend({
