@@ -49,9 +49,25 @@ export async function uploadObject(
 
 export async function publicOrPresignedUrl(key: string): Promise<string> {
   if (PUBLIC_URL) return `${PUBLIC_URL.replace(/\/$/, "")}/${key}`;
+  // Self-hosted backends (R2_ENDPOINT) are typically reachable only over the
+  // private network, so a presigned URL pointing at them is useless to the
+  // browser. Stream the object back through the app instead.
+  if (ENDPOINT) return `/api/export/file/${key}`;
+  // Cloudflare R2: a presigned URL on the public host works directly.
   return getSignedUrl(
     client(),
     new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }),
     { expiresIn: 3600 },
   );
+}
+
+/** Fetch an object's bytes (used to proxy downloads for private backends). */
+export async function getObject(
+  key: string,
+): Promise<{ body: Uint8Array; contentType: string }> {
+  const res = await client().send(
+    new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }),
+  );
+  const body = await res.Body!.transformToByteArray();
+  return { body, contentType: res.ContentType ?? "application/octet-stream" };
 }
