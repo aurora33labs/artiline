@@ -46,11 +46,28 @@ export async function GET(
   }
 
   const { body, contentType } = await getObject(objectKey);
-  return new NextResponse(new Blob([new Uint8Array(body)], { type: contentType }), {
+  // Never trust the stored Content-Type: constrain to an allowlist of safe
+  // export types so a non-image object can't be served as executable HTML on
+  // our own origin. Anything else degrades to an opaque download.
+  const SAFE_TYPES = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "application/pdf",
+  ]);
+  const safeType = SAFE_TYPES.has(contentType)
+    ? contentType
+    : "application/octet-stream";
+  // Filenames are server-generated, but sanitize defensively to keep CR/LF and
+  // quotes out of the header value.
+  const safeName = key[key.length - 1].replace(/[^A-Za-z0-9._-]/g, "_");
+  return new NextResponse(new Blob([new Uint8Array(body)], { type: safeType }), {
     headers: {
-      "Content-Type": contentType,
+      "Content-Type": safeType,
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
       "Cache-Control": "private, max-age=3600",
-      "Content-Disposition": `inline; filename="${key[key.length - 1]}"`,
+      "Content-Disposition": `inline; filename="${safeName}"`,
     },
   });
 }
