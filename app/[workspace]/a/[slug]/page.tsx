@@ -4,7 +4,8 @@ import { headers } from "next/headers";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
-import { recordView, extractIp } from "@/lib/tracking";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { recordView, extractIp, bumpViewsThrottled } from "@/lib/tracking";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 import { FloatingActionCard } from "@/components/floating-action-card";
 import { CommentsSection } from "@/components/comments-section";
@@ -31,10 +32,11 @@ export default async function ArtifactInternalView({
     role === "admin";
 
   const reqHeaders = await headers();
-  await db
-    .update(schema.artifacts)
-    .set({ views: sql`${schema.artifacts.views} + 1` })
-    .where(eq(schema.artifacts.id, artifact.id));
+  await bumpViewsThrottled(
+    artifact.id,
+    extractIp(reqHeaders),
+    reqHeaders.get("user-agent"),
+  );
 
   await recordView({
     artifactId: artifact.id,
@@ -52,13 +54,21 @@ export default async function ArtifactInternalView({
     .from(schema.comments)
     .where(eq(schema.comments.artifactId, artifact.id));
 
+  // HTML streams via the iframe src; markdown/code render server-side. The edit
+  // dialog lazy-loads raw content from the same route, so the page never inlines
+  // a (possibly multi-MB) payload.
+  const isHtml = version.type === "html";
+  const rawSrc = rawContentPath({ slug });
+  const content = isHtml ? null : await getContent(version);
+
   return (
     <main className="fixed inset-0 bg-background overflow-auto">
       <ArtifactViewer
         artifact={{
           type: version.type,
-          content: version.content,
           language: version.language,
+          contentSrc: isHtml ? rawSrc : null,
+          content,
         }}
         fullscreen
       />
@@ -75,7 +85,7 @@ export default async function ArtifactInternalView({
         hasPassword={!!artifact.passwordHash}
         workspaceSlug={workspace}
         artifactSlug={artifact.slug}
-        versionContent={version.content}
+        editContentSrc={rawSrc}
         versionLanguage={version.language}
         reviewStatus={version.reviewStatus}
         backHref={`/${workspace}`}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,7 +20,6 @@ import {
   type LoadedFile,
 } from "@/components/artifact-dropzone";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
-import { createArtifact } from "./actions";
 
 type Visibility = "internal_pw" | "internal" | "public_pw" | "public";
 
@@ -28,6 +28,7 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("internal");
   const [pending, start] = useTransition();
+  const router = useRouter();
   const needsPw = visibility === "internal_pw" || visibility === "public_pw";
 
   const t = useTranslations("new");
@@ -86,12 +87,25 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
         if (file.detected.language) fd.set("language", file.detected.language);
         fd.set("visibility", visibility);
         start(async () => {
+          // Upload via the API route (not a server action): /api isn't rewritten
+          // by the proxy and isn't capped by serverActions.bodySizeLimit, so large
+          // files upload reliably on custom domains too.
           try {
-            await createArtifact(fd);
-          } catch (err) {
-            const message = (err as Error).message || "generic";
-            if (message.startsWith("NEXT_")) throw err;
-            toast.error(translateError(message));
+            const res = await fetch("/api/artifacts", {
+              method: "POST",
+              body: fd,
+            });
+            if (res.ok) {
+              const { slug } = (await res.json()) as { slug: string };
+              router.push(`/${workspaceSlug}/a/${slug}`);
+              return;
+            }
+            const { error } = (await res.json().catch(() => ({}))) as {
+              error?: string;
+            };
+            toast.error(translateError(error || "generic"));
+          } catch {
+            toast.error(translateError("generic"));
           }
         });
       }}

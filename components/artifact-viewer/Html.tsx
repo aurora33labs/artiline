@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils";
 
 export function HtmlViewer({
-  html,
+  src,
   fullscreen,
 }: {
-  html: string;
+  src: string;
   fullscreen?: boolean;
 }) {
   return (
     <iframe
-      srcDoc={html}
+      src={src}
       sandbox="allow-scripts"
       className={cn(
         "bg-white",

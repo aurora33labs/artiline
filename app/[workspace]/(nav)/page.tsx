@@ -22,7 +22,8 @@ export default async function WorkspaceHome({
       updatedAt: schema.artifacts.updatedAt,
       title: schema.artifactVersions.title,
       type: schema.artifactVersions.type,
-      content: schema.artifactVersions.content,
+      snippet: schema.artifactVersions.contentSnippet,
+      thumbKey: schema.artifactVersions.thumbKey,
       language: schema.artifactVersions.language,
     })
     .from(schema.artifacts)
@@ -62,7 +63,8 @@ export default async function WorkspaceHome({
               slug: a.slug,
               title: a.title,
               type: a.type,
-              content: a.content,
+              snippet: a.snippet,
+              thumbKey: a.thumbKey,
               language: a.language,
               visibility: a.visibility,
               views: a.views,

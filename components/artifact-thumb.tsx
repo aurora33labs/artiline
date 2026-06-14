@@ -1,29 +1,48 @@
 import { codeToHtml } from "shiki";
+import { FileCode2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ThumbProps = {
   type: "html" | "markdown" | "code";
-  content: string;
+  // First few KB only — the full content is never loaded for the list.
+  snippet: string | null;
+  thumbKey: string | null;
   language?: string | null;
 };
 
-export async function ArtifactThumb({ type, content, language }: ThumbProps) {
-  if (type === "html") return <HtmlThumb html={content} />;
-  if (type === "markdown") return <MarkdownThumb md={content} />;
-  return <CodeThumb code={content} language={language ?? null} />;
+export async function ArtifactThumb({
+  type,
+  snippet,
+  thumbKey,
+  language,
+}: ThumbProps) {
+  if (type === "html") return <HtmlThumb thumbKey={thumbKey} />;
+  if (type === "markdown") return <MarkdownThumb md={snippet ?? ""} />;
+  return <CodeThumb code={snippet ?? ""} language={language ?? null} />;
 }
 
-function HtmlThumb({ html }: { html: string }) {
+/**
+ * HTML preview. We never inline the (possibly multi-MB) markup into the list —
+ * a pre-rendered PNG thumbnail is shown when available, otherwise a neutral
+ * placeholder. This keeps the dashboard payload tiny regardless of artifact size.
+ */
+function HtmlThumb({ thumbKey }: { thumbKey: string | null }) {
+  if (thumbKey) {
+    return (
+      <div className="absolute inset-0 bg-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/api/artifacts/thumb/${thumbKey}`}
+          alt="preview"
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover object-top"
+        />
+      </div>
+    );
+  }
   return (
-    <div className="absolute inset-0 bg-white">
-      <iframe
-        srcDoc={html}
-        sandbox=""
-        loading="lazy"
-        title="preview"
-        className="absolute top-0 left-0 origin-top-left pointer-events-none border-0"
-        style={{ width: "400%", height: "400%", transform: "scale(0.25)" }}
-      />
+    <div className="absolute inset-0 bg-card flex items-center justify-center">
+      <FileCode2 className="size-8 text-muted-foreground/50" />
     </div>
   );
 }

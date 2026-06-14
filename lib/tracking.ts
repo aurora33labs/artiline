@@ -1,7 +1,48 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+
+/** Window during which repeat views from the same viewer don't re-bump the counter. */
+const VIEW_DEDUP_MS = 30 * 60 * 1000;
+
+/**
+ * Increment an artifact's denormalized view counter, but at most once per viewer
+ * per ~30 min — so refreshes and back-navigation don't write to the hot
+ * `artifacts` row on every load. The full analytics ledger (`recordView`) is
+ * unaffected; this only guards the counter. Best-effort.
+ */
+export async function bumpViewsThrottled(
+  artifactId: string,
+  ip: string | null,
+  userAgent: string | null,
+): Promise<void> {
+  try {
+    const salt = await getDailySalt();
+    const viewerHash = hashViewer(ip, userAgent, salt);
+    const [recent] = await db
+      .select({ id: schema.viewEvents.id })
+      .from(schema.viewEvents)
+      .where(
+        and(
+          eq(schema.viewEvents.artifactId, artifactId),
+          eq(schema.viewEvents.viewerHash, viewerHash),
+          gte(
+            schema.viewEvents.createdAt,
+            new Date(Date.now() - VIEW_DEDUP_MS),
+          ),
+        ),
+      )
+      .limit(1);
+    if (recent) return;
+    await db
+      .update(schema.artifacts)
+      .set({ views: sql`${schema.artifacts.views} + 1` })
+      .where(eq(schema.artifacts.id, artifactId));
+  } catch {
+    // Never block render on view accounting.
+  }
+}
 
 /**
  * Salt rotates daily. Hashing `ip + user-agent + salt` produces a stable

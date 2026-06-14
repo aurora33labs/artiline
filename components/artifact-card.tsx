@@ -13,7 +13,9 @@ export type ArtifactCardData = {
   slug: string;
   title: string;
   type: "html" | "markdown" | "code";
-  content: string;
+  // Only the snippet (first KBs) reaches the list — never the full content.
+  snippet: string | null;
+  thumbKey: string | null;
   language: string | null;
   visibility: Visibility;
   views: number;
@@ -39,7 +41,8 @@ export async function ArtifactCard({
         <div className="relative aspect-[4/3] overflow-hidden bg-background">
           <ArtifactThumb
             type={artifact.type}
-            content={artifact.content}
+            snippet={artifact.snippet}
+            thumbKey={artifact.thumbKey}
             language={artifact.language}
           />
 

@@ -187,7 +187,17 @@ export const artifactVersions = pgTable(
       .references(() => artifacts.id, { onDelete: "cascade" }),
     versionNumber: integer("version_number").notNull(),
     type: artifactTypeEnum("type").notNull(),
-    content: text("content").notNull(),
+    // Content lives EITHER inline here (DB, when no object storage configured or
+    // small) OR in object storage under `contentKey`. Read via lib/artifact-content
+    // (getContent) which picks the right source — never read `content` directly.
+    content: text("content"),
+    contentKey: text("content_key"),
+    // First few KB, always in the DB — powers list thumbnails and search without
+    // loading the full (possibly multi-MB, possibly S3) content.
+    contentSnippet: text("content_snippet"),
+    contentBytes: integer("content_bytes"),
+    // Optional pre-rendered PNG thumbnail key (object storage) for the dashboard.
+    thumbKey: text("thumb_key"),
     language: text("language"),
     title: text("title").notNull(),
     message: text("message"),

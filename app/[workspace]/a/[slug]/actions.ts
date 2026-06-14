@@ -8,6 +8,8 @@ import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
+import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
+import { generateThumbnail } from "@/lib/artifact-thumb-gen";
 
 const inputSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -107,6 +109,9 @@ export async function publishNewVersion(formData: FormData) {
   const isManager = role === "owner" || role === "admin";
   if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
 
+  const versionId = newVersionId();
+  const prepared = await prepareContent(versionId, data.content, data.type);
+
   const nextNumber = await db.transaction(async (tx) => {
     const [{ next }] = await tx
       .select({
@@ -116,10 +121,14 @@ export async function publishNewVersion(formData: FormData) {
       .where(eq(schema.artifactVersions.artifactId, artifact.id));
 
     await tx.insert(schema.artifactVersions).values({
+      id: versionId,
       artifactId: artifact.id,
       versionNumber: Number(next),
       type: data.type,
-      content: data.content,
+      content: prepared.content,
+      contentKey: prepared.contentKey,
+      contentSnippet: prepared.contentSnippet,
+      contentBytes: prepared.contentBytes,
       language: data.language,
       title: data.title,
       message: data.message,
@@ -134,6 +143,16 @@ export async function publishNewVersion(formData: FormData) {
 
     return Number(next);
   });
+
+  if (data.type === "html") {
+    void generateThumbnail(versionId, data.content).then((thumbKey) => {
+      if (!thumbKey) return;
+      return db
+        .update(schema.artifactVersions)
+        .set({ thumbKey })
+        .where(eq(schema.artifactVersions.id, versionId));
+    }).catch(() => {});
+  }
 
   await emitEvent(workspace.id, "version.published", {
     artifactId: artifact.id,
@@ -203,6 +222,12 @@ export async function rollbackToVersion(formData: FormData) {
     .limit(1);
   if (!target) throw new Error("NOT_FOUND");
 
+  // The target's content may live in object storage — read it through getContent
+  // and re-store for the new version (re-uploads under the new version's key).
+  const targetContent = await getContent(target);
+  const versionId = newVersionId();
+  const prepared = await prepareContent(versionId, targetContent, target.type);
+
   await db.transaction(async (tx) => {
     const [{ next }] = await tx
       .select({
@@ -212,10 +237,14 @@ export async function rollbackToVersion(formData: FormData) {
       .where(eq(schema.artifactVersions.artifactId, artifact.id));
 
     await tx.insert(schema.artifactVersions).values({
+      id: versionId,
       artifactId: artifact.id,
       versionNumber: Number(next),
       type: target.type,
-      content: target.content,
+      content: prepared.content,
+      contentKey: prepared.contentKey,
+      contentSnippet: prepared.contentSnippet,
+      contentBytes: prepared.contentBytes,
       language: target.language,
       title: target.title,
       message:

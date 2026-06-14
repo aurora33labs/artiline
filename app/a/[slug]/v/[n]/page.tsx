@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { resolveArtifactVersion } from "@/lib/artifact-resolve";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { recordView, extractIp } from "@/lib/tracking";
 
 export async function generateMetadata({
@@ -126,14 +127,18 @@ export default async function PinnedVersionView({
     /* tracking failures should never block render */
   });
 
+  const isHtml = version.type === "html";
+  const content = isHtml ? null : await getContent(version);
+
   return (
     <main className="fixed inset-0 bg-background overflow-auto">
       <link rel="canonical" href={`/a/${artifact!.slug}`} />
       <ArtifactViewer
         artifact={{
           type: version.type,
-          content: version.content,
           language: version.language,
+          contentSrc: isHtml ? rawContentPath({ slug, versionNumber, pw }) : null,
+          content,
         }}
         fullscreen
       />

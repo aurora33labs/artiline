@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { evaluateAccess } from "@/lib/visibility";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 import { auth } from "@/auth";
 import { recordView, extractIp } from "@/lib/tracking";
@@ -42,13 +43,17 @@ export default async function EmbedView({
     userId: session?.user?.id ?? null,
   }).catch(() => {});
 
+  const isHtml = resolved.version.type === "html";
+  const content = isHtml ? null : await getContent(resolved.version);
+
   return (
     <div className="fixed inset-0 bg-background overflow-auto">
       <ArtifactViewer
         artifact={{
           type: resolved.version.type,
-          content: resolved.version.content,
           language: resolved.version.language,
+          contentSrc: isHtml ? rawContentPath({ slug }) : null,
+          content,
         }}
         fullscreen
       />

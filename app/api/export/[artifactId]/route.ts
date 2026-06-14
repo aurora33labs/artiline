@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { htmlToPng } from "@/lib/export/html-to-png";
+import { getContent } from "@/lib/artifact-content";
 import { r2Configured, uploadObject, publicOrPresignedUrl } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -68,7 +69,7 @@ export async function POST(
     );
   }
 
-  const png = await htmlToPng(version.content);
+  const png = await htmlToPng(await getContent(version));
   const key = `exports/${artifact!.id}/v${version.versionNumber}-${Date.now()}.png`;
   await uploadObject(key, png, "image/png");
 

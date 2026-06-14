@@ -4,8 +4,11 @@ import { CodeViewer } from "./Code";
 
 export type ArtifactRender = {
   type: "html" | "markdown" | "code";
-  content: string;
   language?: string | null;
+  // HTML streams from a URL (iframe src) so its bytes never enter the RSC
+  // payload. Markdown/code are rendered server-side from `content`.
+  contentSrc?: string | null;
+  content?: string | null;
 };
 
 export async function ArtifactViewer({
@@ -16,12 +19,14 @@ export async function ArtifactViewer({
   fullscreen?: boolean;
 }) {
   if (artifact.type === "html")
-    return <HtmlViewer html={artifact.content} fullscreen={fullscreen} />;
+    return <HtmlViewer src={artifact.contentSrc ?? ""} fullscreen={fullscreen} />;
   if (artifact.type === "markdown")
-    return <MarkdownViewer md={artifact.content} fullscreen={fullscreen} />;
+    return (
+      <MarkdownViewer md={artifact.content ?? ""} fullscreen={fullscreen} />
+    );
   return (
     <CodeViewer
-      code={artifact.content}
+      code={artifact.content ?? ""}
       language={artifact.language}
       fullscreen={fullscreen}
     />

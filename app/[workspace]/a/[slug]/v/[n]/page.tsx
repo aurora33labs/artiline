@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireMemberPage } from "@/lib/tenant";
 import { resolveArtifactVersion } from "@/lib/artifact-resolve";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 
 export default async function WorkspacePinnedVersionView({
@@ -17,6 +18,8 @@ export default async function WorkspacePinnedVersionView({
   const resolved = await resolveArtifactVersion(slug, versionNumber);
   if (!resolved || resolved.artifact.workspaceId !== ws.id) notFound();
   const { artifact, version } = resolved;
+  const isHtml = version.type === "html";
+  const content = isHtml ? null : await getContent(version);
 
   return (
     <main className="fixed inset-0 bg-background overflow-auto">
@@ -24,8 +27,9 @@ export default async function WorkspacePinnedVersionView({
       <ArtifactViewer
         artifact={{
           type: version.type,
-          content: version.content,
           language: version.language,
+          contentSrc: isHtml ? rawContentPath({ slug, versionNumber }) : null,
+          content,
         }}
         fullscreen
       />

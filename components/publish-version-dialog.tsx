@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Loader2, GitCommit } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,7 +23,7 @@ export function PublishVersionDialog({
   workspaceSlug,
   defaultTitle,
   defaultType,
-  defaultContent,
+  contentSrc,
   defaultLanguage,
   open: openProp,
   onOpenChange: onOpenChangeProp,
@@ -32,7 +32,7 @@ export function PublishVersionDialog({
   workspaceSlug: string;
   defaultTitle: string;
   defaultType: "html" | "markdown" | "code";
-  defaultContent: string;
+  contentSrc: string;
   defaultLanguage: string | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -44,6 +44,20 @@ export function PublishVersionDialog({
     if (isControlled) onOpenChangeProp?.(next);
     else setInternalOpen(next);
   };
+
+  // Lazy-load the current content only when the editor opens — the viewer never
+  // ships it to the page. Fetched once (ref guard) so we never setState synchronously.
+  const [content, setContent] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
+  useEffect(() => {
+    if (!open || fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetch(contentSrc)
+      .then((r) => (r.ok ? r.text() : Promise.reject(new Error("load"))))
+      .then((text) => setContent(text))
+      .catch(() => setContent(""));
+  }, [open, contentSrc]);
+  const loadingContent = open && content === null;
 
   const [pending, start] = useTransition();
   const t = useTranslations("versions");
@@ -121,7 +135,10 @@ export function PublishVersionDialog({
               required
               minLength={1}
               rows={12}
-              defaultValue={defaultContent}
+              value={content ?? ""}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={loadingContent}
+              placeholder={loadingContent ? "…" : undefined}
               className="font-mono text-xs"
             />
           </div>

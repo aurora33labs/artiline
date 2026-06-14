@@ -8,7 +8,8 @@ import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
-import { recordView, extractIp } from "@/lib/tracking";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { recordView, extractIp, bumpViewsThrottled } from "@/lib/tracking";
 
 export async function generateMetadata({
   params,
@@ -114,10 +115,11 @@ export default async function PublicArtifact({
   }
 
   const reqHeaders = await headers();
-  await db
-    .update(schema.artifacts)
-    .set({ views: sql`${schema.artifacts.views} + 1` })
-    .where(eq(schema.artifacts.id, artifact!.id));
+  await bumpViewsThrottled(
+    artifact!.id,
+    extractIp(reqHeaders),
+    reqHeaders.get("user-agent"),
+  );
 
   await recordView({
     artifactId: artifact!.id,
@@ -135,13 +137,17 @@ export default async function PublicArtifact({
     .from(schema.comments)
     .where(eq(schema.comments.artifactId, artifact!.id));
 
+  const isHtml = version!.type === "html";
+  const content = isHtml ? null : await getContent(version!);
+
   return (
     <main className="fixed inset-0 bg-background overflow-auto">
       <ArtifactViewer
         artifact={{
           type: version!.type,
-          content: version!.content,
           language: version!.language,
+          contentSrc: isHtml ? rawContentPath({ slug, pw }) : null,
+          content,
         }}
         fullscreen
       />

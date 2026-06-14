@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
+import { getContent } from "@/lib/artifact-content";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,15 @@ export default async function VersionsListPage({
       )
     : null;
 
+  // Diff needs full content of both versions — resolve from DB or object storage.
+  const diffContent =
+    focused && previous
+      ? {
+          old: await getContent(previous.version),
+          new: await getContent(focused.version),
+        }
+      : null;
+
   return (
     <div className="space-y-8 max-w-5xl">
       <div className="space-y-2 border-b border-border pb-6">
@@ -72,7 +82,7 @@ export default async function VersionsListPage({
         </p>
       </div>
 
-      {focused && previous && (
+      {focused && previous && diffContent && (
         <section className="space-y-3">
           <header className="flex items-center justify-between">
             <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
@@ -88,8 +98,8 @@ export default async function VersionsListPage({
             </Button>
           </header>
           <VersionDiff
-            oldContent={previous.version.content}
-            newContent={focused.version.content}
+            oldContent={diffContent.old}
+            newContent={diffContent.new}
             oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
             newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
           />

@@ -378,6 +378,8 @@
     "ERR_FILE_EMPTY": "Empty file.",
     "ERR_FILE_MAX_SIZE": "Maximum {maxMB} MB.",
     "ERR_FILE_READ": "Could not read the file",
+    "ERR_CONTENT_TOO_LARGE": "Content is too large (12 MB maximum).",
+    "ERR_INVALID": "Invalid data. Check the form.",
     "ERR_EXPORT_HTML_ONLY": "Only HTML supports PNG export",
     "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage not configured. Contact your admin.",
     "LIMIT_ARTIFACTS": "Artifact limit reached. Upgrade your plan to create more.",
