@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { guardPageRequests } from "@/lib/safe-render";
 
 export async function htmlToPng(
   html: string,
@@ -14,6 +15,7 @@ export async function htmlToPng(
       deviceScaleFactor: opts.deviceScaleFactor ?? 2,
     });
     const page = await context.newPage();
+    await guardPageRequests(page); // block SSRF to internal/metadata hosts
     await page.setContent(html, { waitUntil: "networkidle" });
     const buffer = await page.screenshot({ type: "png", fullPage: true });
     return buffer;

@@ -1,6 +1,7 @@
 import "server-only";
 import { chromium } from "playwright";
 import { r2Configured, uploadObject } from "@/lib/r2";
+import { guardPageRequests } from "@/lib/safe-render";
 
 /**
  * Render a small PNG preview of an HTML artifact (viewport-clipped, not full
@@ -15,6 +16,7 @@ async function renderThumbnail(html: string): Promise<Buffer> {
       deviceScaleFactor: 1,
     });
     const page = await context.newPage();
+    await guardPageRequests(page); // block SSRF to internal/metadata hosts
     // domcontentloaded (not networkidle) + a hard timeout keeps big/heavy
     // artifacts from hanging the thumbnail step.
     await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 8000 });
