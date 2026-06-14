@@ -137,6 +137,9 @@ export default async function AcceptInvitePage({
           {error === "badpw" && (
             <p className="text-sm text-destructive">{t("badPassword")}</p>
           )}
+          {error === "throttled" && (
+            <p className="text-sm text-destructive">{t("throttled")}</p>
+          )}
           <Button type="submit" className="w-full h-11">
             {hasPassword ? t("joinBtn") : t("createAccountBtn")}
           </Button>

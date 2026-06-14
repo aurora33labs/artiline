@@ -71,6 +71,9 @@ export default async function LoginPage({
         {error === "closed" && (
           <p className="text-sm text-muted-foreground">{t("signupClosedHint")}</p>
         )}
+        {error === "throttled" && (
+          <p className="text-sm text-destructive">{t("throttled")}</p>
+        )}
         <Button type="submit" className="w-full h-11">
           {tc("signIn")}
         </Button>

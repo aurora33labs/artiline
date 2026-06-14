@@ -120,12 +120,30 @@ export const invitations = pgTable(
     role: roleEnum("role").notNull().default("member"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    // Cumulative wrong-password count on the accept page. Survives attempt-log
+    // pruning so a slow brute force can't outlast the window — at the cap the
+    // invite is killed (expired) and must be reissued.
+    failedAttempts: integer("failed_attempts").notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("invitations_token_idx").on(t.token),
     index("invitations_workspace_idx").on(t.workspaceId),
   ],
+);
+
+// Generic throttle log for password auth (login + invite-accept). Rows are
+// failed attempts keyed by email / ip / invite-token; a sliding-window count
+// drives temporary cooldowns. Pruned opportunistically on write.
+export const authAttempts = pgTable(
+  "auth_attempts",
+  {
+    id: id(),
+    key: text("key").notNull(),
+    kind: text("kind").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("auth_attempts_key_idx").on(t.key, t.kind, t.createdAt)],
 );
 
 export const artifacts = pgTable(

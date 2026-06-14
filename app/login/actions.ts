@@ -6,11 +6,27 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { createUserSession, setSessionCookie } from "@/lib/auth-session";
+import {
+  type Bucket,
+  clearAttempts,
+  getClientIp,
+  isRateLimited,
+  recordFailure,
+} from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(1).max(200),
 });
+
+async function loginBuckets(email: string): Promise<Bucket[]> {
+  const ip = await getClientIp();
+  const buckets: Bucket[] = [
+    { key: email, kind: "login-email", limit: 5, windowMin: 15 },
+  ];
+  if (ip) buckets.push({ key: ip, kind: "login-ip", limit: 20, windowMin: 15 });
+  return buckets;
+}
 
 /**
  * Email + password sign-in. Self-host fallback for instances without Resend, so
@@ -23,19 +39,32 @@ export async function signInWithPassword(formData: FormData) {
     password: formData.get("password"),
   });
   if (!parsed.success) redirect("/login?error=badcreds");
+  const email = parsed.data.email.toLowerCase();
+  const buckets = await loginBuckets(email);
+
+  // Throttle brute force. Cooldown is temporary; magic link stays an open
+  // recovery path, so this can't permanently lock anyone out.
+  if ((await isRateLimited(buckets)).limited) redirect("/login?error=throttled");
 
   const [user] = await db
     .select({ id: schema.users.id, passwordHash: schema.users.passwordHash })
     .from(schema.users)
-    .where(eq(schema.users.email, parsed.data.email.toLowerCase()))
+    .where(eq(schema.users.email, email))
     .limit(1);
 
   // Same generic outcome whether the email is unknown or the password is wrong,
   // so the form can't be used to probe which emails have accounts.
-  if (!user?.passwordHash) redirect("/login?error=badcreds");
+  if (!user?.passwordHash) {
+    await recordFailure(buckets);
+    redirect("/login?error=badcreds");
+  }
   const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
-  if (!ok) redirect("/login?error=badcreds");
+  if (!ok) {
+    await recordFailure(buckets);
+    redirect("/login?error=badcreds");
+  }
 
+  await clearAttempts(buckets);
   const { sessionToken, expires } = await createUserSession(user.id);
   await setSessionCookie(sessionToken, expires);
   redirect("/");
