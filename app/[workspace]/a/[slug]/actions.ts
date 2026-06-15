@@ -11,6 +11,7 @@ import { deleteObjects } from "@/lib/r2";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
 import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
+import { generateThumbnail } from "@/lib/artifact-thumb-gen";
 import { pruneArtifactVersions } from "@/lib/versions";
 
 const inputSchema = z.object({
@@ -223,6 +224,19 @@ export async function rollbackToVersion(formData: FormData) {
       .set({ updatedAt: new Date() })
       .where(eq(schema.artifacts.id, artifact.id));
   });
+
+  // Generate the thumbnail for the new (rolled-back) version — best-effort.
+  if (target.type === "html") {
+    void generateThumbnail(versionId, targetContent)
+      .then((thumbKey) => {
+        if (!thumbKey) return;
+        return db
+          .update(schema.artifactVersions)
+          .set({ thumbKey })
+          .where(eq(schema.artifactVersions.id, versionId));
+      })
+      .catch(() => {});
+  }
 
   // Keep history bounded; never drop the live version.
   await pruneArtifactVersions(
