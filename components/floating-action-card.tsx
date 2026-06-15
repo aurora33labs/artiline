@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/dialog";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
-  VisibilityBadge,
   VISIBILITY_LABEL_KEYS,
   type Visibility,
 } from "@/components/visibility-badge";
@@ -45,7 +44,6 @@ export function FloatingActionCard({
   title,
   type,
   visibility,
-  views,
   commentsCount,
   artifactId,
   publicPath,
@@ -55,7 +53,9 @@ export function FloatingActionCard({
   hasPassword,
   workspaceSlug,
   artifactSlug,
-  reviewStatus,
+  publishedAt,
+  updatedAt,
+  versionCount,
   backHref,
   commentsSlot,
   reactionsSlot,
@@ -63,7 +63,6 @@ export function FloatingActionCard({
   title: string;
   type: "html" | "markdown" | "code";
   visibility: Visibility;
-  views: number;
   commentsCount: number;
   artifactId: string;
   publicPath: string | null;
@@ -73,7 +72,9 @@ export function FloatingActionCard({
   hasPassword: boolean;
   workspaceSlug?: string;
   artifactSlug?: string;
-  reviewStatus?: "draft" | "pending" | "approved" | "changes_requested";
+  publishedAt: Date;
+  updatedAt: Date;
+  versionCount: number;
   backHref: string;
   commentsSlot: React.ReactNode;
   reactionsSlot: React.ReactNode;
@@ -92,6 +93,10 @@ export function FloatingActionCard({
   const tt = useTranslations("toasts");
   const tc = useTranslations("common");
   const tv = useTranslations("visibility");
+  const format = useFormatter();
+  const fmtDate = (d: Date) =>
+    format.dateTime(d, { day: "numeric", month: "short", year: "numeric" });
+  const hasUpdates = versionCount > 1;
 
   async function copyLink() {
     if (!publicPath) return;
@@ -128,15 +133,15 @@ export function FloatingActionCard({
 
   return (
     <>
-      <aside className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-end gap-2">
-        <DockButton
-          icon={<ArrowLeft className="size-5" />}
-          label={t("back")}
-          as="link"
-          href={backHref}
-        />
-
+      <aside className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-end">
         <div className="bg-surface/95 backdrop-blur-md border border-border rounded-md p-1 flex flex-col gap-0.5">
+          <DockButton
+            icon={<ArrowLeft className="size-5" />}
+            label={t("back")}
+            as="link"
+            href={backHref}
+          />
+          <div className="h-px my-0.5 bg-border" />
           <DockButton
             icon={<MessageSquare className="size-5" />}
             label={t("comments")}
@@ -212,13 +217,14 @@ export function FloatingActionCard({
               onClick={() => setDeleteOpen(true)}
             />
           )}
-        </div>
 
-        <DockButton
-          icon={<Info className="size-5" />}
-          label={t("info")}
-          onClick={() => setInfoOpen(true)}
-        />
+          <div className="h-px my-0.5 bg-border" />
+          <DockButton
+            icon={<Info className="size-5" />}
+            label={t("info")}
+            onClick={() => setInfoOpen(true)}
+          />
+        </div>
       </aside>
 
       <CommentsModal open={commentsOpen} onOpenChange={setCommentsOpen}>
@@ -307,27 +313,24 @@ export function FloatingActionCard({
           <div className="space-y-4 pt-2">
             <div className="flex flex-wrap gap-2">
               <ArtifactTypeBadge type={type} size="md" />
-              <VisibilityBadge visibility={visibility} size="md" />
-              {reviewStatus && (
-                <span
-                  className={`meta border px-2 py-1 ${statusPillClass(reviewStatus)}`}
-                >
-                  {reviewStatus.toUpperCase().replace("_", " ")}
-                </span>
-              )}
             </div>
             <dl className="grid grid-cols-2 gap-px border border-border bg-border">
               <div className="bg-surface p-3 space-y-0.5">
-                <dt className="meta">{t("viewsLabel")}</dt>
-                <dd className="font-display font-bold text-2xl">{views}</dd>
+                <dt className="meta">{t("publishedLabel")}</dt>
+                <dd className="text-sm">{fmtDate(publishedAt)}</dd>
               </div>
-              <div className="bg-surface p-3 space-y-0.5">
-                <dt className="meta">{t("commentsLabel")}</dt>
-                <dd className="font-display font-bold text-2xl">
-                  {commentsCount}
-                </dd>
-              </div>
-              <div className="col-span-2 bg-surface p-3 space-y-0.5">
+              {hasUpdates && (
+                <div className="bg-surface p-3 space-y-0.5">
+                  <dt className="meta">{t("updatedLabel")}</dt>
+                  <dd className="text-sm">{fmtDate(updatedAt)}</dd>
+                </div>
+              )}
+              <div
+                className={cn(
+                  "bg-surface p-3 space-y-0.5",
+                  hasUpdates && "col-span-2",
+                )}
+              >
                 <dt className="meta">{t("accessLabel")}</dt>
                 <dd className="text-sm">{tv(VISIBILITY_LABEL_KEYS[visibility])}</dd>
               </div>
@@ -346,13 +349,6 @@ export function FloatingActionCard({
       </Dialog>
     </>
   );
-}
-
-function statusPillClass(s: string): string {
-  if (s === "approved") return "text-success border-success";
-  if (s === "pending") return "text-warning border-warning";
-  if (s === "changes_requested") return "text-destructive border-destructive";
-  return "text-muted-foreground border-border";
 }
 
 function DockButton({

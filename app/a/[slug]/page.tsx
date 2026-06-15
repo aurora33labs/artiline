@@ -137,6 +137,11 @@ export default async function PublicArtifact({
     .from(schema.comments)
     .where(eq(schema.comments.artifactId, artifact!.id));
 
+  const [{ count: versionCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.artifactVersions)
+    .where(eq(schema.artifactVersions.artifactId, artifact!.id));
+
   const isHtml = version!.type === "html";
   const content = isHtml ? null : await getContent(version!);
 
@@ -156,9 +161,11 @@ export default async function PublicArtifact({
         title={version!.title}
         type={version!.type}
         visibility={artifact!.visibility}
-        views={artifact!.views}
         commentsCount={commentsCount}
         artifactId={artifact!.id}
+        publishedAt={artifact!.createdAt}
+        updatedAt={version!.createdAt}
+        versionCount={versionCount}
         publicPath={`/a/${artifact!.slug}`}
         canExport={version!.type === "html"}
         canEdit={false}

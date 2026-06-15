@@ -306,7 +306,9 @@
     "deleteConfirm": "Se eliminará «{title}» y todas sus versiones, comentarios y exports. Esta acción no se puede deshacer.",
     "viewsLabel": "VISTAS",
     "commentsLabel": "COMENTARIOS",
-    "accessLabel": "ACCESO"
+    "accessLabel": "ACCESO",
+    "publishedLabel": "PUBLICADO",
+    "updatedLabel": "ACTUALIZADO"
   },
   "settings": {
     "title": "Miembros",

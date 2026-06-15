@@ -54,6 +54,11 @@ export default async function ArtifactInternalView({
     .from(schema.comments)
     .where(eq(schema.comments.artifactId, artifact.id));
 
+  const [{ count: versionCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.artifactVersions)
+    .where(eq(schema.artifactVersions.artifactId, artifact.id));
+
   // HTML streams via the iframe src; markdown/code render server-side. The edit
   // dialog lazy-loads raw content from the same route, so the page never inlines
   // a (possibly multi-MB) payload.
@@ -76,7 +81,6 @@ export default async function ArtifactInternalView({
         title={version.title}
         type={version.type}
         visibility={artifact.visibility}
-        views={artifact.views}
         commentsCount={commentsCount}
         artifactId={artifact.id}
         publicPath={publicPath}
@@ -86,7 +90,9 @@ export default async function ArtifactInternalView({
         hasPassword={!!artifact.passwordHash}
         workspaceSlug={workspace}
         artifactSlug={artifact.slug}
-        reviewStatus={version.reviewStatus}
+        publishedAt={artifact.createdAt}
+        updatedAt={version.createdAt}
+        versionCount={versionCount}
         backHref={`/${workspace}`}
         commentsSlot={
           <CommentsSection

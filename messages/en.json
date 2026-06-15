@@ -306,7 +306,9 @@
     "deleteConfirm": "This deletes “{title}” and all its versions, comments and exports. This cannot be undone.",
     "viewsLabel": "VIEWS",
     "commentsLabel": "COMMENTS",
-    "accessLabel": "ACCESS"
+    "accessLabel": "ACCESS",
+    "publishedLabel": "PUBLISHED",
+    "updatedLabel": "UPDATED"
   },
   "settings": {
     "title": "Members",
