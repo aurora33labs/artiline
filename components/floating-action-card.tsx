@@ -374,7 +374,13 @@ function DockButton({
     "group relative size-10 rounded-sm flex items-center justify-center transition-colors",
     "bg-surface border border-border hover:bg-surface-2 hover:border-border-strong",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-    accent && "bg-primary text-primary-foreground border-primary hover:bg-primary hover:border-primary",
+    // Accent buttons read as normal at rest. They turn primary only on keyboard
+    // focus or while pressed/active — never on hover, never by default.
+    accent &&
+      cn(
+        "focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:border-primary",
+        "active:bg-primary active:text-primary-foreground active:border-primary",
+      ),
     disabled && "opacity-50 cursor-not-allowed",
   );
 
