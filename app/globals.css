@@ -76,9 +76,9 @@
   --success: oklch(70% 0.16 145);
   --warning: oklch(78% 0.16 80);
 
-  --border: oklch(0.20 0.006 250);
-  --border-strong: oklch(0.28 0.008 250);
-  --input: oklch(0.20 0.006 250);
+  --border: oklch(0.30 0.006 250);
+  --border-strong: oklch(0.40 0.008 250);
+  --input: oklch(0.30 0.006 250);
   --ring: oklch(0.76 0.19 47 / 0.55);
 
   --chart-1: oklch(0.67 0.22 38);
