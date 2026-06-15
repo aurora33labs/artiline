@@ -9,7 +9,32 @@ import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { assertCanAddMember } from "@/lib/limits";
+import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
+
+const maxVersionsSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  maxVersions: z.coerce
+    .number()
+    .int()
+    .min(MIN_MAX_VERSIONS)
+    .max(MAX_MAX_VERSIONS),
+});
+
+/** Owner-only: set how many versions per artifact are retained before pruning. */
+export async function updateMaxVersions(formData: FormData) {
+  const data = maxVersionsSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    maxVersions: formData.get("maxVersions"),
+  });
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner"]);
+  await db
+    .update(schema.workspaces)
+    .set({ maxVersions: data.maxVersions })
+    .where(eq(schema.workspaces.id, workspace.id));
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
 
 const FROM = process.env.RESEND_FROM ?? "onboarding@resend.dev";
 const KEY = process.env.RESEND_API_KEY;

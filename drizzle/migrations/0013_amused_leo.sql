@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ADD COLUMN "max_versions" integer DEFAULT 5 NOT NULL;

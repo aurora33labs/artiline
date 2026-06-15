@@ -55,8 +55,6 @@ export function FloatingActionCard({
   hasPassword,
   workspaceSlug,
   artifactSlug,
-  editContentSrc,
-  versionLanguage,
   reviewStatus,
   backHref,
   commentsSlot,
@@ -75,8 +73,6 @@ export function FloatingActionCard({
   hasPassword: boolean;
   workspaceSlug?: string;
   artifactSlug?: string;
-  editContentSrc?: string;
-  versionLanguage?: string | null;
   reviewStatus?: "draft" | "pending" | "approved" | "changes_requested";
   backHref: string;
   commentsSlot: React.ReactNode;
@@ -244,14 +240,11 @@ export function FloatingActionCard({
         />
       )}
 
-      {canEdit && workspaceSlug && editContentSrc !== undefined && (
+      {canEdit && workspaceSlug && (
         <PublishVersionDialog
           artifactId={artifactId}
           workspaceSlug={workspaceSlug}
           defaultTitle={title}
-          defaultType={type}
-          contentSrc={editContentSrc}
-          defaultLanguage={versionLanguage ?? null}
           open={publishOpen}
           onOpenChange={setPublishOpen}
         />

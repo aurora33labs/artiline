@@ -86,8 +86,6 @@ export default async function ArtifactInternalView({
         hasPassword={!!artifact.passwordHash}
         workspaceSlug={workspace}
         artifactSlug={artifact.slug}
-        editContentSrc={rawSrc}
-        versionLanguage={version.language}
         reviewStatus={version.reviewStatus}
         backHref={`/${workspace}`}
         commentsSlot={

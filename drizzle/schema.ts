@@ -65,6 +65,9 @@ export const workspaces = pgTable(
       brandName?: string;
       hideFooterChip?: boolean;
     } | null>(),
+    // Max retained versions per artifact. Older versions (and their storage) are
+    // pruned past this. Owner-configurable in workspace settings; default 5.
+    maxVersions: integer("max_versions").notNull().default(5),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("workspaces_slug_idx").on(t.slug)],

@@ -11,7 +11,7 @@ import { deleteObjects } from "@/lib/r2";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
 import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
-import { generateThumbnail } from "@/lib/artifact-thumb-gen";
+import { pruneArtifactVersions } from "@/lib/versions";
 
 const inputSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -74,113 +74,6 @@ export async function updateArtifactVisibility(formData: FormData) {
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}`);
   revalidatePath(`/${workspace.slug}`);
   revalidatePath(`/a/${artifact.slug}`);
-}
-
-const publishSchema = z.object({
-  workspaceSlug: z.string().min(1),
-  artifactId: z.string().min(1),
-  type: z.enum(["html", "markdown", "code"]),
-  title: z.string().min(1).max(200),
-  content: z.string().min(1),
-  language: z.string().max(50).optional().nullable(),
-  message: z.string().max(500).optional().nullable(),
-});
-
-export async function publishNewVersion(formData: FormData) {
-  const data = publishSchema.parse({
-    workspaceSlug: formData.get("workspaceSlug"),
-    artifactId: formData.get("artifactId"),
-    type: formData.get("type"),
-    title: formData.get("title"),
-    content: formData.get("content"),
-    language: formData.get("language") || null,
-    message: formData.get("message") || null,
-  });
-
-  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
-
-  const [artifact] = await db
-    .select()
-    .from(schema.artifacts)
-    .where(eq(schema.artifacts.id, data.artifactId))
-    .limit(1);
-  if (!artifact) throw new Error("NOT_FOUND");
-  if (artifact.workspaceId !== workspace.id) throw new Error("FORBIDDEN");
-
-  const isAuthor = artifact.authorUserId === session.user.id;
-  const isManager = role === "owner" || role === "admin";
-  if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
-
-  const versionId = newVersionId();
-  const prepared = await prepareContent(versionId, data.content, data.type);
-
-  const nextNumber = await db.transaction(async (tx) => {
-    const [{ next }] = await tx
-      .select({
-        next: sql<number>`coalesce(max(${schema.artifactVersions.versionNumber}), 0) + 1`,
-      })
-      .from(schema.artifactVersions)
-      .where(eq(schema.artifactVersions.artifactId, artifact.id));
-
-    await tx.insert(schema.artifactVersions).values({
-      id: versionId,
-      artifactId: artifact.id,
-      versionNumber: Number(next),
-      type: data.type,
-      content: prepared.content,
-      contentKey: prepared.contentKey,
-      contentSnippet: prepared.contentSnippet,
-      contentBytes: prepared.contentBytes,
-      language: data.language,
-      title: data.title,
-      message: data.message,
-      authorUserId: session.user.id,
-      reviewStatus: "pending",
-    });
-
-    await tx
-      .update(schema.artifacts)
-      .set({ updatedAt: new Date() })
-      .where(eq(schema.artifacts.id, artifact.id));
-
-    return Number(next);
-  });
-
-  if (data.type === "html") {
-    void generateThumbnail(versionId, data.content).then((thumbKey) => {
-      if (!thumbKey) return;
-      return db
-        .update(schema.artifactVersions)
-        .set({ thumbKey })
-        .where(eq(schema.artifactVersions.id, versionId));
-    }).catch(() => {});
-  }
-
-  await emitEvent(workspace.id, "version.published", {
-    artifactId: artifact.id,
-    slug: artifact.slug,
-    versionNumber: nextNumber,
-    title: data.title,
-    message: data.message ?? null,
-    authorUserId: session.user.id,
-  }).catch(() => {});
-
-  await recordEvent({
-    workspaceId: workspace.id,
-    actorUserId: session.user.id,
-    type: "version.published",
-    subjectType: "version",
-    subjectId: artifact.id,
-    payload: {
-      slug: artifact.slug,
-      versionNumber: nextNumber,
-      title: data.title,
-      message: data.message ?? null,
-    },
-  }).catch(() => {});
-
-  revalidatePath(`/${workspace.slug}/a/${artifact.slug}`);
-  revalidatePath(`/${workspace.slug}/a/${artifact.slug}/versions`);
 }
 
 const deleteSchema = z.object({
@@ -330,6 +223,13 @@ export async function rollbackToVersion(formData: FormData) {
       .set({ updatedAt: new Date() })
       .where(eq(schema.artifacts.id, artifact.id));
   });
+
+  // Keep history bounded; never drop the live version.
+  await pruneArtifactVersions(
+    artifact.id,
+    workspace.maxVersions,
+    artifact.currentVersionId,
+  );
 
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}`);
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}/versions`);

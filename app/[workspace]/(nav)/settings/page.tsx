@@ -1,9 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
+import { History, Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { planLimitsForWorkspace } from "@/lib/limits";
+import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import {
   inviteMember,
   revokeInvitation,
   removeMember,
+  updateMaxVersions,
 } from "./actions";
 
 function initials(src: string): string {
@@ -98,6 +100,44 @@ export default async function SettingsPage({
         <h1 className="text-3xl">{t("title")}</h1>
         <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
       </header>
+
+      {myRole === "owner" && (
+        <section className="border border-border bg-surface p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-sm border border-border-strong bg-surface-2 flex items-center justify-center">
+              <History className="size-4 text-primary" />
+            </div>
+            <div className="space-y-0.5">
+              <h2 className="text-sm font-sans font-semibold normal-case tracking-normal">
+                {t("versionsTitle")}
+              </h2>
+              <p className="meta">{t("versionsSubtitle")}</p>
+            </div>
+          </div>
+          <form
+            action={updateMaxVersions}
+            className="flex flex-col sm:flex-row gap-2 sm:items-end"
+          >
+            <input type="hidden" name="workspaceSlug" value={slug} />
+            <div className="w-full sm:w-40 space-y-1.5">
+              <Label htmlFor="maxVersions">{t("versionsLabel")}</Label>
+              <Input
+                id="maxVersions"
+                name="maxVersions"
+                type="number"
+                min={MIN_MAX_VERSIONS}
+                max={MAX_MAX_VERSIONS}
+                defaultValue={workspace.maxVersions}
+                required
+                className="h-10"
+              />
+            </div>
+            <Button type="submit" className="h-10">
+              {t("versionsSave")}
+            </Button>
+          </form>
+        </section>
+      )}
 
       {canManage && (
         <section className="border border-border bg-surface p-6 space-y-4">
