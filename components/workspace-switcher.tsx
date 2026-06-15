@@ -65,7 +65,7 @@ export function WorkspaceSwitcher({
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link
-            href="/signup/workspace"
+            href="/workspaces/new"
             className="flex items-center gap-2 cursor-pointer text-muted-foreground text-sm"
           >
             <Plus className="size-3.5" />

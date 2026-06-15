@@ -3,9 +3,11 @@
 import bcrypt from "bcryptjs";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
+import { deleteObjects } from "@/lib/r2";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
 import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
@@ -179,6 +181,76 @@ export async function publishNewVersion(formData: FormData) {
 
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}`);
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}/versions`);
+}
+
+const deleteSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  artifactId: z.string().min(1),
+});
+
+/**
+ * Permanently delete an artifact. Author or workspace owner/admin only (checked
+ * server-side, never trust the client). DB rows (versions, exports, comments,
+ * reactions, view events) cascade automatically; object storage for content,
+ * thumbnails and exports is cleaned up best-effort first so a storage failure
+ * can't block the delete.
+ */
+export async function deleteArtifact(formData: FormData) {
+  const data = deleteSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    artifactId: formData.get("artifactId"),
+  });
+
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
+
+  const [artifact] = await db
+    .select()
+    .from(schema.artifacts)
+    .where(eq(schema.artifacts.id, data.artifactId))
+    .limit(1);
+  if (!artifact) throw new Error("NOT_FOUND");
+  if (artifact.workspaceId !== workspace.id) throw new Error("FORBIDDEN");
+
+  const isAuthor = artifact.authorUserId === session.user.id;
+  const isManager = role === "owner" || role === "admin";
+  if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
+
+  // Collect object-storage keys before the cascade removes the rows.
+  const versions = await db
+    .select({
+      contentKey: schema.artifactVersions.contentKey,
+      thumbKey: schema.artifactVersions.thumbKey,
+    })
+    .from(schema.artifactVersions)
+    .where(eq(schema.artifactVersions.artifactId, artifact.id));
+  const exports = await db
+    .select({ r2Key: schema.artifactExports.r2Key })
+    .from(schema.artifactExports)
+    .where(eq(schema.artifactExports.artifactId, artifact.id));
+
+  await deleteObjects([
+    ...versions.flatMap((v) => [v.contentKey, v.thumbKey]),
+    ...exports.map((e) => e.r2Key),
+  ]);
+
+  await db.delete(schema.artifacts).where(eq(schema.artifacts.id, artifact.id));
+
+  await emitEvent(workspace.id, "artifact.deleted", {
+    artifactId: artifact.id,
+    slug: artifact.slug,
+    actorUserId: session.user.id,
+  }).catch(() => {});
+  await recordEvent({
+    workspaceId: workspace.id,
+    actorUserId: session.user.id,
+    type: "artifact.deleted",
+    subjectType: "artifact",
+    subjectId: artifact.id,
+    payload: { slug: artifact.slug },
+  }).catch(() => {});
+
+  revalidatePath(`/${workspace.slug}`);
+  redirect(`/${workspace.slug}`);
 }
 
 const rollbackSchema = z.object({

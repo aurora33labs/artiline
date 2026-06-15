@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const accountId = process.env.R2_ACCOUNT_ID;
@@ -58,6 +63,23 @@ export async function publicOrPresignedUrl(key: string): Promise<string> {
     client(),
     new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }),
     { expiresIn: 3600 },
+  );
+}
+
+/**
+ * Best-effort delete of one or more objects. Used to clean up artifact content,
+ * thumbnails and exports when an artifact is removed. Never throws — a storage
+ * hiccup must not block the DB delete; at worst an object is briefly orphaned.
+ */
+export async function deleteObjects(keys: (string | null | undefined)[]): Promise<void> {
+  if (!r2Configured()) return;
+  const real = keys.filter((k): k is string => !!k);
+  await Promise.all(
+    real.map((key) =>
+      client()
+        .send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }))
+        .catch(() => {}),
+    ),
   );
 }
 

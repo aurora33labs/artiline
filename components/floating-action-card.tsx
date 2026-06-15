@@ -15,6 +15,7 @@ import {
   X,
   GitBranch,
   GitCommit,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -23,9 +24,12 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
   VisibilityBadge,
   VISIBILITY_LABEL_KEYS,
@@ -47,6 +51,7 @@ export function FloatingActionCard({
   publicPath,
   canExport,
   canEdit,
+  canDelete,
   hasPassword,
   workspaceSlug,
   artifactSlug,
@@ -66,6 +71,7 @@ export function FloatingActionCard({
   publicPath: string | null;
   canExport: boolean;
   canEdit: boolean;
+  canDelete?: boolean;
   hasPassword: boolean;
   workspaceSlug?: string;
   artifactSlug?: string;
@@ -81,6 +87,8 @@ export function FloatingActionCard({
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -200,6 +208,14 @@ export function FloatingActionCard({
               accent
             />
           )}
+
+          {canDelete && workspaceSlug && (
+            <DockButton
+              icon={<Trash2 className="size-5" />}
+              label={t("deleteBtn")}
+              onClick={() => setDeleteOpen(true)}
+            />
+          )}
         </div>
 
         <DockButton
@@ -239,6 +255,53 @@ export function FloatingActionCard({
           open={publishOpen}
           onOpenChange={setPublishOpen}
         />
+      )}
+
+      {canDelete && workspaceSlug && (
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg">{t("deleteTitle")}</DialogTitle>
+              <DialogDescription>
+                {t("deleteConfirm", { title })}
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              action={async (fd) => {
+                fd.set("workspaceSlug", workspaceSlug);
+                fd.set("artifactId", artifactId);
+                setDeleting(true);
+                try {
+                  await deleteArtifact(fd);
+                } catch (err) {
+                  const msg = (err as Error).message || "";
+                  if (msg.startsWith("NEXT_")) throw err; // redirect on success
+                  setDeleting(false);
+                  toast.error(tt("generic"));
+                }
+              }}
+            >
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setDeleteOpen(false)}
+                  disabled={deleting}
+                >
+                  {tc("cancel")}
+                </Button>
+                <Button type="submit" variant="destructive" disabled={deleting}>
+                  {deleting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  {t("deleteBtn")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>

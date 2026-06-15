@@ -301,6 +301,9 @@
     "exportPng": "Export PNG",
     "info": "Info",
     "visibility": "Visibility",
+    "deleteBtn": "Delete",
+    "deleteTitle": "Delete artifact?",
+    "deleteConfirm": "This deletes “{title}” and all its versions, comments and exports. This cannot be undone.",
     "viewsLabel": "VIEWS",
     "commentsLabel": "COMMENTS",
     "accessLabel": "ACCESS"

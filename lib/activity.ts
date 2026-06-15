@@ -3,6 +3,7 @@ import { db, schema } from "@/lib/db";
 
 export type EventType =
   | "artifact.created"
+  | "artifact.deleted"
   | "version.published"
   | "version.approved"
   | "version.changes_requested"

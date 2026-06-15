@@ -9,8 +9,9 @@ export default async function Home() {
   const session = await auth();
   if (session?.user?.id) {
     const workspaces = await getMyWorkspaces(session.user.id);
-    if (workspaces.length === 1) redirect(`/${workspaces[0].slug}`);
-    if (workspaces.length > 1) redirect(`/workspaces`);
+    // No dedicated /workspaces list yet — land on the first workspace; the
+    // switcher handles moving between them and creating new ones.
+    if (workspaces.length >= 1) redirect(`/${workspaces[0].slug}`);
     redirect(`/signup/workspace`);
   }
 

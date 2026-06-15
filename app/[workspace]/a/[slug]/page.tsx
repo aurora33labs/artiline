@@ -82,6 +82,7 @@ export default async function ArtifactInternalView({
         publicPath={publicPath}
         canExport={version.type === "html"}
         canEdit={canEdit}
+        canDelete={canEdit}
         hasPassword={!!artifact.passwordHash}
         workspaceSlug={workspace}
         artifactSlug={artifact.slug}

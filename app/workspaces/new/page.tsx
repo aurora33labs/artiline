@@ -1,0 +1,100 @@
+import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
+import { db, schema } from "@/lib/db";
+import { slugify } from "@/lib/tenant";
+import { assertCanCreateWorkspace } from "@/lib/limits";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AuthShell } from "@/components/auth-shell";
+
+/**
+ * Create an additional workspace. Unlike `/signup/workspace` (first-run
+ * onboarding), this never redirects a user who already has workspaces away — it
+ * is the entry point the workspace switcher links to.
+ */
+export default async function NewWorkspace() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const t = await getTranslations("auth");
+
+  let capReached = false;
+  try {
+    await assertCanCreateWorkspace();
+  } catch (e) {
+    if ((e as Error).message === "LIMIT_WORKSPACES") capReached = true;
+    else throw e;
+  }
+  if (capReached) {
+    return (
+      <AuthShell title={t("workspaceCapTitle")} subtitle={t("workspaceCapBody")} />
+    );
+  }
+
+  return (
+    <AuthShell title={t("workspaceTitle")} subtitle={t("workspaceSubtitle")}>
+      <form
+        action={async (formData) => {
+          "use server";
+          const s = await auth();
+          if (!s?.user?.id) throw new Error("UNAUTH");
+          // Re-check the cap inside the action (redirect to the notice, no 500).
+          try {
+            await assertCanCreateWorkspace();
+          } catch (e) {
+            if ((e as Error).message === "LIMIT_WORKSPACES")
+              redirect("/workspaces/new");
+            throw e;
+          }
+          const rawName = String(formData.get("name") ?? "").trim();
+          if (!rawName) throw new Error("ERR_NAME_REQUIRED");
+          let slug = slugify(rawName) || "team";
+          let suffix = 0;
+          while (true) {
+            const candidate = suffix === 0 ? slug : `${slug}-${suffix}`;
+            const [exists] = await db
+              .select({ id: schema.workspaces.id })
+              .from(schema.workspaces)
+              .where(eq(schema.workspaces.slug, candidate))
+              .limit(1);
+            if (!exists) {
+              slug = candidate;
+              break;
+            }
+            suffix++;
+          }
+          const [ws] = await db
+            .insert(schema.workspaces)
+            .values({ slug, name: rawName, ownerUserId: s.user.id })
+            .returning();
+          await db.insert(schema.workspaceMembers).values({
+            workspaceId: ws.id,
+            userId: s.user.id,
+            role: "owner",
+          });
+          redirect(`/${ws.slug}`);
+        }}
+        className="space-y-4"
+      >
+        <div className="space-y-2">
+          <Label htmlFor="name">{t("workspaceLabel")}</Label>
+          <Input
+            id="name"
+            name="name"
+            required
+            placeholder={t("workspacePlaceholder")}
+            className="h-11"
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground">{t("inviteAfter")}</p>
+        </div>
+        <Button type="submit" className="w-full h-11">
+          {t("createWorkspaceBtn")}
+        </Button>
+      </form>
+    </AuthShell>
+  );
+}
