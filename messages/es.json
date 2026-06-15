@@ -155,12 +155,12 @@
     "ctaFinalH": "Tu próximo output merece un link, no una captura."
   },
   "authShell": {
-    "edition": "EDICIÓN 2026 · CATÁLOGO PRIVADO",
+    "edition": "HOSTING DE ARTIFACTS DE IA · PRIVADO POR DEFECTO",
     "quote": "Sube lo que la IA genera. Recibe un link. Ciérralo con password o ábrelo al mundo.",
     "drop": "Drop",
     "link": "Link",
     "ship": "Ship",
-    "tagline": "ARTILINE · MULTI-TENANT ARTIFACT HOSTING"
+    "tagline": "ARTILINE · ARTIFACT HOSTING"
   },
   "auth": {
     "loginTitle": "Bienvenido de vuelta",

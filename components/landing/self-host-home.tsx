@@ -33,7 +33,6 @@ export async function SelfHostHome() {
     <AuthShell
       title={t("menuTitle")}
       subtitle={t("menuInviteOnlySubtitle")}
-      footer={t("builtBy")}
     >
       <Button asChild className="h-11 w-full">
         <Link href="/login">

@@ -58,6 +58,15 @@ export async function AuthShell({
           )}
         </div>
       </main>
+
+      <a
+        href="https://aurora33.org"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-3 right-4 z-10 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+      >
+        Built by aurora33.org
+      </a>
     </div>
   );
 }

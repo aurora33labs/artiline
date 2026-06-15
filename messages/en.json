@@ -155,12 +155,12 @@
     "ctaFinalH": "Your next output deserves a link, not a capture."
   },
   "authShell": {
-    "edition": "EDITION 2026 · PRIVATE CATALOG",
+    "edition": "AI ARTIFACT HOSTING · PRIVATE BY DEFAULT",
     "quote": "Upload what AI generates. Get a link. Lock it with a password or open it to the world.",
     "drop": "Drop",
     "link": "Link",
     "ship": "Ship",
-    "tagline": "ARTILINE · MULTI-TENANT ARTIFACT HOSTING"
+    "tagline": "ARTILINE · ARTIFACT HOSTING"
   },
   "auth": {
     "loginTitle": "Welcome back",
