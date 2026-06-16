@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { requireMember, getMyWorkspaces } from "@/lib/tenant";
-import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
@@ -20,6 +18,7 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
   const workspaces = await getMyWorkspaces(data.session.user.id);
   const t = await getTranslations("navTop");
   const theme = await resolveTheme();
+  const canAdmin = data.role === "owner" || data.role === "admin";
 
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur sticky top-0 z-30">
@@ -43,12 +42,14 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
           >
             {t("artifacts")}
           </Link>
-          <Link
-            href={`/${slug}/settings`}
-            className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
-          >
-            {t("team")}
-          </Link>
+          {canAdmin && (
+            <Link
+              href={`/${slug}/settings`}
+              className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {t("admin")}
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -56,12 +57,6 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
             <ThemeSwitcher variant="nav-inline" current={theme} />
             <LocaleSwitcher variant="nav-inline" />
           </div>
-          <Button asChild size="sm">
-            <Link href={`/${slug}/new`}>
-              <Plus className="size-4" />
-              {t("new")}
-            </Link>
-          </Button>
           <UserMenu
             name={data.session.user.name ?? null}
             email={data.session.user.email ?? ""}

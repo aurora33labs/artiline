@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { desc, eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
+import { Button } from "@/components/ui/button";
 import { ArtifactCard } from "@/components/artifact-card";
 import { EmptyDashboard } from "@/components/empty-dashboard";
 
@@ -19,6 +22,7 @@ export default async function WorkspaceHome({
       slug: schema.artifacts.slug,
       visibility: schema.artifacts.visibility,
       views: schema.artifacts.views,
+      createdAt: schema.artifacts.createdAt,
       updatedAt: schema.artifacts.updatedAt,
       title: schema.artifactVersions.title,
       type: schema.artifactVersions.type,
@@ -39,6 +43,7 @@ export default async function WorkspaceHome({
   }
 
   const t = await getTranslations("dashboard");
+  const tn = await getTranslations("navTop");
 
   return (
     <div className="space-y-8">
@@ -51,9 +56,15 @@ export default async function WorkspaceHome({
             {t("artifactsCount", { count: String(list.length).padStart(3, "0") })}
           </h1>
         </div>
+        <Button asChild size="sm">
+          <Link href={`/${slug}/new`}>
+            <Plus className="size-4" />
+            {tn("new")}
+          </Link>
+        </Button>
       </div>
 
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+      <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
         {list.map((a) => (
           <ArtifactCard
             key={a.id}
@@ -68,6 +79,7 @@ export default async function WorkspaceHome({
               language: a.language,
               visibility: a.visibility,
               views: a.views,
+              createdAt: a.createdAt,
               updatedAt: a.updatedAt,
             }}
           />

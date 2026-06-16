@@ -25,7 +25,11 @@ export default async function ArtifactInternalView({
 
   const isPublic =
     artifact.visibility === "public" || artifact.visibility === "public_pw";
-  const publicPath = isPublic ? `/a/${artifact.slug}` : null;
+  // Shareable URL always exists: public artifacts share the short public path,
+  // private ones share the workspace-internal URL (access is gated on open).
+  const shareHref = isPublic
+    ? `/a/${artifact.slug}`
+    : `/${workspace}/a/${artifact.slug}`;
   const canEdit =
     artifact.authorUserId === session.user.id ||
     role === "owner" ||
@@ -83,7 +87,7 @@ export default async function ArtifactInternalView({
         visibility={artifact.visibility}
         commentsCount={commentsCount}
         artifactId={artifact.id}
-        publicPath={publicPath}
+        shareHref={shareHref}
         canExport={version.type === "html"}
         canEdit={canEdit}
         canDelete={canEdit}

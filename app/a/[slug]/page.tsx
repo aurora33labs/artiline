@@ -166,7 +166,7 @@ export default async function PublicArtifact({
         publishedAt={artifact!.createdAt}
         updatedAt={version!.createdAt}
         versionCount={versionCount}
-        publicPath={`/a/${artifact!.slug}`}
+        shareHref={`/a/${artifact!.slug}`}
         canExport={version!.type === "html"}
         canEdit={false}
         hasPassword={!!artifact!.passwordHash}

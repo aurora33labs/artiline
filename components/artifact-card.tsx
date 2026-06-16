@@ -19,6 +19,7 @@ export type ArtifactCardData = {
   language: string | null;
   visibility: Visibility;
   views: number;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -45,35 +46,43 @@ export async function ArtifactCard({
             thumbKey={artifact.thumbKey}
             language={artifact.language}
           />
+        </div>
 
-          <div className="absolute top-2 left-2 z-10">
-            <VisibilityBadge visibility={artifact.visibility} iconOnly size="xs" />
-          </div>
-
-          <div className="absolute top-2 right-2 z-10">
+        <div className="px-3 py-2.5 border-t border-border space-y-2">
+          <h3 className="font-sans font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors normal-case tracking-normal">
+            {artifact.title}
+          </h3>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <VisibilityBadge visibility={artifact.visibility} size="xs" />
             <ArtifactTypeBadge
               type={artifact.type}
               language={artifact.language}
               size="xs"
             />
           </div>
-        </div>
-
-        <div className="px-3 py-2.5 border-t border-border space-y-1.5">
-          <h3 className="font-sans font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors normal-case tracking-normal">
-            {artifact.title}
-          </h3>
           <div className="flex items-center justify-between meta">
             <span className="inline-flex items-center gap-1">
               <Eye className="size-3" />
               {artifact.views}
             </span>
-            <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
+            <span className="inline-flex items-center gap-2">
+              <span>{fmtDate(artifact.createdAt, formatter)}</span>
+              <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
+            </span>
           </div>
         </div>
       </article>
     </Link>
   );
+}
+
+function fmtDate(
+  date: Date,
+  formatter: Awaited<ReturnType<typeof getFormatter>>,
+): string {
+  return formatter
+    .dateTime(date, { day: "numeric", month: "short", year: "numeric" })
+    .toUpperCase();
 }
 
 function shortRelative(

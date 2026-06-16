@@ -46,7 +46,7 @@ export function FloatingActionCard({
   visibility,
   commentsCount,
   artifactId,
-  publicPath,
+  shareHref,
   canExport,
   canEdit,
   canDelete,
@@ -65,7 +65,7 @@ export function FloatingActionCard({
   visibility: Visibility;
   commentsCount: number;
   artifactId: string;
-  publicPath: string | null;
+  shareHref: string;
   canExport: boolean;
   canEdit: boolean;
   canDelete?: boolean;
@@ -99,8 +99,7 @@ export function FloatingActionCard({
   const hasUpdates = versionCount > 1;
 
   async function copyLink() {
-    if (!publicPath) return;
-    const url = new URL(publicPath, window.location.origin).toString();
+    const url = new URL(shareHref, window.location.origin).toString();
     await navigator.clipboard.writeText(url);
     setCopied(true);
     toast.success(tt("linkCopied"));
@@ -154,19 +153,17 @@ export function FloatingActionCard({
             onClick={() => setReactionsOpen(true)}
           />
 
-          {publicPath && (
-            <DockButton
-              icon={
-                copied ? (
-                  <Check className="size-5 text-primary" />
-                ) : (
-                  <Link2 className="size-5" />
-                )
-              }
-              label={copied ? t("copied") : t("copyPublic")}
-              onClick={copyLink}
-            />
-          )}
+          <DockButton
+            icon={
+              copied ? (
+                <Check className="size-5 text-primary" />
+              ) : (
+                <Link2 className="size-5" />
+              )
+            }
+            label={copied ? t("copied") : t("share")}
+            onClick={copyLink}
+          />
 
           {canExport && (
             <DockButton

@@ -242,6 +242,7 @@
   "navTop": {
     "artifacts": "Artifacts",
     "team": "Team",
+    "admin": "Admin",
     "new": "New"
   },
   "userMenu": {
@@ -297,6 +298,7 @@
     "comments": "Comments",
     "react": "React",
     "copyPublic": "Copy public link",
+    "share": "Share",
     "copied": "Copied!",
     "exportPng": "Export PNG",
     "info": "Info",
