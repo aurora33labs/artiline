@@ -8,42 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
 import { cn } from "@/lib/utils";
 import {
-  detectArtifact,
-  basenameWithoutExt,
-  type Detected,
-} from "@/lib/detect-artifact";
+  loadFile,
+  ACCEPT_EXTENSIONS,
+  MAX_UPLOAD_MB,
+  type LoadedFile,
+} from "@/lib/artifact-upload";
 
-export type LoadedFile = {
-  name: string;
-  baseName: string;
-  size: number;
-  content: string;
-  detected: Detected;
-};
-
-const MAX_BYTES = 10_000_000;
-const ACCEPT =
-  ".html,.htm,.md,.markdown,.mdx,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.go,.rs,.css,.scss,.json,.sh,.bash,.zsh,.sql,.yml,.yaml,.toml,.xml,.svg,.java,.kt,.swift,.rb,.php,.c,.h,.cpp,.hpp,.cs,.txt";
-
-function looksTexty(file: File): boolean {
-  if (!file.type) return true;
-  return (
-    file.type.startsWith("text/") ||
-    file.type === "application/json" ||
-    file.type === "application/xml" ||
-    file.type === "image/svg+xml" ||
-    /javascript|typescript|x-sh|x-yaml|toml/i.test(file.type)
-  );
-}
-
-function readAsText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error ?? new Error("ERR_FILE_READ"));
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.readAsText(file);
-  });
-}
+export type { LoadedFile };
 
 export function ArtifactDropzone({
   file,
@@ -62,36 +33,14 @@ export function ArtifactDropzone({
   const te = useTranslations("errors");
 
   async function process(picked: File) {
-    if (!looksTexty(picked)) {
-      toast.error(te("ERR_FILE_TEXT_ONLY"));
-      return;
-    }
-    if (picked.size > MAX_BYTES) {
-      toast.error(
-        te("ERR_FILE_MAX_SIZE", { maxMB: (MAX_BYTES / 1_000_000).toFixed(0) }),
-      );
-      return;
-    }
     try {
-      const content = await readAsText(picked);
-      if (!content.trim()) {
-        toast.error(te("ERR_FILE_EMPTY"));
-        return;
-      }
-      const detected = detectArtifact(picked.name, content);
-      onFile({
-        name: picked.name,
-        baseName: basenameWithoutExt(picked.name),
-        size: picked.size,
-        content,
-        detected,
-      });
+      onFile(await loadFile(picked));
     } catch (err) {
       const code = (err as Error).message;
-      try {
-        toast.error(te(code));
-      } catch {
-        toast.error(te("ERR_FILE_READ"));
+      if (code === "ERR_FILE_MAX_SIZE") {
+        toast.error(te(code, { maxMB: MAX_UPLOAD_MB }));
+      } else {
+        toast.error(te.has(code) ? te(code) : te("ERR_FILE_READ"));
       }
     }
   }
@@ -212,7 +161,7 @@ export function ArtifactDropzone({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT}
+        accept={ACCEPT_EXTENSIONS}
         hidden
         onChange={(e) => {
           const picked = e.target.files?.[0];

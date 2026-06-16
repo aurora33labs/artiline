@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Menu,
-  Plus,
   Library,
   ShieldCheck,
   ChevronRight,
@@ -14,14 +13,9 @@ import {
   Monitor,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Dialog as DialogPrimitive } from "radix-ui";
-import {
-  Dialog,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { UserMenu } from "@/components/user-menu";
+import { MobileQuickUpload } from "@/components/mobile-quick-upload";
 import { setThemeAction } from "@/app/actions/theme";
 import { setLocaleAction } from "@/app/actions/locale";
 import { themes, type Theme } from "@/lib/theme";
@@ -90,16 +84,7 @@ export function WorkspaceMobileNav({
             {t("menu")}
           </span>
         </button>
-        <Link
-          href={`/${slug}/new`}
-          aria-label={t("new")}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-primary hover:text-primary transition-colors focus-visible:outline-none focus-visible:bg-surface-2"
-        >
-          <Plus className="size-5" />
-          <span className="text-[10px] font-display font-medium uppercase tracking-[0.06em]">
-            {t("new")}
-          </span>
-        </Link>
+        <MobileQuickUpload workspaceSlug={slug} />
         <div className="flex-1 flex items-center justify-center">
           <UserMenu
             name={user.name}
@@ -110,19 +95,7 @@ export function WorkspaceMobileNav({
         </div>
       </nav>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogPrimitive.Content
-            data-slot="dialog-content"
-            className="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-border outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-full"
-          >
-          <DialogTitle className="sr-only">{t("menu")}</DialogTitle>
-          <div
-            aria-hidden
-            className="mx-auto mt-3 h-1.5 w-9 rounded-full bg-border"
-          />
-
+      <BottomSheet open={open} onOpenChange={setOpen} title={t("menu")}>
           <div className="max-h-[78vh] space-y-6 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             <section className="space-y-2">
               <h3 className="meta px-1">{tw("label")}</h3>
@@ -250,9 +223,7 @@ export function WorkspaceMobileNav({
               </div>
             </section>
           </div>
-          </DialogPrimitive.Content>
-        </DialogPortal>
-      </Dialog>
+      </BottomSheet>
     </>
   );
 }

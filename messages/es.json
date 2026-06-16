@@ -269,7 +269,8 @@
     "publish": "Publicar artifact",
     "publishing": "Creando…",
     "fileMeta": "{kb} KB · {lines} LÍNEAS",
-    "firstStepMeta": "NUEVO · 01 DROP"
+    "firstStepMeta": "NUEVO · 01 DROP",
+    "quickTitle": "Nuevo artifact"
   },
   "dropzone": {
     "label": "DROP ZONE · 01",
