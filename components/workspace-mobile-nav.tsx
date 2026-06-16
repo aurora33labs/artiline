@@ -14,9 +14,11 @@ import {
   Monitor,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import {
   Dialog,
-  DialogContent,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { UserMenu } from "@/components/user-menu";
@@ -109,10 +111,12 @@ export function WorkspaceMobileNav({
       </nav>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          showCloseButton={false}
-          className="top-auto bottom-0 left-0 right-0 w-full max-w-full translate-x-0 translate-y-0 gap-0 rounded-2xl rounded-b-none p-0 ring-border data-open:slide-in-from-bottom-4 sm:max-w-full"
-        >
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogPrimitive.Content
+            data-slot="dialog-content"
+            className="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-border outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-top-full"
+          >
           <DialogTitle className="sr-only">{t("menu")}</DialogTitle>
           <div
             aria-hidden
@@ -246,7 +250,8 @@ export function WorkspaceMobileNav({
               </div>
             </section>
           </div>
-        </DialogContent>
+          </DialogPrimitive.Content>
+        </DialogPortal>
       </Dialog>
     </>
   );
