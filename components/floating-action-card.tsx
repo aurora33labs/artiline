@@ -16,6 +16,8 @@ import {
   GitBranch,
   RefreshCw,
   Trash2,
+  MoreHorizontal,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -29,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
   VISIBILITY_LABEL_KEYS,
@@ -85,6 +88,7 @@ export function FloatingActionCard({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -132,7 +136,7 @@ export function FloatingActionCard({
 
   return (
     <>
-      <aside className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-end">
+      <aside className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col items-end">
         <div className="bg-surface/95 backdrop-blur-md border border-border rounded-md p-1 flex flex-col gap-0.5">
           <DockButton
             icon={<ArrowLeft className="size-5" />}
@@ -225,6 +229,125 @@ export function FloatingActionCard({
           )}
         </div>
       </aside>
+
+      {/* Mobile: compact bottom bar with primary actions + a "More" sheet for
+          the rest. The right-side dock is hidden below md. */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur h-14 flex items-stretch">
+        <BarButton
+          icon={<ArrowLeft className="size-5" />}
+          label={t("back")}
+          href={backHref}
+        />
+        <BarButton
+          icon={
+            copied ? (
+              <Check className="size-5 text-primary" />
+            ) : (
+              <Share className="size-5" />
+            )
+          }
+          label={t("share")}
+          onClick={copyLink}
+        />
+        <BarButton
+          icon={<MessageSquare className="size-5" />}
+          label={t("comments")}
+          badge={commentsCount > 0 ? commentsCount : undefined}
+          onClick={() => setCommentsOpen(true)}
+        />
+        <BarButton
+          icon={<MoreHorizontal className="size-5" />}
+          label={t("more")}
+          onClick={() => setMoreOpen(true)}
+        />
+      </nav>
+
+      <BottomSheet open={moreOpen} onOpenChange={setMoreOpen} title={t("more")}>
+        <div className="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] space-y-3">
+          <div className="rounded-xl border border-border bg-surface overflow-hidden divide-y divide-border">
+            <SheetRow
+              icon={<Smile className="size-4" />}
+              label={t("react")}
+              onClick={() => {
+                setMoreOpen(false);
+                setReactionsOpen(true);
+              }}
+            />
+            {canExport && (
+              <SheetRow
+                icon={
+                  exporting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ImageDown className="size-4" />
+                  )
+                }
+                label={t("exportPng")}
+                disabled={exporting}
+                onClick={() => {
+                  setMoreOpen(false);
+                  void exportPng();
+                }}
+              />
+            )}
+            {canEdit && workspaceSlug && artifactSlug && (
+              <SheetRow
+                icon={<RefreshCw className="size-4" />}
+                label={t("updateVersion")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  setPublishOpen(true);
+                }}
+              />
+            )}
+            {canEdit && workspaceSlug && artifactSlug && (
+              <SheetRow
+                icon={<GitBranch className="size-4" />}
+                label="Versions"
+                href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
+                trailing={
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                }
+              />
+            )}
+            {canEdit && workspaceSlug && (
+              <SheetRow
+                icon={<Settings className="size-4" />}
+                label={t("visibility")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  setSettingsOpen(true);
+                }}
+              />
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <SheetRow
+              icon={<Info className="size-4" />}
+              label={t("info")}
+              onClick={() => {
+                setMoreOpen(false);
+                setInfoOpen(true);
+              }}
+            />
+          </div>
+
+          {canDelete && workspaceSlug && (
+            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+              <SheetRow
+                icon={<Trash2 className="size-4" />}
+                label={t("deleteBtn")}
+                destructive
+                onClick={() => {
+                  setMoreOpen(false);
+                  setDeleteOpen(true);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </BottomSheet>
 
       <CommentsModal open={commentsOpen} onOpenChange={setCommentsOpen}>
         {commentsSlot}
@@ -347,6 +470,101 @@ export function FloatingActionCard({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function BarButton({
+  icon,
+  label,
+  badge,
+  onClick,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  onClick?: () => void;
+  href?: string;
+}) {
+  const cls =
+    "relative flex-1 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:bg-surface-2";
+  const inner = (
+    <>
+      <span className="relative">
+        {icon}
+        {typeof badge === "number" && (
+          <span className="absolute -top-1.5 -right-2 size-4 rounded-xs bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center font-display">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+      </span>
+      <span className="text-[10px] font-display font-medium uppercase tracking-[0.06em]">
+        {label}
+      </span>
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} aria-label={label} className={cls}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" aria-label={label} onClick={onClick} className={cls}>
+      {inner}
+    </button>
+  );
+}
+
+function SheetRow({
+  icon,
+  label,
+  onClick,
+  href,
+  trailing,
+  destructive,
+  disabled,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  trailing?: React.ReactNode;
+  destructive?: boolean;
+  disabled?: boolean;
+}) {
+  const cls = cn(
+    "flex w-full items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-surface-2 active:bg-surface-2",
+    destructive ? "text-destructive" : "text-foreground",
+    disabled && "opacity-50 pointer-events-none",
+  );
+  const inner = (
+    <>
+      <span className={cn("shrink-0", !destructive && "text-muted-foreground")}>
+        {icon}
+      </span>
+      <span className="flex-1 text-left">{label}</span>
+      {trailing}
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} aria-label={label} className={cls}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={cls}
+    >
+      {inner}
+    </button>
   );
 }
 
