@@ -14,7 +14,7 @@ import {
   Info,
   X,
   GitBranch,
-  GitCommit,
+  Upload,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -181,8 +181,8 @@ export function FloatingActionCard({
 
           {canEdit && workspaceSlug && artifactSlug && (
             <DockButton
-              icon={<GitCommit className="size-5" />}
-              label="Publish version"
+              icon={<Upload className="size-5" />}
+              label={t("updateVersion")}
               onClick={() => setPublishOpen(true)}
               accent
             />

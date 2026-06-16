@@ -304,6 +304,7 @@
     "react": "React",
     "copyPublic": "Copy public link",
     "share": "Link to share",
+    "updateVersion": "Update file",
     "copied": "Copied!",
     "exportPng": "Export PNG",
     "info": "Info",
