@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, Library, ShieldCheck, Check } from "lucide-react";
+import { Menu, Plus, Library, ShieldCheck, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { BrandLogo } from "@/components/brand-logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -49,23 +48,36 @@ export function WorkspaceMobileNav({
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur h-14 flex items-center justify-between px-5">
-        <BrandLogo size="sm" markOnly />
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur h-16 flex items-stretch">
         <button
           type="button"
           aria-label={t("menu")}
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-sm border border-border bg-surface hover:bg-surface-2 hover:border-border-strong transition-colors font-display text-[11px] font-medium uppercase tracking-[0.06em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:bg-surface-2"
         >
-          <Menu className="size-4" />
-          {t("menu")}
+          <Menu className="size-5" />
+          <span className="text-[10px] font-display font-medium uppercase tracking-[0.06em]">
+            {t("menu")}
+          </span>
         </button>
-        <UserMenu
-          name={user.name}
-          email={user.email}
-          image={user.image}
-          theme={theme}
-        />
+        <Link
+          href={`/${slug}/new`}
+          aria-label={t("new")}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-primary hover:text-primary transition-colors focus-visible:outline-none focus-visible:bg-surface-2"
+        >
+          <Plus className="size-5" />
+          <span className="text-[10px] font-display font-medium uppercase tracking-[0.06em]">
+            {t("new")}
+          </span>
+        </Link>
+        <div className="flex-1 flex items-center justify-center">
+          <UserMenu
+            name={user.name}
+            email={user.email}
+            image={user.image}
+            theme={theme}
+          />
+        </div>
       </nav>
 
       <Dialog open={open} onOpenChange={setOpen}>
