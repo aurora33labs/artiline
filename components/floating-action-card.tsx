@@ -6,7 +6,7 @@ import {
   ArrowLeft,
   ImageDown,
   Loader2,
-  Link2,
+  Share,
   Check,
   MessageSquare,
   Smile,
@@ -158,7 +158,7 @@ export function FloatingActionCard({
               copied ? (
                 <Check className="size-5 text-primary" />
               ) : (
-                <Link2 className="size-5" />
+                <Share className="size-5" />
               )
             }
             label={copied ? t("copied") : t("share")}
