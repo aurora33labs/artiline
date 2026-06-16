@@ -56,10 +56,14 @@ export default async function WorkspaceHome({
             {t("artifactsCount", { count: String(list.length).padStart(3, "0") })}
           </h1>
         </div>
-        <Button asChild size="sm" className="hidden md:inline-flex">
+        <Button
+          asChild
+          size="lg"
+          className="hidden md:inline-flex h-10 px-5 text-sm"
+        >
           <Link href={`/${slug}/new`}>
             <Plus className="size-4" />
-            {tn("new")}
+            {tn("uploadNew")}
           </Link>
         </Button>
       </div>
