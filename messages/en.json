@@ -230,13 +230,13 @@
     "loggedAs": "You're signed in as <strong>{email}</strong>. Sign out and come back with the correct email."
   },
   "dashboard": {
-    "emptyTitle": "EMPTY CATALOG",
+    "emptyTitle": "EMPTY LIBRARY",
     "emptyHeadingLine1": "Drop a file.",
     "emptyHeadingLine2": "Share it in seconds.",
     "emptyBody": "HTML, Markdown, code. We detect it and ship a link, optional password, and image export.",
     "createFirst": "Create first artifact",
     "inviteTeam": "Invite your team",
-    "catalogLabel": "CATALOG · {name}",
+    "catalogLabel": "LIBRARY · {name}",
     "artifactsCount": "{count} ARTIFACTS"
   },
   "navTop": {

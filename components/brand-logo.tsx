@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export function BrandLogo({
@@ -11,9 +12,9 @@ export function BrandLogo({
   className?: string;
 }) {
   const sizeMap = {
-    sm: { mark: "size-5", text: "text-sm" },
-    md: { mark: "size-6", text: "text-base" },
-    lg: { mark: "size-8", text: "text-xl" },
+    sm: { mark: "size-5", px: 20, text: "text-sm" },
+    md: { mark: "size-6", px: 24, text: "text-base" },
+    lg: { mark: "size-8", px: 32, text: "text-xl" },
   } as const;
   const s = sizeMap[size];
 
@@ -24,15 +25,13 @@ export function BrandLogo({
         className,
       )}
     >
-      <span
-        className={cn(
-          "bg-primary text-primary-foreground inline-flex items-center justify-center rounded-sm text-[10px] leading-none",
-          s.mark,
-        )}
-        aria-hidden
-      >
-        A
-      </span>
+      <Image
+        src="/artiline.webp"
+        alt="Artiline"
+        width={s.px}
+        height={s.px}
+        className={cn("rounded-sm object-cover", s.mark)}
+      />
       <span className={cn(s.text)}>Artiline</span>
     </span>
   );

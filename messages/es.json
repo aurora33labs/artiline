@@ -230,13 +230,13 @@
     "loggedAs": "Estás logueado como <strong>{email}</strong>. Cierra sesión y vuelve a entrar con el correo correcto."
   },
   "dashboard": {
-    "emptyTitle": "CATÁLOGO VACÍO",
+    "emptyTitle": "LIBRERÍA VACÍA",
     "emptyHeadingLine1": "Suelta un archivo.",
     "emptyHeadingLine2": "Compártelo en segundos.",
     "emptyBody": "HTML, Markdown, código. Lo detectamos y queda con link, password opcional y export a imagen.",
     "createFirst": "Crear primer artifact",
     "inviteTeam": "Invitar al equipo",
-    "catalogLabel": "CATÁLOGO · {name}",
+    "catalogLabel": "LIBRERÍA · {name}",
     "artifactsCount": "{count} ARTIFACTS"
   },
   "navTop": {
