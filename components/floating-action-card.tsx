@@ -206,20 +206,23 @@ export function FloatingActionCard({
             />
           )}
 
-          {canDelete && workspaceSlug && (
-            <DockButton
-              icon={<Trash2 className="size-5" />}
-              label={t("deleteBtn")}
-              onClick={() => setDeleteOpen(true)}
-            />
-          )}
-
           <div className="h-px my-0.5 bg-border" />
           <DockButton
             icon={<Info className="size-5" />}
             label={t("info")}
             onClick={() => setInfoOpen(true)}
           />
+
+          {canDelete && workspaceSlug && (
+            <>
+              <div className="h-px my-0.5 bg-border" />
+              <DockButton
+                icon={<Trash2 className="size-5" />}
+                label={t("deleteBtn")}
+                onClick={() => setDeleteOpen(true)}
+              />
+            </>
+          )}
         </div>
       </aside>
 
