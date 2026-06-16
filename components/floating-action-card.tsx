@@ -142,18 +142,6 @@ export function FloatingActionCard({
           />
           <div className="h-px my-0.5 bg-border" />
           <DockButton
-            icon={<MessageSquare className="size-5" />}
-            label={t("comments")}
-            badge={commentsCount > 0 ? commentsCount : undefined}
-            onClick={() => setCommentsOpen(true)}
-          />
-          <DockButton
-            icon={<Smile className="size-5" />}
-            label={t("react")}
-            onClick={() => setReactionsOpen(true)}
-          />
-
-          <DockButton
             icon={
               copied ? (
                 <Check className="size-5 text-primary" />
@@ -163,6 +151,17 @@ export function FloatingActionCard({
             }
             label={copied ? t("copied") : t("share")}
             onClick={copyLink}
+          />
+          <DockButton
+            icon={<MessageSquare className="size-5" />}
+            label={t("comments")}
+            badge={commentsCount > 0 ? commentsCount : undefined}
+            onClick={() => setCommentsOpen(true)}
+          />
+          <DockButton
+            icon={<Smile className="size-5" />}
+            label={t("react")}
+            onClick={() => setReactionsOpen(true)}
           />
 
           {canExport && (
