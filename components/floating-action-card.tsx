@@ -14,7 +14,7 @@ import {
   Info,
   X,
   GitBranch,
-  Upload,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -181,7 +181,7 @@ export function FloatingActionCard({
 
           {canEdit && workspaceSlug && artifactSlug && (
             <DockButton
-              icon={<Upload className="size-5" />}
+              icon={<RefreshCw className="size-5" />}
               label={t("updateVersion")}
               onClick={() => setPublishOpen(true)}
               accent
