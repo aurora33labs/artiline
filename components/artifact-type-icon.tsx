@@ -1,5 +1,6 @@
-import { FileCode2, FileText, Globe } from "lucide-react";
+import { Atom, FileCode2, FileText, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isReactRenderable } from "@/lib/detect-artifact";
 
 export type ArtifactType = "html" | "markdown" | "code";
 
@@ -23,7 +24,9 @@ export function ArtifactTypeBadge({
   size?: "xs" | "sm" | "md";
   className?: string;
 }) {
+  const react = isReactRenderable(type, language);
   const meta = META[type];
+  const Icon = react ? Atom : meta.Icon;
   const iconSize =
     size === "xs" ? "size-3" : size === "md" ? "size-3.5" : "size-3";
   const padding =
@@ -32,8 +35,11 @@ export function ArtifactTypeBadge({
       : size === "md"
         ? "px-2.5 py-1 text-xs"
         : "px-2 py-0.5 text-[11px]";
-  const label =
-    type === "code" && language ? language.toUpperCase() : meta.label;
+  const label = react
+    ? "REACT"
+    : type === "code" && language
+      ? language.toUpperCase()
+      : meta.label;
 
   return (
     <span
@@ -43,7 +49,7 @@ export function ArtifactTypeBadge({
         className,
       )}
     >
-      <meta.Icon className={iconSize} />
+      <Icon className={iconSize} />
       <span>{label}</span>
     </span>
   );

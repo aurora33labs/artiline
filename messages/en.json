@@ -303,6 +303,8 @@
     "more": "More",
     "comments": "Comments",
     "react": "React",
+    "preview": "Preview",
+    "source": "Source",
     "copyPublic": "Copy public link",
     "share": "Link to share",
     "updateVersion": "Update file",

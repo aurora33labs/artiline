@@ -75,6 +75,24 @@ export function detectArtifact(filename: string, content: string): Detected {
   return detectByContent(content);
 }
 
+// Languages whose `code` artifacts are rendered as live React components
+// (via the sandboxed iframe wrapper) instead of shown as highlighted source.
+export const RENDERABLE_REACT_LANGUAGES = new Set(["jsx", "tsx"]);
+
+/**
+ * True when a `code` artifact should render as a live React component rather
+ * than Shiki-highlighted text. Single source of truth — used by the raw route,
+ * the viewer dispatch, and the type badge so the rule never drifts.
+ */
+export function isReactRenderable(
+  type: string,
+  language: string | null | undefined,
+): boolean {
+  return (
+    type === "code" && !!language && RENDERABLE_REACT_LANGUAGES.has(language)
+  );
+}
+
 export function basenameWithoutExt(filename: string): string {
   const slashed = filename.split(/[/\\]/).pop() ?? filename;
   const dot = slashed.lastIndexOf(".");

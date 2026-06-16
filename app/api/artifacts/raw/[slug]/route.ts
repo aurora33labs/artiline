@@ -5,6 +5,8 @@ import {
   resolveArtifactVersion,
 } from "@/lib/artifact-resolve";
 import { getContent } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
+import { renderReactWrapper } from "@/lib/react-wrapper";
 
 export const runtime = "nodejs";
 
@@ -43,6 +45,14 @@ export async function GET(
 
   const content = await getContent(resolved.version);
   const isHtml = resolved.version.type === "html";
+  const isReact = isReactRenderable(
+    resolved.version.type,
+    resolved.version.language,
+  );
+  // React artifacts are wrapped in a self-contained HTML doc that transpiles and
+  // mounts the component; both it and HTML are served as a sandboxed document.
+  const serveAsDocument = isHtml || isReact;
+  const body = isReact ? renderReactWrapper(content) : content;
 
   // Cap browser/proxy caching for private artifacts; private content must not be
   // cached by shared caches.
@@ -54,13 +64,13 @@ export async function GET(
     : "private, no-store";
 
   const headers: Record<string, string> = {
-    "Content-Type": isHtml
+    "Content-Type": serveAsDocument
       ? "text/html; charset=utf-8"
       : "text/plain; charset=utf-8",
     "X-Content-Type-Options": "nosniff",
     "Cache-Control": cache,
   };
-  if (isHtml) {
+  if (serveAsDocument) {
     // Sandbox the document at the HTTP layer so a direct navigation can't run on
     // our origin; allow-scripts keeps interactive artifacts working in the iframe.
     headers["Content-Security-Policy"] = "sandbox allow-scripts";
@@ -68,7 +78,7 @@ export async function GET(
     headers["Content-Security-Policy"] = "default-src 'none'; sandbox";
   }
 
-  return new Response(content, { headers });
+  return new Response(body, { headers });
 }
 
 // Views are recorded by the page, not the raw stream — keep this uncached/dynamic.

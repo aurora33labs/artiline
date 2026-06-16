@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireMemberPage } from "@/lib/tenant";
 import { resolveArtifactVersion } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 
 export default async function WorkspacePinnedVersionView({
@@ -19,6 +20,8 @@ export default async function WorkspacePinnedVersionView({
   if (!resolved || resolved.artifact.workspaceId !== ws.id) notFound();
   const { artifact, version } = resolved;
   const isHtml = version.type === "html";
+  const usesIframe =
+    isHtml || isReactRenderable(version.type, version.language);
   const content = isHtml ? null : await getContent(version);
 
   return (
@@ -28,7 +31,7 @@ export default async function WorkspacePinnedVersionView({
         artifact={{
           type: version.type,
           language: version.language,
-          contentSrc: isHtml ? rawContentPath({ slug, versionNumber }) : null,
+          contentSrc: usesIframe ? rawContentPath({ slug, versionNumber }) : null,
           content,
         }}
         fullscreen

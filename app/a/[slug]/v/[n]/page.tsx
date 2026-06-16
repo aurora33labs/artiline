@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { resolveArtifactVersion } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { recordView, extractIp } from "@/lib/tracking";
 
 export async function generateMetadata({
@@ -128,6 +129,8 @@ export default async function PinnedVersionView({
   });
 
   const isHtml = version.type === "html";
+  const usesIframe =
+    isHtml || isReactRenderable(version.type, version.language);
   const content = isHtml ? null : await getContent(version);
 
   return (
@@ -137,7 +140,7 @@ export default async function PinnedVersionView({
         artifact={{
           type: version.type,
           language: version.language,
-          contentSrc: isHtml ? rawContentPath({ slug, versionNumber, pw }) : null,
+          contentSrc: usesIframe ? rawContentPath({ slug, versionNumber, pw }) : null,
           content,
         }}
         fullscreen

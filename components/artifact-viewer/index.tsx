@@ -1,6 +1,8 @@
 import { HtmlViewer } from "./Html";
 import { MarkdownViewer } from "./Markdown";
 import { CodeViewer } from "./Code";
+import { ReactViewer } from "./React";
+import { isReactRenderable } from "@/lib/detect-artifact";
 
 export type ArtifactRender = {
   type: "html" | "markdown" | "code";
@@ -23,6 +25,20 @@ export async function ArtifactViewer({
   if (artifact.type === "markdown")
     return (
       <MarkdownViewer md={artifact.content ?? ""} fullscreen={fullscreen} />
+    );
+  if (isReactRenderable(artifact.type, artifact.language))
+    return (
+      <ReactViewer
+        src={artifact.contentSrc ?? ""}
+        fullscreen={fullscreen}
+        sourceSlot={
+          <CodeViewer
+            code={artifact.content ?? ""}
+            language={artifact.language}
+            fullscreen={fullscreen}
+          />
+        }
+      />
     );
   return (
     <CodeViewer

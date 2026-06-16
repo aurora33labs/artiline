@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { recordView, extractIp, bumpViewsThrottled } from "@/lib/tracking";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 import { FloatingActionCard } from "@/components/floating-action-card";
@@ -67,6 +68,10 @@ export default async function ArtifactInternalView({
   // dialog lazy-loads raw content from the same route, so the page never inlines
   // a (possibly multi-MB) payload.
   const isHtml = version.type === "html";
+  // React artifacts also stream through the iframe (the wrapper doc), but still
+  // load `content` so the viewer's Source toggle can highlight it.
+  const usesIframe =
+    isHtml || isReactRenderable(version.type, version.language);
   const rawSrc = rawContentPath({ slug });
   const content = isHtml ? null : await getContent(version);
 
@@ -76,7 +81,7 @@ export default async function ArtifactInternalView({
         artifact={{
           type: version.type,
           language: version.language,
-          contentSrc: isHtml ? rawSrc : null,
+          contentSrc: usesIframe ? rawSrc : null,
           content,
         }}
         fullscreen

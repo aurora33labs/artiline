@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { evaluateAccess } from "@/lib/visibility";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { ArtifactViewer } from "@/components/artifact-viewer";
 import { auth } from "@/auth";
 import { recordView, extractIp } from "@/lib/tracking";
@@ -44,6 +45,9 @@ export default async function EmbedView({
   }).catch(() => {});
 
   const isHtml = resolved.version.type === "html";
+  const usesIframe =
+    isHtml ||
+    isReactRenderable(resolved.version.type, resolved.version.language);
   const content = isHtml ? null : await getContent(resolved.version);
 
   return (
@@ -52,7 +56,7 @@ export default async function EmbedView({
         artifact={{
           type: resolved.version.type,
           language: resolved.version.language,
-          contentSrc: isHtml ? rawContentPath({ slug }) : null,
+          contentSrc: usesIframe ? rawContentPath({ slug }) : null,
           content,
         }}
         fullscreen
