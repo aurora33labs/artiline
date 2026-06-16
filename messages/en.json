@@ -240,10 +240,12 @@
     "artifactsCount": "{count} ARTIFACTS"
   },
   "navTop": {
-    "artifacts": "Artifacts",
+    "artifacts": "Library",
     "team": "Team",
     "admin": "Admin",
-    "new": "New"
+    "new": "New",
+    "menu": "Menu",
+    "appearance": "Appearance"
   },
   "userMenu": {
     "label": "User menu",

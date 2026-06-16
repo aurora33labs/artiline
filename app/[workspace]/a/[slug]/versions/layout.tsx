@@ -17,7 +17,7 @@ export default async function VersionsLayout({
   return (
     <>
       <WorkspaceTopNav slug={slug} />
-      <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-10">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-6 pt-10 pb-24 md:pb-10">
         {children}
       </div>
     </>

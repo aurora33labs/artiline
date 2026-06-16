@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 export function BrandLogo({
   href = "/",
   size = "md",
+  markOnly = false,
   className,
 }: {
   href?: string | null;
   size?: "sm" | "md" | "lg";
+  markOnly?: boolean;
   className?: string;
 }) {
   const sizeMap = {
@@ -32,7 +34,7 @@ export function BrandLogo({
         height={s.px}
         className={cn("rounded-sm object-cover", s.mark)}
       />
-      <span className={cn(s.text)}>Artiline</span>
+      {!markOnly && <span className={cn(s.text)}>Artiline</span>}
     </span>
   );
 

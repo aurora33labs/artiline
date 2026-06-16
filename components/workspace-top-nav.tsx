@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { WorkspaceMobileNav } from "@/components/workspace-mobile-nav";
 import { resolveTheme } from "@/lib/theme.server";
 
 /**
@@ -21,7 +22,8 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
   const canAdmin = data.role === "owner" || data.role === "admin";
 
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur sticky top-0 z-30">
+    <>
+    <header className="hidden md:block border-b border-border bg-background/95 backdrop-blur sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <BrandLogo size="sm" />
@@ -66,5 +68,19 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
         </div>
       </div>
     </header>
+
+    <WorkspaceMobileNav
+      slug={slug}
+      workspace={{ slug: data.workspace.slug, name: data.workspace.name }}
+      workspaces={workspaces.map((w) => ({ slug: w.slug, name: w.name }))}
+      canAdmin={canAdmin}
+      theme={theme}
+      user={{
+        name: data.session.user.name ?? null,
+        email: data.session.user.email ?? "",
+        image: data.session.user.image ?? null,
+      }}
+    />
+    </>
   );
 }
