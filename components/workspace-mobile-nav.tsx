@@ -115,7 +115,7 @@ export function WorkspaceMobileNav({
           <DialogOverlay />
           <DialogPrimitive.Content
             data-slot="dialog-content"
-            className="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-border outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-top-full"
+            className="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-border outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-full"
           >
           <DialogTitle className="sr-only">{t("menu")}</DialogTitle>
           <div
