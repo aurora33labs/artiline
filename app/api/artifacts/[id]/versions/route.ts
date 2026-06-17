@@ -9,6 +9,7 @@ import {
   prepareContent,
 } from "@/lib/artifact-content";
 import { generateThumbnail } from "@/lib/artifact-thumb-gen";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { pruneArtifactVersions } from "@/lib/versions";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
@@ -109,8 +110,9 @@ export async function POST(
 
     await pruneArtifactVersions(artifact.id, workspace.maxVersions, versionId);
 
-    if (data.type === "html") {
-      void generateThumbnail(versionId, data.content)
+    const reactThumb = isReactRenderable(data.type, data.language);
+    if (data.type === "html" || reactThumb) {
+      void generateThumbnail(versionId, data.content, { react: reactThumb })
         .then((thumbKey) => {
           if (!thumbKey) return;
           return db
