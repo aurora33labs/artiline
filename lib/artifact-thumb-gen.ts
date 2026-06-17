@@ -2,6 +2,7 @@ import "server-only";
 import { chromium } from "playwright";
 import { r2Configured, uploadObject } from "@/lib/r2";
 import { guardPageRequests } from "@/lib/safe-render";
+import { gotoDocument } from "@/lib/headless-doc";
 import { renderReactWrapper } from "@/lib/react-wrapper";
 import { waitForReactMount } from "@/lib/render-wait";
 
@@ -26,9 +27,13 @@ async function renderThumbnail(
     });
     const page = await context.newPage();
     await guardPageRequests(page); // block SSRF to internal/metadata hosts
-    // domcontentloaded (not networkidle) + a hard timeout keeps big/heavy
-    // artifacts from hanging the thumbnail step.
-    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 8000 });
+    // Navigate (not setContent) so cross-origin CDN scripts the artifact pulls
+    // load reliably; domcontentloaded + a hard timeout keeps big/heavy artifacts
+    // from hanging the thumbnail step.
+    await gotoDocument(page, html, {
+      waitUntil: "domcontentloaded",
+      timeout: 8000,
+    });
     if (opts.reactMount) {
       const status = await waitForReactMount(page);
       if (status === "error") throw new Error("react-render-failed");
