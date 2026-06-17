@@ -38,7 +38,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
@@ -260,7 +259,7 @@ export function FloatingActionCard({
               className="min-w-56 p-1.5"
             >
               <DropdownMenuLabel className={MENU_LABEL}>
-                {t("actions")}
+                {t("moreOptions")}
               </DropdownMenuLabel>
               {canExport && (
                 <DropdownMenuItem
@@ -286,10 +285,6 @@ export function FloatingActionCard({
 
               {hasEditorItems && (
                 <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className={MENU_LABEL}>
-                    {t("edit")}
-                  </DropdownMenuLabel>
                   {canManage && (
                     <>
                       <DropdownMenuItem
