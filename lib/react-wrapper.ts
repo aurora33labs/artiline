@@ -17,6 +17,10 @@
 
 const REACT_VERSION = "19";
 const ESM = "https://esm.sh";
+// Babel must be the UMD build (sets a global `Babel`) loaded as a classic
+// script. esm.sh only serves ESM, which can't define the global — use a CDN
+// that ships the UMD bundle.
+const BABEL_UMD = "https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js";
 
 const IMPORT_MAP = {
   imports: {
@@ -108,7 +112,7 @@ export function renderReactWrapper(source: string): string {
 <body>
 <div id="root"></div>
 <script type="text/plain" id="__src">${b64}</script>
-<script src="${ESM}/@babel/standalone"></script>
+<script src="${BABEL_UMD}"></script>
 <script type="module">${inlineSafe(BOOTSTRAP)}</script>
 </body>
 </html>`;
