@@ -58,6 +58,47 @@ export function requireRole(
 }
 
 /**
+ * Single source of truth for who may manage a given member. Pure (no DB) so the
+ * settings page (render) and the server actions (enforcement) agree exactly.
+ *
+ * Rules (product decisions):
+ * - Never act on yourself (actor === target) or on the owner — both immutable.
+ * - Owner manages any non-owner: remove + assign member/admin.
+ * - Admin manages only members: remove + promote member→admin. An admin can NOT
+ *   touch another admin (not remove, not change role) — this is what stops the
+ *   "demote an admin to member, then delete" bypass of the no-admin-deletes-admin
+ *   rule, so degrading an admin stays owner-only.
+ * - Ownership is never transferable here: `assignableRoles` never includes "owner".
+ */
+export function memberManagementRights(args: {
+  actorUserId: string;
+  actorRole: WorkspaceRole;
+  ownerUserId: string;
+  targetUserId: string;
+  targetRole: WorkspaceRole;
+}): { canRemove: boolean; assignableRoles: WorkspaceRole[] } {
+  const none = { canRemove: false, assignableRoles: [] as WorkspaceRole[] };
+  const { actorUserId, actorRole, ownerUserId, targetUserId, targetRole } = args;
+
+  if (actorUserId === targetUserId) return none; // no self-management
+  if (targetUserId === ownerUserId) return none; // owner is immutable
+
+  // Owner (by ownership, not just role) manages every non-owner member.
+  if (actorUserId === ownerUserId)
+    return { canRemove: true, assignableRoles: ["member", "admin"] };
+
+  if (actorRole === "admin") {
+    if (targetRole === "admin") return none; // admin can't touch another admin
+    // target is a member: removable + promotable. "member" stays selectable as
+    // the current (no-op) value; admins can promote but not create new powers
+    // they couldn't otherwise undo on an admin.
+    return { canRemove: true, assignableRoles: ["member", "admin"] };
+  }
+
+  return none; // members manage nobody
+}
+
+/**
  * Redirect-context guards. Same checks as `requireMember` / `requireRole`, but
  * an unauthorized request becomes a clean redirect / 404 instead of an uncaught
  * 500. Use in **pages, layouts, and server actions** (all support redirect /
