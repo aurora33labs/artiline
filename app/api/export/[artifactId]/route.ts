@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { htmlToPng } from "@/lib/export/html-to-png";
 import { getContent } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
+import { renderReactWrapper } from "@/lib/react-wrapper";
 import { r2Configured, uploadObject, publicOrPresignedUrl } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -59,7 +61,8 @@ export async function POST(
   if (!version) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
-  if (version.type !== "html") {
+  const isReact = isReactRenderable(version.type, version.language);
+  if (version.type !== "html" && !isReact) {
     return NextResponse.json({ error: "ERR_EXPORT_HTML_ONLY" }, { status: 400 });
   }
   if (!r2Configured()) {
@@ -69,7 +72,22 @@ export async function POST(
     );
   }
 
-  const png = await htmlToPng(await getContent(version));
+  const source = await getContent(version);
+  const html = isReact ? renderReactWrapper(source) : source;
+  let png: Buffer;
+  try {
+    png = await htmlToPng(html, isReact ? { waitForMount: true } : {});
+  } catch (e) {
+    // A React artifact that fails to mount (no default export, runtime error,
+    // CDN unreachable) must not produce a screenshot of the error pane.
+    if ((e as Error).message === "ERR_EXPORT_RENDER_FAILED") {
+      return NextResponse.json(
+        { error: "ERR_EXPORT_RENDER_FAILED" },
+        { status: 400 },
+      );
+    }
+    throw e;
+  }
   const key = `exports/${artifact!.id}/v${version.versionNumber}-${Date.now()}.png`;
   await uploadObject(key, png, "image/png");
 

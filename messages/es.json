@@ -412,6 +412,7 @@
     "ERR_INVALID": "Datos inválidos. Revisa el formulario.",
     "ERR_EXPORT_HTML_ONLY": "Solo HTML soporta export PNG",
     "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage no configurado. Avisa al admin.",
+    "ERR_EXPORT_RENDER_FAILED": "No se pudo renderizar el componente.",
     "LIMIT_ARTIFACTS": "Límite de artifacts alcanzado. Mejora tu plan para crear más.",
     "LIMIT_MEMBERS": "Límite de miembros alcanzado. Mejora tu plan para invitar más.",
     "UNAUTH": "No autenticado",

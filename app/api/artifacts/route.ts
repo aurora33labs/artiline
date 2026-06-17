@@ -12,6 +12,7 @@ import {
   prepareContent,
 } from "@/lib/artifact-content";
 import { generateThumbnail } from "@/lib/artifact-thumb-gen";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { recordEvent } from "@/lib/activity";
 
 export const runtime = "nodejs";
@@ -118,16 +119,20 @@ export async function POST(req: Request) {
       payload: { slug: created.slug, title: data.title, type: data.type },
     }).catch(() => {});
 
-    // Fire-and-forget thumbnail (HTML only, best-effort). The container is
-    // long-lived (not serverless), so this completes after the response.
-    if (data.type === "html") {
-      void generateThumbnail(versionId, data.content).then((thumbKey) => {
-        if (!thumbKey) return;
-        return db
-          .update(schema.artifactVersions)
-          .set({ thumbKey })
-          .where(eq(schema.artifactVersions.id, versionId));
-      }).catch(() => {});
+    // Fire-and-forget thumbnail (HTML + renderable React, best-effort). The
+    // container is long-lived (not serverless), so this completes after the
+    // response.
+    const reactThumb = isReactRenderable(data.type, data.language);
+    if (data.type === "html" || reactThumb) {
+      void generateThumbnail(versionId, data.content, { react: reactThumb })
+        .then((thumbKey) => {
+          if (!thumbKey) return;
+          return db
+            .update(schema.artifactVersions)
+            .set({ thumbKey })
+            .where(eq(schema.artifactVersions.id, versionId));
+        })
+        .catch(() => {});
     }
 
     return NextResponse.json({ slug: created.slug });

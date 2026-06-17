@@ -1,6 +1,7 @@
 import { codeToHtml } from "shiki";
 import { FileCode2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isReactRenderable } from "@/lib/detect-artifact";
 
 export type ThumbProps = {
   type: "html" | "markdown" | "code";
@@ -17,6 +18,10 @@ export async function ArtifactThumb({
   language,
 }: ThumbProps) {
   if (type === "html") return <HtmlThumb thumbKey={thumbKey} />;
+  // Renderable React: show the pre-rendered component PNG when we have one;
+  // otherwise fall through to the Shiki source snippet (never a blank card).
+  if (isReactRenderable(type, language) && thumbKey)
+    return <HtmlThumb thumbKey={thumbKey} />;
   if (type === "markdown") return <MarkdownThumb md={snippet ?? ""} />;
   return <CodeThumb code={snippet ?? ""} language={language ?? null} />;
 }

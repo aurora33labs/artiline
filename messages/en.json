@@ -412,6 +412,7 @@
     "ERR_INVALID": "Invalid data. Check the form.",
     "ERR_EXPORT_HTML_ONLY": "Only HTML supports PNG export",
     "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage not configured. Contact your admin.",
+    "ERR_EXPORT_RENDER_FAILED": "Could not render the component.",
     "LIMIT_ARTIFACTS": "Artifact limit reached. Upgrade your plan to create more.",
     "LIMIT_MEMBERS": "Member limit reached. Upgrade your plan to invite more.",
     "UNAUTH": "Not authenticated",
