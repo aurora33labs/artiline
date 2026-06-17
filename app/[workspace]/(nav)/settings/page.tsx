@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { History, Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMemberPage } from "@/lib/tenant";
+import { memberManagementRights, requireMemberPage } from "@/lib/tenant";
 import { planLimitsForWorkspace } from "@/lib/limits";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "@/components/copy-link-button";
-import {
-  inviteMember,
-  revokeInvitation,
-  removeMember,
-  updateMaxVersions,
-} from "./actions";
+import { ManageMemberDialog } from "@/components/settings/manage-member-dialog";
+import { inviteMember, revokeInvitation, updateMaxVersions } from "./actions";
 
 function initials(src: string): string {
   const parts = src.trim().split(/\s+/);
@@ -36,7 +32,8 @@ export default async function SettingsPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace, role: myRole } = await requireMemberPage(slug);
+  const { session, workspace, role: myRole } = await requireMemberPage(slug);
+  const myUserId = session.user.id;
   const canManage = myRole === "owner" || myRole === "admin";
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
@@ -207,7 +204,15 @@ export default async function SettingsPage({
           {members.map((m) => {
             const display = m.name ?? m.email;
             const roleMeta = ROLE_META[m.role] ?? ROLE_META.member;
-            const isOwner = m.userId === workspace.ownerUserId;
+            const rights = memberManagementRights({
+              actorUserId: myUserId,
+              actorRole: myRole,
+              ownerUserId: workspace.ownerUserId,
+              targetUserId: m.userId,
+              targetRole: m.role,
+            });
+            const showManage =
+              rights.canRemove || rights.assignableRoles.length > 0;
             return (
               <div
                 key={m.userId}
@@ -242,24 +247,20 @@ export default async function SettingsPage({
                     <roleMeta.Icon className="size-3" />
                     {roleMeta.label}
                   </span>
-                  {canManage && !isOwner && (
-                    <form action={removeMember}>
-                      <input
-                        type="hidden"
-                        name="workspaceSlug"
-                        value={slug}
-                      />
-                      <input type="hidden" name="userId" value={m.userId} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        type="submit"
-                        className="text-muted-foreground hover:text-destructive"
-                        title={t("removeBtn")}
-                      >
-                        ×
-                      </Button>
-                    </form>
+                  {showManage && (
+                    <ManageMemberDialog
+                      workspaceSlug={slug}
+                      member={{
+                        userId: m.userId,
+                        name: m.name,
+                        email: m.email,
+                        role: m.role,
+                      }}
+                      canRemove={rights.canRemove}
+                      assignableRoles={
+                        rights.assignableRoles as ("member" | "admin")[]
+                      }
+                    />
                   )}
                 </div>
               </div>
