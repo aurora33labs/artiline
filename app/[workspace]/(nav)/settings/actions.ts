@@ -7,7 +7,11 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
-import { requireMemberPage, requireRolePage } from "@/lib/tenant";
+import {
+  memberManagementRights,
+  requireMemberPage,
+  requireRolePage,
+} from "@/lib/tenant";
 import { assertCanAddMember } from "@/lib/limits";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
@@ -107,22 +111,106 @@ export async function revokeInvitation(formData: FormData) {
   revalidatePath(`/${data.workspaceSlug}/settings`);
 }
 
+/** Loads the target member's current role + email within the workspace. */
+async function loadTargetMember(workspaceId: string, userId: string) {
+  const [row] = await db
+    .select({
+      role: schema.workspaceMembers.role,
+      email: schema.users.email,
+    })
+    .from(schema.workspaceMembers)
+    .innerJoin(schema.users, eq(schema.users.id, schema.workspaceMembers.userId))
+    .where(
+      and(
+        eq(schema.workspaceMembers.workspaceId, workspaceId),
+        eq(schema.workspaceMembers.userId, userId),
+      ),
+    )
+    .limit(1);
+  return row;
+}
+
 const removeSchema = z.object({
   workspaceSlug: z.string().min(1),
   userId: z.string().min(1),
+  confirmEmail: z.string().min(1),
 });
 
 export async function removeMember(formData: FormData) {
   const data = removeSchema.parse({
     workspaceSlug: formData.get("workspaceSlug"),
     userId: formData.get("userId"),
+    confirmEmail: formData.get("confirmEmail"),
   });
-  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
   requireRolePage(role, ["owner", "admin"]);
   if (data.userId === workspace.ownerUserId)
     throw new Error("ERR_CANNOT_REMOVE_OWNER");
+
+  const target = await loadTargetMember(workspace.id, data.userId);
+  if (!target) throw new Error("NOT_FOUND");
+
+  const { canRemove } = memberManagementRights({
+    actorUserId: session.user.id,
+    actorRole: role,
+    ownerUserId: workspace.ownerUserId,
+    targetUserId: data.userId,
+    targetRole: target.role,
+  });
+  if (!canRemove) throw new Error("FORBIDDEN");
+
+  // The typed email must match the member's — defense in depth so a crafted
+  // request can't skip the confirmation the UI enforces.
+  if (
+    data.confirmEmail.trim().toLowerCase() !== target.email.toLowerCase()
+  )
+    throw new Error("ERR_EMAIL_MISMATCH");
+
   await db
     .delete(schema.workspaceMembers)
+    .where(
+      and(
+        eq(schema.workspaceMembers.workspaceId, workspace.id),
+        eq(schema.workspaceMembers.userId, data.userId),
+      ),
+    );
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
+
+const changeRoleSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  userId: z.string().min(1),
+  role: z.enum(["admin", "member"]),
+});
+
+export async function changeMemberRole(formData: FormData) {
+  const data = changeRoleSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    userId: formData.get("userId"),
+    role: formData.get("role"),
+  });
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
+  requireRolePage(role, ["owner", "admin"]);
+
+  const target = await loadTargetMember(workspace.id, data.userId);
+  if (!target) throw new Error("NOT_FOUND");
+
+  const { assignableRoles } = memberManagementRights({
+    actorUserId: session.user.id,
+    actorRole: role,
+    ownerUserId: workspace.ownerUserId,
+    targetUserId: data.userId,
+    targetRole: target.role,
+  });
+  if (!assignableRoles.includes(data.role)) throw new Error("FORBIDDEN");
+
+  await db
+    .update(schema.workspaceMembers)
+    .set({ role: data.role })
     .where(
       and(
         eq(schema.workspaceMembers.workspaceId, workspace.id),
