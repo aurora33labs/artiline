@@ -93,7 +93,7 @@ export default async function ArtifactInternalView({
         commentsCount={commentsCount}
         artifactId={artifact.id}
         shareHref={shareHref}
-        canExport={version.type === "html"}
+        canExport={usesIframe}
         canEdit={canEdit}
         canDelete={canEdit}
         hasPassword={!!artifact.passwordHash}

@@ -170,7 +170,7 @@ export default async function PublicArtifact({
         updatedAt={version!.createdAt}
         versionCount={versionCount}
         shareHref={`/a/${artifact!.slug}`}
-        canExport={version!.type === "html"}
+        canExport={usesIframe}
         canEdit={false}
         hasPassword={!!artifact!.passwordHash}
         backHref="/"

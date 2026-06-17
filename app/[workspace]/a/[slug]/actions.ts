@@ -12,6 +12,7 @@ import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
 import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
 import { generateThumbnail } from "@/lib/artifact-thumb-gen";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { pruneArtifactVersions } from "@/lib/versions";
 
 const inputSchema = z.object({
@@ -226,8 +227,9 @@ export async function rollbackToVersion(formData: FormData) {
   });
 
   // Generate the thumbnail for the new (rolled-back) version — best-effort.
-  if (target.type === "html") {
-    void generateThumbnail(versionId, targetContent)
+  const reactThumb = isReactRenderable(target.type, target.language);
+  if (target.type === "html" || reactThumb) {
+    void generateThumbnail(versionId, targetContent, { react: reactThumb })
       .then((thumbKey) => {
         if (!thumbKey) return;
         return db
