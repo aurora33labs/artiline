@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Download,
   ImageDown,
   Loader2,
   Share,
@@ -50,6 +51,7 @@ export function FloatingActionCard({
   commentsCount,
   artifactId,
   shareHref,
+  downloadHref,
   canExport,
   canEdit,
   canDelete,
@@ -69,6 +71,7 @@ export function FloatingActionCard({
   commentsCount: number;
   artifactId: string;
   shareHref: string;
+  downloadHref?: string;
   canExport: boolean;
   canEdit: boolean;
   canDelete?: boolean;
@@ -114,6 +117,18 @@ export function FloatingActionCard({
 
   function translateError(code: string): string {
     return te.has(code) ? te(code) : tt("pngError");
+  }
+
+  function downloadFile() {
+    if (!downloadHref) return;
+    // Same-origin attachment response; the synthetic anchor lets the server's
+    // Content-Disposition filename win and downloads without leaving the page.
+    const a = document.createElement("a");
+    a.href = downloadHref;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   async function exportPng() {
@@ -180,6 +195,14 @@ export function FloatingActionCard({
               label={t("exportPng")}
               onClick={exportPng}
               disabled={exporting}
+            />
+          )}
+
+          {downloadHref && (
+            <DockButton
+              icon={<Download className="size-5" />}
+              label={t("download")}
+              onClick={downloadFile}
             />
           )}
 
@@ -287,6 +310,16 @@ export function FloatingActionCard({
                 onClick={() => {
                   setMoreOpen(false);
                   void exportPng();
+                }}
+              />
+            )}
+            {downloadHref && (
+              <SheetRow
+                icon={<Download className="size-4" />}
+                label={t("download")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  downloadFile();
                 }}
               />
             )}
