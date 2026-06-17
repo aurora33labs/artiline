@@ -36,7 +36,7 @@ export async function ArtifactCard({
   return (
     <Link
       href={`/${workspaceSlug}/a/${artifact.slug}`}
-      className="group block break-inside-avoid mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="rounded-md overflow-hidden bg-surface border border-border group-hover:border-border-strong transition-colors">
         <div className="relative aspect-[4/3] overflow-hidden bg-background">
