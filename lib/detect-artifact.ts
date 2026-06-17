@@ -45,6 +45,45 @@ const EXTENSION_MAP: Record<string, Detected> = {
   txt: { type: "code", language: "text" },
 };
 
+// language → file extension, for naming downloads. Inverse of EXTENSION_MAP's
+// language column (picking the canonical extension per language).
+const LANGUAGE_EXTENSION: Record<string, string> = {
+  typescript: "ts",
+  tsx: "tsx",
+  javascript: "js",
+  jsx: "jsx",
+  python: "py",
+  go: "go",
+  rust: "rs",
+  css: "css",
+  scss: "scss",
+  json: "json",
+  bash: "sh",
+  sql: "sql",
+  yaml: "yaml",
+  toml: "toml",
+  xml: "xml",
+  java: "java",
+  kotlin: "kt",
+  swift: "swift",
+  ruby: "rb",
+  php: "php",
+  c: "c",
+  cpp: "cpp",
+  csharp: "cs",
+  text: "txt",
+};
+
+/** File extension (no dot) for downloading a stored artifact's original source. */
+export function extensionForArtifact(
+  type: string,
+  language: string | null | undefined,
+): string {
+  if (type === "html") return "html";
+  if (type === "markdown") return "md";
+  return (language && LANGUAGE_EXTENSION[language]) || "txt";
+}
+
 const HTML_HEAD = /^(<!doctype html|<html|<!--|<head|<body|<\?xml)/i;
 const HTML_TAIL = /<\/html\s*>/i;
 const MARKDOWN_LINE = /^(#{1,6}\s|[*\-]\s|\d+\.\s|\|.*\|\s*$|>\s|```)/;
