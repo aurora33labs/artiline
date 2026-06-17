@@ -89,10 +89,14 @@ export function rawContentPath(opts: {
   slug: string;
   versionNumber?: number | null;
   pw?: string | null;
+  // When true, the route serves the original source as a file download
+  // (Content-Disposition: attachment) instead of the inline iframe document.
+  download?: boolean;
 }): string {
   const params = new URLSearchParams();
   if (opts.versionNumber != null) params.set("v", String(opts.versionNumber));
   if (opts.pw) params.set("pw", opts.pw);
+  if (opts.download) params.set("download", "1");
   const qs = params.toString();
   return `/api/artifacts/raw/${opts.slug}${qs ? `?${qs}` : ""}`;
 }

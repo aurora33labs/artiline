@@ -1,12 +1,15 @@
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { db, schema } from "@/lib/db";
 import { evaluateAccess } from "@/lib/visibility";
 import {
   resolveCurrentArtifact,
   resolveArtifactVersion,
 } from "@/lib/artifact-resolve";
 import { getContent } from "@/lib/artifact-content";
-import { isReactRenderable } from "@/lib/detect-artifact";
+import { extensionForArtifact, isReactRenderable } from "@/lib/detect-artifact";
 import { renderReactWrapper } from "@/lib/react-wrapper";
+import { slugify } from "@/lib/tenant";
 
 export const runtime = "nodejs";
 
@@ -26,6 +29,7 @@ export async function GET(
   const url = new URL(req.url);
   const v = url.searchParams.get("v");
   const pw = url.searchParams.get("pw");
+  const download = url.searchParams.get("download") === "1";
 
   const versionNumber = v ? Number(v) : null;
   const resolved =
@@ -35,6 +39,41 @@ export async function GET(
   if (!resolved) return new Response("Not found", { status: 404 });
 
   const session = await auth();
+
+  // Download mode: serve the ORIGINAL source as a file attachment, restricted to
+  // workspace members (stricter than view access — a public visitor can view but
+  // not download). Membership implies view rights for any visibility.
+  if (download) {
+    const userId = session?.user?.id;
+    if (!userId) return new Response("Forbidden", { status: 403 });
+    const [member] = await db
+      .select({ userId: schema.workspaceMembers.userId })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, resolved.artifact.workspaceId),
+          eq(schema.workspaceMembers.userId, userId),
+        ),
+      )
+      .limit(1);
+    if (!member) return new Response("Forbidden", { status: 403 });
+
+    const source = await getContent(resolved.version);
+    const ext = extensionForArtifact(
+      resolved.version.type,
+      resolved.version.language,
+    );
+    const name = `${slugify(resolved.version.title) || "artifact"}.${ext}`;
+    return new Response(source, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${name}"`,
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }
+
   const access = await evaluateAccess(resolved.artifact, {
     sessionUserId: session?.user?.id ?? null,
     passwordAttempt: pw,

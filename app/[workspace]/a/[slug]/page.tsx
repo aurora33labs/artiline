@@ -93,6 +93,7 @@ export default async function ArtifactInternalView({
         commentsCount={commentsCount}
         artifactId={artifact.id}
         shareHref={shareHref}
+        downloadHref={rawContentPath({ slug: artifact.slug, download: true })}
         canExport={usesIframe}
         canEdit={canEdit}
         canDelete={canEdit}

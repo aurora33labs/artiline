@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Download,
   ImageDown,
   Loader2,
   Share,
@@ -32,6 +33,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
   VISIBILITY_LABEL_KEYS,
@@ -43,6 +52,40 @@ import { ReactionsModal } from "@/components/reactions-modal";
 import { ArtifactSettingsModal } from "@/components/artifact-settings-modal";
 import { PublishVersionDialog } from "@/components/publish-version-dialog";
 
+// Shared so the "Edit" dropdown trigger matches the dock buttons exactly.
+const DOCK_BASE =
+  "group relative size-10 rounded-sm flex items-center justify-center transition-colors bg-surface border border-border hover:bg-surface-2 hover:border-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background data-[state=open]:bg-surface-2 data-[state=open]:border-border-strong";
+const DOCK_TOOLTIP =
+  "absolute right-full mr-2 px-2 py-1 rounded-xs text-[11px] font-display font-medium uppercase tracking-[0.06em] whitespace-nowrap bg-foreground text-background pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150";
+
+// Comfortable ~44px command rows for the "More" menu (anti-misclick). Border is
+// transparent at rest (no layout shift) and shows on hover/focus.
+const MENU_ROW =
+  "gap-3 rounded-lg px-2 py-2 text-sm border border-transparent focus:border-border-strong hover:border-border-strong data-[variant=destructive]:focus:border-destructive/40 data-[variant=destructive]:hover:border-destructive/40";
+const MENU_LABEL = "px-2 pb-1 pt-1 text-[10px] uppercase tracking-[0.08em]";
+
+/** Rounded icon chip used in the menu rows. */
+function MenuChip({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <span
+      className={cn(
+        "flex size-7 shrink-0 items-center justify-center rounded-md",
+        tone === "danger"
+          ? "bg-destructive/10 text-destructive"
+          : "bg-surface-2 text-muted-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function FloatingActionCard({
   title,
   type,
@@ -50,6 +93,7 @@ export function FloatingActionCard({
   commentsCount,
   artifactId,
   shareHref,
+  downloadHref,
   canExport,
   canEdit,
   canDelete,
@@ -69,6 +113,7 @@ export function FloatingActionCard({
   commentsCount: number;
   artifactId: string;
   shareHref: string;
+  downloadHref?: string;
   canExport: boolean;
   canEdit: boolean;
   canDelete?: boolean;
@@ -101,6 +146,10 @@ export function FloatingActionCard({
   const fmtDate = (d: Date) =>
     format.dateTime(d, { day: "numeric", month: "short", year: "numeric" });
   const hasUpdates = versionCount > 1;
+  const canManage = !!canEdit && !!workspaceSlug && !!artifactSlug;
+  const canChangeAccess = !!canEdit && !!workspaceSlug;
+  const canRemove = !!canDelete && !!workspaceSlug;
+  const hasEditorItems = canManage || canChangeAccess || canRemove;
 
   async function copyLink() {
     const url = new URL(shareHref, window.location.origin).toString();
@@ -114,6 +163,18 @@ export function FloatingActionCard({
 
   function translateError(code: string): string {
     return te.has(code) ? te(code) : tt("pngError");
+  }
+
+  function downloadFile() {
+    if (!downloadHref) return;
+    // Same-origin attachment response; the synthetic anchor lets the server's
+    // Content-Disposition filename win and downloads without leaving the page.
+    const a = document.createElement("a");
+    a.href = downloadHref;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   async function exportPng() {
@@ -136,15 +197,19 @@ export function FloatingActionCard({
 
   return (
     <>
-      <aside className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col items-end">
-        <div className="bg-surface/95 backdrop-blur-md border border-border rounded-md p-1 flex flex-col gap-0.5">
+      <aside className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col items-end gap-2">
+        {/* Back floats as its own pill just above the action dock — same right
+            edge (no corner obstruction), but separated from the actions. */}
+        <div className="bg-surface/95 backdrop-blur-md border border-border rounded-md p-1">
           <DockButton
             icon={<ArrowLeft className="size-5" />}
             label={t("back")}
             as="link"
             href={backHref}
           />
-          <div className="h-px my-0.5 bg-border" />
+        </div>
+
+        <div className="bg-surface/95 backdrop-blur-md border border-border rounded-md p-1 flex flex-col gap-0.5">
           <DockButton
             icon={
               copied ? (
@@ -167,66 +232,114 @@ export function FloatingActionCard({
             label={t("react")}
             onClick={() => setReactionsOpen(true)}
           />
-
-          {canExport && (
+          {downloadHref && (
             <DockButton
-              icon={
-                exporting ? (
-                  <Loader2 className="size-5 animate-spin" />
-                ) : (
-                  <ImageDown className="size-5" />
-                )
-              }
-              label={t("exportPng")}
-              onClick={exportPng}
-              disabled={exporting}
+              icon={<Download className="size-5" />}
+              label={t("download")}
+              onClick={downloadFile}
             />
           )}
 
-          {canEdit && workspaceSlug && artifactSlug && (
-            <DockButton
-              icon={<RefreshCw className="size-5" />}
-              label={t("updateVersion")}
-              onClick={() => setPublishOpen(true)}
-              accent
-            />
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("more")}
+                className={DOCK_BASE}
+              >
+                <MoreHorizontal className="size-5" />
+                <span role="tooltip" className={DOCK_TOOLTIP}>
+                  {t("more")}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="left"
+              align="end"
+              sideOffset={10}
+              className="min-w-56 p-1.5"
+            >
+              <DropdownMenuLabel className={MENU_LABEL}>
+                {t("actions")}
+              </DropdownMenuLabel>
+              {canExport && (
+                <DropdownMenuItem
+                  className={MENU_ROW}
+                  disabled={exporting}
+                  onSelect={() => setTimeout(exportPng)}
+                >
+                  <MenuChip>
+                    <ImageDown />
+                  </MenuChip>
+                  {t("exportPng")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                className={MENU_ROW}
+                onSelect={() => setTimeout(() => setInfoOpen(true))}
+              >
+                <MenuChip>
+                  <Info />
+                </MenuChip>
+                {t("info")}
+              </DropdownMenuItem>
 
-          {canEdit && workspaceSlug && artifactSlug && (
-            <DockButton
-              icon={<GitBranch className="size-5" />}
-              label="Versions"
-              as="link"
-              href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
-            />
-          )}
-
-          {canEdit && workspaceSlug && (
-            <DockButton
-              icon={<Settings className="size-5" />}
-              label={t("visibility")}
-              onClick={() => setSettingsOpen(true)}
-              accent
-            />
-          )}
-
-          <div className="h-px my-0.5 bg-border" />
-          <DockButton
-            icon={<Info className="size-5" />}
-            label={t("info")}
-            onClick={() => setInfoOpen(true)}
-          />
-
-          {canDelete && workspaceSlug && (
-            <>
-              <div className="h-px my-0.5 bg-border" />
-              <DockButton
-                icon={<Trash2 className="size-5" />}
-                label={t("deleteBtn")}
-                onClick={() => setDeleteOpen(true)}
-              />
-            </>
-          )}
+              {hasEditorItems && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className={MENU_LABEL}>
+                    {t("edit")}
+                  </DropdownMenuLabel>
+                  {canManage && (
+                    <>
+                      <DropdownMenuItem
+                        className={MENU_ROW}
+                        onSelect={() => setTimeout(() => setPublishOpen(true))}
+                      >
+                        <MenuChip>
+                          <RefreshCw />
+                        </MenuChip>
+                        {t("updateVersion")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={MENU_ROW}>
+                        <Link
+                          href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
+                        >
+                          <MenuChip>
+                            <GitBranch />
+                          </MenuChip>
+                          {t("versions")}
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {canChangeAccess && (
+                    <DropdownMenuItem
+                      className={MENU_ROW}
+                      onSelect={() => setTimeout(() => setSettingsOpen(true))}
+                    >
+                      <MenuChip>
+                        <Settings />
+                      </MenuChip>
+                      {t("changeAccess")}
+                    </DropdownMenuItem>
+                  )}
+                  {canRemove && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      className={MENU_ROW}
+                      onSelect={() => setTimeout(() => setDeleteOpen(true))}
+                    >
+                      <MenuChip tone="danger">
+                        <Trash2 />
+                      </MenuChip>
+                      {t("deleteBtn")}
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
@@ -290,6 +403,16 @@ export function FloatingActionCard({
                 }}
               />
             )}
+            {downloadHref && (
+              <SheetRow
+                icon={<Download className="size-4" />}
+                label={t("download")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  downloadFile();
+                }}
+              />
+            )}
             {canEdit && workspaceSlug && artifactSlug && (
               <SheetRow
                 icon={<RefreshCw className="size-4" />}
@@ -303,17 +426,17 @@ export function FloatingActionCard({
             {canEdit && workspaceSlug && artifactSlug && (
               <SheetRow
                 icon={<GitBranch className="size-4" />}
-                label="Versions"
+                label={t("versions")}
                 href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
                 trailing={
                   <ChevronRight className="size-4 text-muted-foreground" />
                 }
               />
             )}
-            {canEdit && workspaceSlug && (
+            {canChangeAccess && (
               <SheetRow
                 icon={<Settings className="size-4" />}
-                label={t("visibility")}
+                label={t("changeAccess")}
                 onClick={() => {
                   setMoreOpen(false);
                   setSettingsOpen(true);
@@ -588,9 +711,7 @@ function DockButton({
   accent?: boolean;
 }) {
   const baseClasses = cn(
-    "group relative size-10 rounded-sm flex items-center justify-center transition-colors",
-    "bg-surface border border-border hover:bg-surface-2 hover:border-border-strong",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+    DOCK_BASE,
     // Accent buttons read as normal at rest. They turn primary only on keyboard
     // focus or while pressed/active — never on hover, never by default.
     accent &&
@@ -609,15 +730,7 @@ function DockButton({
           {badge > 99 ? "99+" : badge}
         </span>
       )}
-      <span
-        role="tooltip"
-        className={cn(
-          "absolute right-full mr-2 px-2 py-1 rounded-xs text-[11px] font-display font-medium uppercase tracking-[0.06em] whitespace-nowrap",
-          "bg-foreground text-background pointer-events-none",
-          "opacity-0 group-hover:opacity-100",
-          "transition-opacity duration-150",
-        )}
-      >
+      <span role="tooltip" className={DOCK_TOOLTIP}>
         {label}
       </span>
     </>
