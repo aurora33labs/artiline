@@ -121,7 +121,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
       <li
         key={annotation.commentId}
         className={cn(
-          "mx-3 rounded-lg border border-border bg-surface-2 overflow-hidden transition-colors hover:border-border-strong",
+          "mx-2 sm:mx-3 rounded-lg border border-border bg-surface-2 overflow-hidden transition-colors hover:border-border-strong",
           selectedAnnotationId === annotation.commentId && "border-primary/50",
           isResolvedSection && "opacity-60"
         )}
@@ -251,31 +251,31 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
       className={cn(
         "fixed right-0 top-0 h-full z-50 bg-surface/95 backdrop-blur-md border-l border-border",
         "transition-all duration-200 ease-in-out flex flex-col",
-        sidebarOpen ? "w-80 md:w-96" : "w-0 overflow-hidden pointer-events-none"
+        sidebarOpen ? "w-full sm:w-80 md:w-96" : "w-0 overflow-hidden pointer-events-none"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
-        <h2 className="font-display font-medium text-base uppercase tracking-[0.06em]">
+      <div className="flex items-center justify-between px-3 sm:px-4 h-12 sm:h-14 border-b border-border shrink-0 gap-2">
+        <h2 className="font-display font-medium text-xs sm:text-sm uppercase tracking-[0.06em] truncate">
           {tn("modalTitle")}
           <span className="ml-1.5 text-muted-foreground">({open.length})</span>
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           {artifactId && (
             <button
               type="button"
               onClick={() => { setGlobalDraftOpen(true); }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-base font-medium hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 rounded-md bg-primary text-primary-foreground text-xs sm:text-sm font-medium hover:bg-primary/90 transition-colors"
               title="Nuevo comentario"
             >
-              <PlusCircle className="size-3.5" />
-              Nuevo
+              <PlusCircle className="size-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Nuevo</span>
             </button>
           )}
           <button
             type="button"
             onClick={() => { setSidebarOpen(false); }}
-            className="p-1.5 hover:bg-surface-2 rounded-md transition-colors text-muted-foreground hover:text-foreground border border-border"
+            className="p-1.5 hover:bg-surface-2 rounded-md transition-colors text-muted-foreground hover:text-foreground border border-border shrink-0"
           >
             <ChevronRight className="size-4" />
           </button>
