@@ -76,6 +76,9 @@ function AnnotationInner({
   initialAnnotations: AnnotationData[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Wraps only the artifact content — used for inspect-mode hit testing so that
+  // app UI (dock, sidebar, overlays) is excluded from element selection.
+  const contentRef = useRef<HTMLDivElement>(null);
   const {
     annotations,
     setAnnotations,
@@ -273,7 +276,7 @@ function AnnotationInner({
           }
         }}
       >
-        {children}
+        <div ref={contentRef}>{children}</div>
 
         {/* Saved area rect overlays — only unresolved */}
         {annotations
@@ -431,8 +434,10 @@ function AnnotationInner({
               (el as HTMLElement).style.pointerEvents = "none";
               const target = document.elementFromPoint(e.clientX, e.clientY);
               (el as HTMLElement).style.pointerEvents = "auto";
-              if (target && target !== el && containerRef.current?.contains(target)) {
+              if (target && target !== el && contentRef.current?.contains(target)) {
                 setHoverHighlight(target.getBoundingClientRect());
+              } else {
+                setHoverHighlight(null);
               }
             }}
             onMouseLeave={() => setHoverHighlight(null)}
@@ -441,7 +446,7 @@ function AnnotationInner({
               (el as HTMLElement).style.pointerEvents = "none";
               const target = document.elementFromPoint(e.clientX, e.clientY);
               (el as HTMLElement).style.pointerEvents = "auto";
-              if (!target || !containerRef.current?.contains(target)) return;
+              if (!target || !contentRef.current?.contains(target)) return;
               const xpath = getXPath(target);
               const targetRect = target.getBoundingClientRect();
               const cr = containerRef.current!.getBoundingClientRect();
