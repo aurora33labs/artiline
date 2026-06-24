@@ -260,16 +260,17 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           {tn("modalTitle")}
           <span className="ml-1.5 text-muted-foreground">({open.length})</span>
         </h2>
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Desktop buttons — hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
           {artifactId && (
             <button
               type="button"
               onClick={() => { setGlobalDraftOpen(true); }}
-              className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 rounded-md bg-primary text-primary-foreground text-xs sm:text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
               title="Nuevo comentario"
             >
               <PlusCircle className="size-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">Nuevo</span>
+              Nuevo
             </button>
           )}
           <button
@@ -383,6 +384,32 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           </div>
         );
       })()}
+      {/* Mobile bottom bar */}
+      <div className="sm:hidden shrink-0 h-16 border-t border-border bg-surface/95 backdrop-blur flex items-center px-4">
+        {/* Left spacer */}
+        <div className="flex-1" />
+        {/* Center: Nuevo */}
+        {artifactId && (
+          <button
+            type="button"
+            onClick={() => { setGlobalDraftOpen(true); }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <PlusCircle className="size-4" />
+            Nuevo
+          </button>
+        )}
+        {/* Right: close */}
+        <div className="flex-1 flex justify-end">
+          <button
+            type="button"
+            onClick={() => { setSidebarOpen(false); }}
+            className="p-2.5 rounded-full hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground border border-border"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        </div>
+      </div>
     </aside>
   );
 }
