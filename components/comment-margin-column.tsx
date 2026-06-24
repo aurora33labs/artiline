@@ -77,7 +77,7 @@ export function CommentMarginColumn({
 
   return (
     <div
-      className="absolute right-0 top-0 w-[280px] hidden md:block pointer-events-none"
+      className="absolute right-16 top-0 w-[280px] hidden md:block pointer-events-none"
       style={{ height: containerHeight || undefined }}
     >
       {annotations.map((annotation) => {
