@@ -185,34 +185,15 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               </button>
             )}
 
-            {/* Delete: 2-step */}
-            {isPendingDelete ? (
-              <span className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => handleDelete(annotation.commentId)}
-                  className="text-[10px] text-destructive hover:text-destructive/80 px-1 py-0.5"
-                >
-                  Sí
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPendingDeleteId(null)}
-                  className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5"
-                >
-                  No
-                </button>
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPendingDeleteId(annotation.commentId)}
-                className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
-                title="Eliminar"
-              >
-                <Trash2 className="size-3" />
-              </button>
-            )}
+            {/* Delete: primer clic abre strip de confirmación al fondo */}
+            <button
+              type="button"
+              onClick={() => setPendingDeleteId(annotation.commentId)}
+              className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
+              title="Eliminar"
+            >
+              <Trash2 className="size-3" />
+            </button>
           </div>
         </div>
 
@@ -369,6 +350,39 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           </div>
         )}
       </div>
+
+      {/* Delete confirmation strip — fijo al fondo del sidebar */}
+      {pendingDeleteId && (() => {
+        const target = annotations.find((a) => a.commentId === pendingDeleteId);
+        return (
+          <div className="shrink-0 border-t border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-destructive">¿Eliminar comentario?</p>
+              {target && (
+                <p className="text-xs text-muted-foreground line-clamp-2 italic">
+                  &ldquo;{target.body.slice(0, 100)}{target.body.length > 100 ? "…" : ""}&rdquo;
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(pendingDeleteId)}
+              >
+                Eliminar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPendingDeleteId(null)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </aside>
   );
 }

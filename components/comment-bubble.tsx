@@ -253,39 +253,42 @@ export function CommentBubble({
               </button>
             )}
 
-            {/* Delete: 2-step confirmation */}
+            {/* Delete: primer clic muestra panel de confirmación debajo */}
             <div className="flex items-center gap-1 ml-auto">
-              {pendingDelete ? (
-                <>
-                  <span className="text-[10px] text-muted-foreground">¿Borrar?</span>
-                  <button
-                    type="button"
-                    onClick={handleDeleteConfirmed}
-                    disabled={isDeleting}
-                    className="text-[10px] text-destructive hover:text-destructive/80 transition-colors px-1"
-                  >
-                    Sí
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setPendingDelete(false); }}
-                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1"
-                  >
-                    No
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setPendingDelete(true); }}
-                  className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
-                  title="Eliminar"
-                >
-                  <Trash2 className="size-3" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setPendingDelete(true); }}
+                className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
+                title="Eliminar"
+              >
+                <Trash2 className="size-3" />
+              </button>
             </div>
           </div>
+
+          {/* Confirmación de borrado — panel dentro de la burbuja */}
+          {pendingDelete && (
+            <div className="mx-3 mb-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+              <p className="text-xs text-destructive font-medium">¿Eliminar este comentario?</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteConfirmed}
+                  disabled={isDeleting}
+                  className="px-2.5 py-1 rounded text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? "Eliminando..." : "Eliminar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setPendingDelete(false); }}
+                  className="px-2.5 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
