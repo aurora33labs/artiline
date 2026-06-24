@@ -86,7 +86,17 @@ function AnnotationInner({
     if (!annotation || !containerRef.current) return;
     const contentHeight = containerRef.current.offsetHeight;
     const top = annotation.y * contentHeight;
-    window.scrollTo({ top: Math.max(0, top - window.innerHeight / 3), behavior: "smooth" });
+    // The page scroll container is <main class="fixed inset-0 overflow-auto">,
+    // not window — find the nearest scrollable ancestor.
+    let scroller: HTMLElement | null = containerRef.current.parentElement;
+    while (scroller) {
+      const oy = window.getComputedStyle(scroller).overflowY;
+      if (oy === "auto" || oy === "scroll") break;
+      scroller = scroller.parentElement;
+    }
+    const target = Math.max(0, top - window.innerHeight / 3);
+    if (scroller) scroller.scrollTo({ top: target, behavior: "smooth" });
+    else window.scrollTo({ top: target, behavior: "smooth" });
   }, [activeCommentId]);
 
   // Cancel placing mode on Escape
