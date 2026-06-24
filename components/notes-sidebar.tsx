@@ -112,21 +112,22 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           {tn("modalTitle")}
           <span className="ml-1.5 text-muted-foreground">({annotations.length})</span>
         </h2>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {artifactId && (
             <button
               type="button"
               onClick={() => { setGlobalDraftOpen(true); }}
-              className="p-1 hover:bg-surface-2 rounded-sm transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
               title="Nuevo comentario"
             >
-              <PlusCircle className="size-4" />
+              <PlusCircle className="size-3.5" />
+              Nuevo
             </button>
           )}
           <button
             type="button"
             onClick={() => { setSidebarOpen(false); }}
-            className="p-1 hover:bg-surface-2 rounded-sm transition-colors"
+            className="p-1.5 hover:bg-surface-2 rounded-md transition-colors text-muted-foreground hover:text-foreground border border-border"
           >
             <ChevronRight className="size-4" />
           </button>
