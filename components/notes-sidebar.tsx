@@ -220,7 +220,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             {artifactId && !isResolvedSection && (
               <form
                 onSubmit={(e) => handleReplySubmit(e, annotation.commentId)}
-                className="flex items-center gap-2 pt-1"
+                className="flex items-center gap-2"
               >
                 <input
                   value={replyBodies[annotation.commentId] ?? ""}
@@ -229,7 +229,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                   }
                   placeholder="Responder..."
                   maxLength={500}
-                  className="flex-1 text-base bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
+                  className="flex-1 text-sm bg-surface rounded-md border border-border px-2.5 py-1.5 outline-none placeholder:text-muted-foreground focus:border-primary/50 transition-colors"
                 />
                 <button
                   type="submit"
