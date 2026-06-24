@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/components/annotation-provider";
-import { NotesSidebar } from "@/components/notes-sidebar";
 import { NoteMarker } from "@/components/note-marker";
 import { CommentMarginColumn } from "@/components/comment-margin-column";
 import { addComment } from "@/app/actions/social";
@@ -281,13 +280,6 @@ function AnnotationInner({
       >
         {children}
         {renderMarkers()}
-        {isPlacing && artifactType === "html" && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-            <div className="bg-primary/10 border-2 border-primary border-dashed rounded-lg px-6 py-3 text-sm text-primary font-medium">
-              Click inside the preview to place a note
-            </div>
-          </div>
-        )}
       </div>
       <CommentMarginColumn
         annotations={annotations}
@@ -305,13 +297,6 @@ function AnnotationInner({
         onDelete={async (commentId) => { removeAnnotation(commentId); }}
         artifactId={artifactId}
         versionId={versionId}
-        workspaceSlug={workspaceSlug}
-        slug={slug}
-      />
-      <NotesSidebar
-        artifactId={artifactId}
-        versionId={versionId}
-        artifactType={artifactType}
         workspaceSlug={workspaceSlug}
         slug={slug}
       />
