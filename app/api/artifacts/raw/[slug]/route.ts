@@ -13,9 +13,22 @@ import { slugify } from "@/lib/tenant";
 
 export const runtime = "nodejs";
 
-// No annotation script needed: area annotations are rendered as overlays
-// on the parent page (annotation-wrapper.tsx), so no iframe injection required.
-const ANNOTATION_SCRIPT = "";
+// Minimal script: reports the iframe document's full height to the parent so
+// the iframe element can be sized to its content (no internal iframe scroll).
+// Area annotation rects are rendered as overlays on the parent page — the
+// iframe just needs to be tall enough that parent-page coords match content coords.
+const ANNOTATION_SCRIPT = `<script>
+(function(){
+  function report(){
+    var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);
+    window.parent.postMessage({type:'IFRAME_HEIGHT',height:h},'*');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',report);
+  else report();
+  window.addEventListener('load',report);
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(report).observe(document.documentElement);
+})();
+</script>`;
 
 /**
  * Streams an artifact version's raw content for the viewer iframe (and the edit
