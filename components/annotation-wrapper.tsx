@@ -127,7 +127,7 @@ function AnnotationInner({
         anchorEndOffset: a.anchorEndOffset ?? 0,
         active: a.commentId === activeCommentId,
       }));
-    iframe.contentWindow.postMessage({ type: "HIGHLIGHT_ANNOTATIONS", annotations: textAnnotations }, "*");
+    iframe.contentWindow.postMessage({ type: "HIGHLIGHT_ANNOTATIONS", annotations: textAnnotations }, window.location.origin);
   }, [annotations, activeCommentId, artifactType]);
 
   // postMessage listener for iframe events
@@ -135,6 +135,8 @@ function AnnotationInner({
     if (artifactType !== "html") return;
 
     const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
 
       if (event.data.type === "TEXT_SELECTION") {
@@ -294,7 +296,7 @@ function AnnotationInner({
         onActivate={(id) => {
           setActiveCommentId(id);
           if (id && artifactType === "html" && iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, "*");
+            iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, window.location.origin);
           }
         }}
         pendingSelection={pendingSelection}
