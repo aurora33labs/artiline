@@ -11,6 +11,7 @@ import {
   jsonb,
   doublePrecision,
 } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 
 const id = () => text("id").$defaultFn(() => nanoid(21)).primaryKey();
@@ -252,11 +253,16 @@ export const comments = pgTable(
     userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
     authorName: text("author_name"),
     body: text("body").notNull(),
+    parentCommentId: text("parent_comment_id").references(
+      (): AnyPgColumn => comments.id,
+      { onDelete: "cascade" },
+    ),
     createdAt: createdAt(),
   },
   (t) => [
     index("comments_artifact_idx").on(t.artifactId),
     index("comments_version_idx").on(t.versionId),
+    index("comments_parent_idx").on(t.parentCommentId),
   ],
 );
 

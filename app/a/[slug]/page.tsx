@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { Lock, FileX, Ban, AlertTriangle } from "lucide-react";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, asc, and, isNull, isNotNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
@@ -168,8 +168,31 @@ export default async function PublicArtifact({
     .from(schema.comments)
     .leftJoin(schema.annotations, eq(schema.annotations.commentId, schema.comments.id))
     .leftJoin(schema.users, eq(schema.users.id, schema.comments.userId))
-    .where(eq(schema.comments.artifactId, artifact!.id))
+    .where(and(eq(schema.comments.artifactId, artifact!.id), isNull(schema.comments.parentCommentId)))
     .orderBy(desc(schema.comments.createdAt));
+
+  const topLevelIds = annotationRows.map((r) => r.commentId);
+  const replyRows = topLevelIds.length > 0
+    ? await db
+        .select({
+          id: schema.comments.id,
+          parentCommentId: schema.comments.parentCommentId,
+          body: schema.comments.body,
+          authorName: schema.comments.authorName,
+          userName: schema.users.name,
+          userEmail: schema.users.email,
+          createdAt: schema.comments.createdAt,
+        })
+        .from(schema.comments)
+        .leftJoin(schema.users, eq(schema.users.id, schema.comments.userId))
+        .where(
+          and(
+            eq(schema.comments.artifactId, artifact!.id),
+            isNotNull(schema.comments.parentCommentId),
+          ),
+        )
+        .orderBy(asc(schema.comments.createdAt))
+    : [];
 
   const initialAnnotations: AnnotationData[] = annotationRows
     .filter((r) => r.x !== null && r.y !== null)
@@ -193,6 +216,16 @@ export default async function PublicArtifact({
       userName: r.userName,
       userEmail: r.userEmail,
       createdAt: r.createdAt.toISOString(),
+      replies: replyRows
+        .filter((rr) => rr.parentCommentId === r.commentId)
+        .map((rr) => ({
+          id: rr.id,
+          body: rr.body,
+          authorName: rr.authorName,
+          userName: rr.userName,
+          userEmail: rr.userEmail,
+          createdAt: rr.createdAt.toISOString(),
+        })),
     }));
 
   const isHtml = version!.type === "html";

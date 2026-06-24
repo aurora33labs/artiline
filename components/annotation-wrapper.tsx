@@ -28,6 +28,14 @@ export type AnnotationData = {
   userName: string | null;
   userEmail: string | null;
   createdAt: string;
+  replies: Array<{
+    id: string;
+    body: string;
+    authorName: string | null;
+    userName: string | null;
+    userEmail: string | null;
+    createdAt: string;
+  }>;
 };
 
 function AnnotationInner({
@@ -275,7 +283,12 @@ function AnnotationInner({
           </div>
         )}
       </div>
-      <NotesSidebar />
+      <NotesSidebar
+        artifactId={artifactId}
+        versionId={versionId}
+        workspaceSlug={workspaceSlug}
+        slug={slug}
+      />
     </div>
   );
 }

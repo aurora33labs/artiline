@@ -45,6 +45,9 @@ export function CommentMarginColumn({
   onActivate,
   onConfirmComment,
   onDelete,
+  artifactId,
+  workspaceSlug,
+  slug,
 }: CommentMarginColumnProps) {
   const { commentDraft, setCommentDraft } = useAnnotations();
 
@@ -91,6 +94,9 @@ export function CommentMarginColumn({
               onActivate={() => onActivate(annotation.commentId)}
               onDeactivate={() => onActivate(null)}
               onDelete={onDelete}
+              artifactId={artifactId}
+              workspaceSlug={workspaceSlug}
+              slug={slug}
             />
           </div>
         );
@@ -111,6 +117,7 @@ export function CommentMarginColumn({
           anchorEndXPath: null, anchorEndOffset: null,
           body: "", authorName: null, userName: null, userEmail: null,
           createdAt: new Date().toISOString(),
+          replies: [],
         };
         const top = tops.get("__draft__") ?? commentDraft.y * containerHeight;
         return (

@@ -2,6 +2,15 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 
+export type Reply = {
+  id: string;
+  body: string;
+  authorName: string | null;
+  userName: string | null;
+  userEmail: string | null;
+  createdAt: string;
+};
+
 export type Annotation = {
   id: string;
   commentId: string;
@@ -22,6 +31,7 @@ export type Annotation = {
   userName: string | null;
   userEmail: string | null;
   createdAt: string;
+  replies: Reply[];
 };
 
 // Normalized rect (all 0-1) for a dragged area selection

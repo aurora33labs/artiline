@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
@@ -86,13 +86,14 @@ export async function addComment(formData: FormData) {
     })
     .returning({ id: schema.comments.id });
 
-  if (data.x !== null && data.y !== null) {
+  const isGlobal = data.targetType === "global";
+  if (isGlobal || (data.x !== null && data.y !== null)) {
     const annotationValues = {
       commentId: comment.id,
-      x: data.x as number,
-      y: data.y as number,
-      width: data.width ?? null,
-      height: data.height ?? null,
+      x: isGlobal ? 0 : (data.x as number),
+      y: isGlobal ? 0 : (data.y as number),
+      width: isGlobal ? null : (data.width ?? null),
+      height: isGlobal ? null : (data.height ?? null),
       targetType: data.targetType ?? "point",
       iframeX: data.iframeX ?? null,
       iframeY: data.iframeY ?? null,
@@ -129,7 +130,7 @@ const updateAnnotationPositionSchema = z.object({
   iframeY: z.number().min(0).max(1).optional().nullable(),
 });
 
-async function requireAnnotationAccess(commentId: string) {
+async function requireCommentAccess(commentId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
 
@@ -139,10 +140,9 @@ async function requireAnnotationAccess(commentId: string) {
       commentUserId: schema.comments.userId,
       workspaceId: schema.artifacts.workspaceId,
     })
-    .from(schema.annotations)
-    .innerJoin(schema.comments, eq(schema.comments.id, schema.annotations.commentId))
+    .from(schema.comments)
     .innerJoin(schema.artifacts, eq(schema.artifacts.id, schema.comments.artifactId))
-    .where(eq(schema.annotations.commentId, commentId))
+    .where(eq(schema.comments.id, commentId))
     .limit(1);
 
   if (!row) throw new Error("NOT_FOUND");
@@ -164,6 +164,9 @@ async function requireAnnotationAccess(commentId: string) {
 
   return session;
 }
+
+// Keep old name for callers that haven't been updated yet
+const requireAnnotationAccess = requireCommentAccess;
 
 export async function updateAnnotationPosition(input: {
   commentId: string;
@@ -190,9 +193,43 @@ export async function updateAnnotationPosition(input: {
     .where(eq(schema.annotations.commentId, data.commentId));
 }
 
+export async function deleteComment(commentId: string) {
+  await requireCommentAccess(commentId);
+  await db.delete(schema.comments).where(eq(schema.comments.id, commentId));
+}
+
+// Alias kept for callers that still reference the old name
 export async function deleteAnnotation(commentId: string) {
-  await requireAnnotationAccess(commentId);
-  await db.delete(schema.annotations).where(eq(schema.annotations.commentId, commentId));
+  return deleteComment(commentId);
+}
+
+const addReplySchema = z.object({
+  parentCommentId: z.string().min(1),
+  body: z.string().min(1).max(2000),
+  artifactId: z.string().min(1),
+  workspaceSlug: z.string().optional().nullable(),
+  slug: z.string().optional().nullable(),
+});
+
+export async function addReply(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  const data = addReplySchema.parse({
+    parentCommentId: formData.get("parentCommentId"),
+    body: formData.get("body"),
+    artifactId: formData.get("artifactId"),
+    workspaceSlug: formData.get("workspaceSlug") || null,
+    slug: formData.get("slug") || null,
+  });
+  const { artifact } = await loadArtifactWithAccess(data.artifactId);
+  await db.insert(schema.comments).values({
+    artifactId: artifact.id,
+    userId: session.user.id,
+    body: data.body,
+    parentCommentId: data.parentCommentId,
+  });
+  if (data.workspaceSlug && data.slug) revalidatePath(`/${data.workspaceSlug}/a/${data.slug}`);
+  if (data.slug) revalidatePath(`/a/${data.slug}`);
 }
 
 const toggleReactionSchema = z.object({

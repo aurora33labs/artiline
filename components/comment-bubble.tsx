@@ -5,7 +5,7 @@ import { Trash2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteAnnotation } from "@/app/actions/social";
+import { deleteComment, addReply } from "@/app/actions/social";
 import type { Annotation } from "@/components/annotation-provider";
 
 interface CommentBubbleProps {
@@ -19,6 +19,9 @@ interface CommentBubbleProps {
   draftDefaultText?: string;
   onDraftSubmit?: (body: string) => Promise<void>;
   onDraftCancel?: () => void;
+  artifactId?: string;
+  workspaceSlug?: string;
+  slug?: string;
 }
 
 function formatRelativeTime(dateStr: string) {
@@ -47,10 +50,15 @@ export function CommentBubble({
   draftDefaultText = "",
   onDraftSubmit,
   onDraftCancel,
+  artifactId,
+  workspaceSlug,
+  slug,
 }: CommentBubbleProps) {
   const [draftBody, setDraftBody] = useState(draftDefaultText);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [replyBody, setReplyBody] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const displayName = annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? "Anónimo";
 
@@ -70,7 +78,7 @@ export function CommentBubble({
     e.stopPropagation();
     setIsDeleting(true);
     try {
-      await deleteAnnotation(annotation.commentId);
+      await deleteComment(annotation.commentId);
       onDelete(annotation.commentId);
     } finally {
       setIsDeleting(false);
@@ -85,6 +93,24 @@ export function CommentBubble({
       await onDraftSubmit(draftBody.trim());
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyBody.trim() || !artifactId) return;
+    setIsReplying(true);
+    try {
+      const fd = new FormData();
+      fd.set("parentCommentId", annotation.commentId);
+      fd.set("body", replyBody.trim());
+      fd.set("artifactId", artifactId);
+      if (workspaceSlug) fd.set("workspaceSlug", workspaceSlug);
+      if (slug) fd.set("slug", slug);
+      await addReply(fd);
+      setReplyBody("");
+    } finally {
+      setIsReplying(false);
     }
   };
 
@@ -154,21 +180,71 @@ export function CommentBubble({
               &ldquo;{annotation.selectedText.slice(0, 60)}{annotation.selectedText.length > 60 ? "…" : ""}&rdquo;
             </p>
           )}
+          {!isActive && annotation.replies.length > 0 && (
+            <p className="text-[9px] text-muted-foreground mt-1 flex items-center gap-0.5">
+              <MessageSquare className="size-2.5" />
+              {annotation.replies.length}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Expanded actions */}
+      {/* Expanded: replies + reply input + delete */}
       {isActive && (
-        <div className="flex items-center justify-end gap-1 px-3 pb-2 border-t border-border pt-2 mt-1">
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
-            title="Eliminar"
-          >
-            <Trash2 className="size-3.5" />
-          </button>
+        <div onClick={(e) => e.stopPropagation()}>
+          {annotation.replies.length > 0 && (
+            <div className="border-t border-border px-3 py-2 space-y-2">
+              {annotation.replies.map((reply) => (
+                <div key={reply.id} className="flex gap-2">
+                  <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold font-display">
+                    {getInitials(reply.userName ?? reply.authorName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {reply.userName ?? reply.authorName ?? "Anónimo"}
+                      </span>
+                      <span>{formatRelativeTime(reply.createdAt)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{reply.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {artifactId && (
+            <div className="border-t border-border px-3 py-2">
+              <form onSubmit={handleReplySubmit} className="flex items-center gap-2">
+                <input
+                  value={replyBody}
+                  onChange={(e) => setReplyBody(e.target.value)}
+                  placeholder="Responder..."
+                  maxLength={500}
+                  className="flex-1 text-xs bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
+                />
+                <button
+                  type="submit"
+                  disabled={!replyBody.trim() || isReplying}
+                  className="text-xs text-primary disabled:opacity-40"
+                >
+                  ↩
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-1 px-3 pb-2 border-t border-border pt-2">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
+              title="Eliminar"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
         </div>
       )}
     </div>
