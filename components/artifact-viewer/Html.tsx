@@ -19,6 +19,7 @@ export function HtmlViewer({
       // No source check: sandboxed iframes have a null/opaque origin which can
       // make contentWindow comparisons unreliable. IFRAME_HEIGHT is harmless.
       if (e.data?.type === "IFRAME_HEIGHT" && typeof e.data.height === "number") {
+        console.log("[HtmlViewer] IFRAME_HEIGHT received:", e.data.height);
         setContentHeight(e.data.height);
       }
     };
