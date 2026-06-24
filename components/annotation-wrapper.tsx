@@ -3,6 +3,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/components/annotation-provider";
 import { NoteMarker } from "@/components/note-marker";
+import { NotesSidebar } from "@/components/notes-sidebar";
 import { CommentMarginColumn } from "@/components/comment-margin-column";
 import { addComment } from "@/app/actions/social";
 
@@ -300,6 +301,7 @@ function AnnotationInner({
         workspaceSlug={workspaceSlug}
         slug={slug}
       />
+      <NotesSidebar />
     </div>
   );
 }
