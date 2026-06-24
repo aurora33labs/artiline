@@ -31,6 +31,13 @@ const addCommentSchema = z.object({
   password: z.string().optional().nullable(),
   workspaceSlug: z.string().optional().nullable(),
   slug: z.string().optional().nullable(),
+  x: z.number().min(0).max(1).optional().nullable(),
+  y: z.number().min(0).max(1).optional().nullable(),
+  width: z.number().min(0).max(1).optional().nullable(),
+  height: z.number().min(0).max(1).optional().nullable(),
+  targetType: z.enum(["point", "area", "global"]).optional().nullable(),
+  iframeX: z.number().min(0).max(1).optional().nullable(),
+  iframeY: z.number().min(0).max(1).optional().nullable(),
 });
 
 export async function addComment(formData: FormData) {
@@ -42,6 +49,13 @@ export async function addComment(formData: FormData) {
     password: formData.get("password") || null,
     workspaceSlug: formData.get("workspaceSlug") || null,
     slug: formData.get("slug") || null,
+    x: formData.get("x") ? Number(formData.get("x")) : null,
+    y: formData.get("y") ? Number(formData.get("y")) : null,
+    width: formData.get("width") ? Number(formData.get("width")) : null,
+    height: formData.get("height") ? Number(formData.get("height")) : null,
+    targetType: formData.get("targetType") || null,
+    iframeX: formData.get("iframeX") ? Number(formData.get("iframeX")) : null,
+    iframeY: formData.get("iframeY") ? Number(formData.get("iframeY")) : null,
   });
   const { session, artifact } = await loadArtifactWithAccess(
     data.artifactId,
@@ -51,13 +65,30 @@ export async function addComment(formData: FormData) {
   // Default to current pointer if no explicit versionId supplied
   const versionId = data.versionId ?? artifact.currentVersionId ?? null;
 
-  await db.insert(schema.comments).values({
-    artifactId: artifact.id,
-    versionId,
-    userId: session?.user?.id ?? null,
-    authorName: session?.user?.id ? null : data.authorName ?? "Anónimo",
-    body: data.body,
-  });
+  const [comment] = await db
+    .insert(schema.comments)
+    .values({
+      artifactId: artifact.id,
+      versionId,
+      userId: session?.user?.id ?? null,
+      authorName: session?.user?.id ? null : data.authorName ?? "Anónimo",
+      body: data.body,
+    })
+    .returning({ id: schema.comments.id });
+
+  if (data.x !== null && data.y !== null) {
+    const annotationValues = {
+      commentId: comment.id,
+      x: data.x as number,
+      y: data.y as number,
+      width: data.width ?? null,
+      height: data.height ?? null,
+      targetType: data.targetType ?? "point",
+      iframeX: data.iframeX ?? null,
+      iframeY: data.iframeY ?? null,
+    };
+    await db.insert(schema.annotations).values(annotationValues);
+  }
 
   await emitEvent(artifact.workspaceId, "comment.created", {
     artifactId: artifact.id,
@@ -71,6 +102,44 @@ export async function addComment(formData: FormData) {
     revalidatePath(`/${data.workspaceSlug}/a/${data.slug}`);
   }
   if (data.slug) revalidatePath(`/a/${data.slug}`);
+}
+
+const updateAnnotationPositionSchema = z.object({
+  commentId: z.string().min(1),
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  width: z.number().min(0).max(1).optional().nullable(),
+  height: z.number().min(0).max(1).optional().nullable(),
+  iframeX: z.number().min(0).max(1).optional().nullable(),
+  iframeY: z.number().min(0).max(1).optional().nullable(),
+});
+
+export async function updateAnnotationPosition(input: {
+  commentId: string;
+  x: number;
+  y: number;
+  width?: number | null;
+  height?: number | null;
+  iframeX?: number | null;
+  iframeY?: number | null;
+}) {
+  const data = updateAnnotationPositionSchema.parse(input);
+
+  await db
+    .update(schema.annotations)
+    .set({
+      x: data.x,
+      y: data.y,
+      width: data.width ?? null,
+      height: data.height ?? null,
+      iframeX: data.iframeX ?? null,
+      iframeY: data.iframeY ?? null,
+    })
+    .where(eq(schema.annotations.commentId, data.commentId));
+}
+
+export async function deleteAnnotation(commentId: string) {
+  await db.delete(schema.annotations).where(eq(schema.annotations.commentId, commentId));
 }
 
 const toggleReactionSchema = z.object({

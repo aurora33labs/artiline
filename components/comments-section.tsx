@@ -33,9 +33,17 @@ export async function CommentsSection({
       authorName: schema.comments.authorName,
       userName: schema.users.name,
       userEmail: schema.users.email,
+      annotationX: schema.annotations.x,
+      annotationY: schema.annotations.y,
+      annotationWidth: schema.annotations.width,
+      annotationHeight: schema.annotations.height,
+      annotationTargetType: schema.annotations.targetType,
+      annotationIframeX: schema.annotations.iframeX,
+      annotationIframeY: schema.annotations.iframeY,
     })
     .from(schema.comments)
     .leftJoin(schema.users, eq(schema.users.id, schema.comments.userId))
+    .leftJoin(schema.annotations, eq(schema.annotations.commentId, schema.comments.id))
     .where(
       versionId
         ? and(

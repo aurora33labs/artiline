@@ -391,7 +391,10 @@
     "yourName": "Your name",
     "body": "Comment",
     "submit": "Post",
-    "modalTitle": "Comments"
+    "modalTitle": "Comments",
+    "addComment": "Add note",
+    "commentPlaceholder": "Write a note…",
+    "noComments": "No notes yet"
   },
   "reactions": {
     "modalTitle": "Reactions",

@@ -9,6 +9,7 @@ import {
   integer,
   boolean,
   jsonb,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 
@@ -36,6 +37,11 @@ export const reviewStatusEnum = pgEnum("review_status", [
   "pending",
   "approved",
   "changes_requested",
+]);
+export const annotationTargetTypeEnum = pgEnum("annotation_target_type", [
+  "point",
+  "area",
+  "global",
 ]);
 
 export const users = pgTable("users", {
@@ -250,6 +256,27 @@ export const comments = pgTable(
   (t) => [
     index("comments_artifact_idx").on(t.artifactId),
     index("comments_version_idx").on(t.versionId),
+  ],
+);
+
+export const annotations = pgTable(
+  "annotations",
+  {
+    id: id(),
+    commentId: text("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    x: doublePrecision("x").notNull(),
+    y: doublePrecision("y").notNull(),
+    width: doublePrecision("width"),
+    height: doublePrecision("height"),
+    targetType: annotationTargetTypeEnum("target_type").notNull().default("point"),
+    iframeX: doublePrecision("iframe_x"),
+    iframeY: doublePrecision("iframe_y"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("annotations_comment_idx").on(t.commentId),
   ],
 );
 

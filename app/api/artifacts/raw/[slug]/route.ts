@@ -13,6 +13,35 @@ import { slugify } from "@/lib/tenant";
 
 export const runtime = "nodejs";
 
+const ANNOTATION_SCRIPT = `
+<script>
+(function () {
+  var origin = window.parent.origin;
+  function sendClick(x, y, width, height) {
+    try {
+      window.parent.postMessage({
+        type: 'ANNOTATION_CLICK',
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      }, origin);
+    } catch (e) {
+      // Ignore postMessage errors
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var rect = document.documentElement.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / window.innerWidth;
+    var y = (e.clientY - rect.top) / window.innerHeight;
+    sendClick(x, y, null, null);
+  }, true);
+})();
+</script>
+`;
+
 /**
  * Streams an artifact version's raw content for the viewer iframe (and the edit
  * dialog), so the bytes never enter the page's RSC payload. Re-checks visibility
@@ -91,7 +120,11 @@ export async function GET(
   // React artifacts are wrapped in a self-contained HTML doc that transpiles and
   // mounts the component; both it and HTML are served as a sandboxed document.
   const serveAsDocument = isHtml || isReact;
-  const body = isReact ? renderReactWrapper(content) : content;
+  let body = isReact ? renderReactWrapper(content) : content;
+
+  if (serveAsDocument) {
+    body = body.replace("</body>", ANNOTATION_SCRIPT + "</body>");
+  }
 
   // Cap browser/proxy caching for private artifacts; private content must not be
   // cached by shared caches.

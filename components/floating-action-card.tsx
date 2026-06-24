@@ -40,13 +40,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAnnotations } from "@/components/annotation-provider";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
   VISIBILITY_LABEL_KEYS,
   type Visibility,
 } from "@/components/visibility-badge";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
-import { CommentsModal } from "@/components/comments-modal";
 import { ReactionsModal } from "@/components/reactions-modal";
 import { ArtifactSettingsModal } from "@/components/artifact-settings-modal";
 import { PublishVersionDialog } from "@/components/publish-version-dialog";
@@ -89,7 +89,6 @@ export function FloatingActionCard({
   title,
   type,
   visibility,
-  commentsCount,
   artifactId,
   shareHref,
   downloadHref,
@@ -103,7 +102,6 @@ export function FloatingActionCard({
   updatedAt,
   versionCount,
   backHref,
-  commentsSlot,
   reactionsSlot,
 }: {
   title: string;
@@ -123,10 +121,9 @@ export function FloatingActionCard({
   updatedAt: Date;
   versionCount: number;
   backHref: string;
-  commentsSlot: React.ReactNode;
   reactionsSlot: React.ReactNode;
 }) {
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { annotations, sidebarOpen, setSidebarOpen } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -223,8 +220,8 @@ export function FloatingActionCard({
           <DockButton
             icon={<MessageSquare className="size-5" />}
             label={t("comments")}
-            badge={commentsCount > 0 ? commentsCount : undefined}
-            onClick={() => setCommentsOpen(true)}
+            badge={annotations.length > 0 ? annotations.length : undefined}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
           />
           <DockButton
             icon={<Smile className="size-5" />}
@@ -360,8 +357,8 @@ export function FloatingActionCard({
         <BarButton
           icon={<MessageSquare className="size-5" />}
           label={t("comments")}
-          badge={commentsCount > 0 ? commentsCount : undefined}
-          onClick={() => setCommentsOpen(true)}
+          badge={annotations.length > 0 ? annotations.length : undefined}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
         />
         <BarButton
           icon={<MoreHorizontal className="size-5" />}
@@ -466,10 +463,6 @@ export function FloatingActionCard({
           )}
         </div>
       </BottomSheet>
-
-      <CommentsModal open={commentsOpen} onOpenChange={setCommentsOpen}>
-        {commentsSlot}
-      </CommentsModal>
 
       <ReactionsModal open={reactionsOpen} onOpenChange={setReactionsOpen}>
         {reactionsSlot}

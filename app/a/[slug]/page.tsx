@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { Lock, FileX, Ban, AlertTriangle } from "lucide-react";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
@@ -11,6 +11,16 @@ import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { isReactRenderable } from "@/lib/detect-artifact";
 import { recordView, extractIp, bumpViewsThrottled } from "@/lib/tracking";
+import { ArtifactViewer } from "@/components/artifact-viewer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ReactionsBar } from "@/components/reactions-bar";
+import { FloatingActionCard } from "@/components/floating-action-card";
+import { BrandLogo } from "@/components/brand-logo";
+import { PublicFooter } from "@/components/public-footer";
+import { AnnotationWrapper } from "@/components/annotation-wrapper";
+import type { AnnotationData } from "@/components/annotation-wrapper";
 
 export async function generateMetadata({
   params,
@@ -40,15 +50,6 @@ export async function generateMetadata({
     },
   };
 }
-import { ArtifactViewer } from "@/components/artifact-viewer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { CommentsSection } from "@/components/comments-section";
-import { ReactionsBar } from "@/components/reactions-bar";
-import { FloatingActionCard } from "@/components/floating-action-card";
-import { BrandLogo } from "@/components/brand-logo";
-import { PublicFooter } from "@/components/public-footer";
 
 export default async function PublicArtifact({
   params,
@@ -143,6 +144,47 @@ export default async function PublicArtifact({
     .from(schema.artifactVersions)
     .where(eq(schema.artifactVersions.artifactId, artifact!.id));
 
+  const annotationRows = await db
+    .select({
+      commentId: schema.comments.id,
+      x: schema.annotations.x,
+      y: schema.annotations.y,
+      width: schema.annotations.width,
+      height: schema.annotations.height,
+      targetType: schema.annotations.targetType,
+      iframeX: schema.annotations.iframeX,
+      iframeY: schema.annotations.iframeY,
+      body: schema.comments.body,
+      authorName: schema.comments.authorName,
+      userName: schema.users.name,
+      userEmail: schema.users.email,
+      createdAt: schema.comments.createdAt,
+    })
+    .from(schema.comments)
+    .leftJoin(schema.annotations, eq(schema.annotations.commentId, schema.comments.id))
+    .leftJoin(schema.users, eq(schema.users.id, schema.comments.userId))
+    .where(eq(schema.comments.artifactId, artifact!.id))
+    .orderBy(desc(schema.comments.createdAt));
+
+  const initialAnnotations: AnnotationData[] = annotationRows
+    .filter((r) => r.x !== null && r.y !== null)
+    .map((r) => ({
+      id: r.commentId,
+      commentId: r.commentId,
+      x: r.x!,
+      y: r.y!,
+      width: r.width,
+      height: r.height,
+      targetType: r.targetType ?? "point",
+      iframeX: r.iframeX,
+      iframeY: r.iframeY,
+      body: r.body,
+      authorName: r.authorName,
+      userName: r.userName,
+      userEmail: r.userEmail,
+      createdAt: r.createdAt.toISOString(),
+    }));
+
   const isHtml = version!.type === "html";
   const usesIframe =
     isHtml || isReactRenderable(version!.type, version!.language);
@@ -150,48 +192,47 @@ export default async function PublicArtifact({
 
   return (
     <main className="fixed inset-0 bg-background overflow-auto">
-      <ArtifactViewer
-        artifact={{
-          type: version!.type,
-          language: version!.language,
-          contentSrc: usesIframe ? rawContentPath({ slug, pw }) : null,
-          content,
-        }}
-        fullscreen
-      />
-      <PublicFooter />
-      <FloatingActionCard
-        title={version!.title}
-        type={version!.type}
-        visibility={artifact!.visibility}
-        commentsCount={commentsCount}
+      <AnnotationWrapper
         artifactId={artifact!.id}
-        publishedAt={artifact!.createdAt}
-        updatedAt={version!.createdAt}
-        versionCount={versionCount}
-        shareHref={`/a/${artifact!.slug}`}
-        canExport={usesIframe}
-        canEdit={false}
-        hasPassword={!!artifact!.passwordHash}
-        backHref="/"
-        commentsSlot={
-          <CommentsSection
-            artifactId={artifact!.id}
-            versionId={version!.id}
-            currentUserId={session?.user?.id ?? null}
-            password={pw}
-            slug={slug}
-          />
-        }
-        reactionsSlot={
-          <ReactionsBar
-            artifactId={artifact!.id}
-            currentUserId={session?.user?.id ?? null}
-            password={pw}
-            slug={slug}
-          />
-        }
-      />
+        versionId={version!.id}
+        artifactType={version!.type}
+        slug={artifact!.slug}
+        initialAnnotations={initialAnnotations}
+      >
+        <ArtifactViewer
+          artifact={{
+            type: version!.type,
+            language: version!.language,
+            contentSrc: usesIframe ? rawContentPath({ slug, pw }) : null,
+            content,
+          }}
+          fullscreen
+        />
+        <PublicFooter />
+        <FloatingActionCard
+          title={version!.title}
+          type={version!.type}
+          visibility={artifact!.visibility}
+          commentsCount={commentsCount}
+          artifactId={artifact!.id}
+          publishedAt={artifact!.createdAt}
+          updatedAt={version!.createdAt}
+          versionCount={versionCount}
+          shareHref={`/a/${artifact!.slug}`}
+          canExport={usesIframe}
+          canEdit={false}
+          hasPassword={!!artifact!.passwordHash}
+          backHref="/"
+          reactionsSlot={
+            <ReactionsBar
+              artifactId={artifact!.id}
+              currentUserId={session?.user?.id ?? null}
+              password={pw}
+              slug={slug}
+            />
+          }
+        />
+      </AnnotationWrapper>
     </main>
   );
 }

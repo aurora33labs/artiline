@@ -391,7 +391,10 @@
     "yourName": "Tu nombre",
     "body": "Comentario",
     "submit": "Comentar",
-    "modalTitle": "Comentarios"
+    "modalTitle": "Comentarios",
+    "addComment": "Añadir nota",
+    "commentPlaceholder": "Escribe una nota…",
+    "noComments": "Aún no hay notas"
   },
   "reactions": {
     "modalTitle": "Reacciones",
