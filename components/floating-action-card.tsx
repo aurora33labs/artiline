@@ -225,18 +225,61 @@ export function FloatingActionCard({
             badge={annotations.length > 0 ? annotations.length : undefined}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           />
-          <DockButton
-            icon={<Crosshair className="size-5" />}
-            label={isPlacing ? "Cancelar" : "Anotar"}
-            selected={isPlacing}
-            onClick={() => { setIsPlacing(!isPlacing); if (!isPlacing) setIsInspecting(false); }}
-          />
-          <DockButton
-            icon={<MousePointer2 className="size-5" />}
-            label={isInspecting ? "Cancelar" : "Inspeccionar"}
-            selected={isInspecting}
-            onClick={() => { setIsInspecting(!isInspecting); if (!isInspecting) setIsPlacing(false); }}
-          />
+          {/* Annotation mode — single entry point with popover */}
+          <DropdownMenu onOpenChange={(open) => { if (!open && !isPlacing && !isInspecting) return; }}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Anotar"
+                className={cn(
+                  DOCK_BASE,
+                  (isPlacing || isInspecting) && "bg-primary/10 border-primary/40 text-primary"
+                )}
+              >
+                {isPlacing ? (
+                  <Crosshair className="size-5" />
+                ) : isInspecting ? (
+                  <MousePointer2 className="size-5" />
+                ) : (
+                  <Crosshair className="size-5" />
+                )}
+                <span role="tooltip" className={DOCK_TOOLTIP}>
+                  {isPlacing ? "Cancelar anotación" : isInspecting ? "Cancelar inspección" : "Anotar"}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="left" align="center" sideOffset={10} className="min-w-52 p-1.5">
+              <DropdownMenuLabel className={MENU_LABEL}>Nueva anotación</DropdownMenuLabel>
+              <DropdownMenuItem
+                className={cn(MENU_ROW, isPlacing && "bg-primary/10 text-primary")}
+                onSelect={() => {
+                  if (isPlacing) { setIsPlacing(false); return; }
+                  setIsPlacing(true);
+                  setIsInspecting(false);
+                }}
+              >
+                <MenuChip><Crosshair className="size-4" /></MenuChip>
+                <div className="flex flex-col">
+                  <span className="font-medium text-sm">Seleccionar área</span>
+                  <span className="text-xs text-muted-foreground">Arrastra para encuadrar una región</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={cn(MENU_ROW, isInspecting && "bg-primary/10 text-primary")}
+                onSelect={() => {
+                  if (isInspecting) { setIsInspecting(false); return; }
+                  setIsInspecting(true);
+                  setIsPlacing(false);
+                }}
+              >
+                <MenuChip><MousePointer2 className="size-4" /></MenuChip>
+                <div className="flex flex-col">
+                  <span className="font-medium text-sm">Inspeccionar elemento</span>
+                  <span className="text-xs text-muted-foreground">Clic en un componente de la página</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DockButton
             icon={<Smile className="size-5" />}
             label={t("react")}
