@@ -53,7 +53,7 @@ export function CommentMarginColumn({
 }: CommentMarginColumnProps) {
   const { commentDraft, setCommentDraft } = useAnnotations();
 
-  const visibleAnnotations = annotations.filter((a) => !a.resolved);
+  const visibleAnnotations = annotations.filter((a) => !a.resolved && a.targetType !== "global");
 
   const items = useMemo(() => {
     const base = visibleAnnotations.map((a) => ({
