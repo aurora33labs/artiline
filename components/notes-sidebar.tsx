@@ -393,7 +393,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           <button
             type="button"
             onClick={() => { setGlobalDraftOpen(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <PlusCircle className="size-4" />
             Nuevo
@@ -404,7 +404,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           <button
             type="button"
             onClick={() => { setSidebarOpen(false); }}
-            className="p-2.5 rounded-full hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground border border-border"
+            className="p-2.5 rounded-md hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground border border-border"
           >
             <ChevronRight className="size-5" />
           </button>
