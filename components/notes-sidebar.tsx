@@ -138,7 +138,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         >
           <div className="shrink-0 mt-0.5">{targetIcon(annotation)}</div>
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-base text-muted-foreground">
               <span className="truncate">
                 {annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? tc("anonymous")}
               </span>
@@ -147,15 +147,15 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               </span>
             </div>
             {annotation.selectedText && (
-              <p className="text-xs text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
+              <p className="text-base text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
                 &ldquo;{annotation.selectedText.slice(0, 50)}&rdquo;
               </p>
             )}
-            <p className={cn("text-sm mt-1 line-clamp-2", isResolvedSection && "line-through decoration-muted-foreground/40")}>
+            <p className={cn("text-base mt-1 line-clamp-2", isResolvedSection && "line-through decoration-muted-foreground/40")}>
               {annotation.body}
             </p>
             {annotation.replies.length > 0 && !isExpanded && (
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <p className="text-base text-muted-foreground mt-1 flex items-center gap-1">
                 <MessageSquare className="size-3" />
                 {annotation.replies.length} {annotation.replies.length === 1 ? "respuesta" : "respuestas"}
               </p>
@@ -202,17 +202,17 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           <div className="mt-3 pl-5 space-y-3">
             {annotation.replies.map((reply) => (
               <div key={reply.id} className="flex gap-2">
-                <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold font-display">
+                <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-xs font-bold font-display">
                   {getInitials(reply.userName ?? reply.authorName)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 text-base text-muted-foreground">
                     <span className="font-medium text-foreground">
                       {reply.userName ?? reply.authorName ?? tc("anonymous")}
                     </span>
                     <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <p className="text-xs mt-0.5 text-muted-foreground">{reply.body}</p>
+                  <p className="text-base mt-0.5 text-muted-foreground">{reply.body}</p>
                 </div>
               </div>
             ))}
@@ -229,12 +229,12 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                   }
                   placeholder="Responder..."
                   maxLength={500}
-                  className="flex-1 text-xs bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
+                  className="flex-1 text-base bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
                 />
                 <button
                   type="submit"
                   disabled={!replyBodies[annotation.commentId]?.trim() || replyingId === annotation.commentId}
-                  className="text-xs text-primary disabled:opacity-40"
+                  className="text-base text-primary disabled:opacity-40"
                 >
                   ↩
                 </button>
@@ -256,7 +256,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
-        <h2 className="font-display font-medium text-sm uppercase tracking-[0.06em]">
+        <h2 className="font-display font-medium text-base uppercase tracking-[0.06em]">
           {tn("modalTitle")}
           <span className="ml-1.5 text-muted-foreground">({open.length})</span>
         </h2>
@@ -265,7 +265,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             <button
               type="button"
               onClick={() => { setGlobalDraftOpen(true); }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-base font-medium hover:bg-primary/90 transition-colors"
               title="Nuevo comentario"
             >
               <PlusCircle className="size-3.5" />
@@ -287,7 +287,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         {globalDraftOpen && (
           <div className="border-b border-border p-4">
             <form onSubmit={handleGlobalSubmit} className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <div className="flex items-center gap-1.5 text-base text-muted-foreground mb-1">
                 <Globe className="size-3.5" />
                 <span>Comentario general</span>
               </div>
@@ -298,7 +298,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                 rows={3}
                 maxLength={2000}
                 autoFocus
-                className="text-sm resize-none"
+                className="text-base resize-none"
               />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" disabled={isSubmittingGlobal || !globalDraftBody.trim()}>
@@ -320,7 +320,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         {open.length === 0 && !globalDraftOpen ? (
           <div className="flex flex-col items-center justify-center h-48 p-6 text-center text-muted-foreground">
             <MessageSquare className="size-8 mb-2 opacity-40" />
-            <p className="text-sm">{tn("noComments")}</p>
+            <p className="text-base">{tn("noComments")}</p>
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -334,7 +334,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             <button
               type="button"
               onClick={() => setShowResolved((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2.5 text-base text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
             >
               <span className="flex items-center gap-1.5">
                 <Check className="size-3 text-green-500" />
@@ -357,9 +357,9 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         return (
           <div className="shrink-0 border-t border-destructive/30 bg-destructive/5 p-4 space-y-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-destructive">¿Eliminar comentario?</p>
+              <p className="text-base font-medium text-destructive">¿Eliminar comentario?</p>
               {target && (
-                <p className="text-xs text-muted-foreground line-clamp-2 italic">
+                <p className="text-base text-muted-foreground line-clamp-2 italic">
                   &ldquo;{target.body.slice(0, 100)}{target.body.length > 100 ? "…" : ""}&rdquo;
                 </p>
               )}
