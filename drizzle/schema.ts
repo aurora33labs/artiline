@@ -42,6 +42,7 @@ export const annotationTargetTypeEnum = pgEnum("annotation_target_type", [
   "point",
   "area",
   "global",
+  "text",
 ]);
 
 export const users = pgTable("users", {
@@ -273,6 +274,11 @@ export const annotations = pgTable(
     targetType: annotationTargetTypeEnum("target_type").notNull().default("point"),
     iframeX: doublePrecision("iframe_x"),
     iframeY: doublePrecision("iframe_y"),
+    selectedText: text("selected_text"),
+    anchorXPath: text("anchor_xpath"),
+    anchorOffset: integer("anchor_offset"),
+    anchorEndXPath: text("anchor_end_xpath"),
+    anchorEndOffset: integer("anchor_end_offset"),
     createdAt: createdAt(),
   },
   (t) => [

@@ -1,0 +1,176 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Trash2, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { deleteAnnotation } from "@/app/actions/social";
+import type { Annotation } from "@/components/annotation-provider";
+
+interface CommentBubbleProps {
+  annotation: Annotation;
+  top: number;
+  isActive: boolean;
+  onActivate: () => void;
+  onDeactivate: () => void;
+  onDelete: (commentId: string) => void;
+  isDraft?: boolean;
+  draftDefaultText?: string;
+  onDraftSubmit?: (body: string) => Promise<void>;
+  onDraftCancel?: () => void;
+}
+
+function formatRelativeTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "justo ahora";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+function getInitials(name: string | null | undefined) {
+  if (!name) return "?";
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
+export function CommentBubble({
+  annotation,
+  top,
+  isActive,
+  onActivate,
+  onDeactivate,
+  onDelete,
+  isDraft = false,
+  draftDefaultText = "",
+  onDraftSubmit,
+  onDraftCancel,
+}: CommentBubbleProps) {
+  const [draftBody, setDraftBody] = useState(draftDefaultText);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const displayName = annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? "Anónimo";
+
+  // Close on outside click when active
+  useEffect(() => {
+    if (!isActive || isDraft) return;
+    const handler = (e: MouseEvent) => {
+      if (bubbleRef.current && !bubbleRef.current.contains(e.target as Node)) {
+        onDeactivate();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isActive, isDraft, onDeactivate]);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleting(true);
+    try {
+      await deleteAnnotation(annotation.commentId);
+      onDelete(annotation.commentId);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDraftSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!draftBody.trim() || !onDraftSubmit) return;
+    setIsSubmitting(true);
+    try {
+      await onDraftSubmit(draftBody.trim());
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isDraft) {
+    return (
+      <div
+        ref={bubbleRef}
+        className="absolute right-2 w-[268px] rounded-lg border border-primary bg-surface shadow-lg z-30"
+        style={{ top }}
+      >
+        <form onSubmit={handleDraftSubmit} className="p-3 space-y-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <MessageSquare className="size-3 text-primary" />
+            <span className="font-medium text-foreground">Nuevo comentario</span>
+          </div>
+          <Textarea
+            value={draftBody}
+            onChange={(e) => setDraftBody(e.target.value)}
+            placeholder="Escribe un comentario..."
+            rows={3}
+            maxLength={2000}
+            autoFocus
+            className="text-sm resize-none"
+          />
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={isSubmitting || !draftBody.trim()}>
+              {isSubmitting ? "Guardando..." : "Comentar"}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onDraftCancel}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={bubbleRef}
+      className={cn(
+        "absolute right-2 w-[268px] rounded-lg border bg-surface shadow-md transition-all duration-150 cursor-pointer z-20",
+        isActive
+          ? "border-primary ring-1 ring-primary/30 shadow-lg"
+          : "border-border hover:border-border-strong hover:shadow-lg"
+      )}
+      style={{ top }}
+      onClick={onActivate}
+    >
+      {/* Collapsed header — always visible */}
+      <div className="flex items-start gap-2 p-3">
+        <div className="size-6 shrink-0 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold font-display">
+          {getInitials(displayName)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-medium truncate">{displayName}</span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {formatRelativeTime(annotation.createdAt)}
+            </span>
+          </div>
+          <p className={cn("text-xs text-muted-foreground mt-0.5", !isActive && "line-clamp-2")}>
+            {annotation.body}
+          </p>
+          {annotation.selectedText && !isActive && (
+            <p className="text-[10px] text-muted-foreground/70 italic truncate mt-1 border-l-2 border-primary/30 pl-1.5">
+              &ldquo;{annotation.selectedText.slice(0, 60)}{annotation.selectedText.length > 60 ? "…" : ""}&rdquo;
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded actions */}
+      {isActive && (
+        <div className="flex items-center justify-end gap-1 px-3 pb-2 border-t border-border pt-2 mt-1">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
+            title="Eliminar"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

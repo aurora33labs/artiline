@@ -35,9 +35,14 @@ const addCommentSchema = z.object({
   y: z.number().min(0).max(1).optional().nullable(),
   width: z.number().min(0).max(1).optional().nullable(),
   height: z.number().min(0).max(1).optional().nullable(),
-  targetType: z.enum(["point", "area", "global"]).optional().nullable(),
+  targetType: z.enum(["point", "area", "global", "text"]).optional().nullable(),
   iframeX: z.number().min(0).max(1).optional().nullable(),
   iframeY: z.number().min(0).max(1).optional().nullable(),
+  selectedText: z.string().max(2000).optional().nullable(),
+  anchorXPath: z.string().max(1000).optional().nullable(),
+  anchorOffset: z.number().int().min(0).optional().nullable(),
+  anchorEndXPath: z.string().max(1000).optional().nullable(),
+  anchorEndOffset: z.number().int().min(0).optional().nullable(),
 });
 
 export async function addComment(formData: FormData) {
@@ -56,6 +61,11 @@ export async function addComment(formData: FormData) {
     targetType: formData.get("targetType") || null,
     iframeX: formData.get("iframeX") ? Number(formData.get("iframeX")) : null,
     iframeY: formData.get("iframeY") ? Number(formData.get("iframeY")) : null,
+    selectedText: formData.get("selectedText") as string || null,
+    anchorXPath: formData.get("anchorXPath") as string || null,
+    anchorOffset: formData.get("anchorOffset") ? Number(formData.get("anchorOffset")) : null,
+    anchorEndXPath: formData.get("anchorEndXPath") as string || null,
+    anchorEndOffset: formData.get("anchorEndOffset") ? Number(formData.get("anchorEndOffset")) : null,
   });
   const { session, artifact } = await loadArtifactWithAccess(
     data.artifactId,
@@ -86,6 +96,11 @@ export async function addComment(formData: FormData) {
       targetType: data.targetType ?? "point",
       iframeX: data.iframeX ?? null,
       iframeY: data.iframeY ?? null,
+      selectedText: data.selectedText ?? null,
+      anchorXPath: data.anchorXPath ?? null,
+      anchorOffset: data.anchorOffset ?? null,
+      anchorEndXPath: data.anchorEndXPath ?? null,
+      anchorEndOffset: data.anchorEndOffset ?? null,
     };
     await db.insert(schema.annotations).values(annotationValues);
   }

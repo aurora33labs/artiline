@@ -9,14 +9,29 @@ export type Annotation = {
   y: number;
   width: number | null;
   height: number | null;
-  targetType: "point" | "area" | "global";
+  targetType: "point" | "area" | "global" | "text";
   iframeX: number | null;
   iframeY: number | null;
+  selectedText: string | null;
+  anchorXPath: string | null;
+  anchorOffset: number | null;
+  anchorEndXPath: string | null;
+  anchorEndOffset: number | null;
   body: string;
   authorName: string | null;
   userName: string | null;
   userEmail: string | null;
   createdAt: string;
+};
+
+export type PendingSelection = {
+  selectedText: string;
+  anchorXPath: string;
+  anchorOffset: number;
+  anchorEndXPath: string;
+  anchorEndOffset: number;
+  rectY: number;
+  rectX: number;
 };
 
 type AnnotationContextType = {
@@ -27,6 +42,10 @@ type AnnotationContextType = {
   removeAnnotation: (commentId: string) => void;
   selectedAnnotationId: string | null;
   setSelectedAnnotationId: (id: string | null) => void;
+  activeCommentId: string | null;
+  setActiveCommentId: (id: string | null) => void;
+  pendingSelection: PendingSelection | null;
+  setPendingSelection: (s: PendingSelection | null) => void;
   isPlacing: boolean;
   setIsPlacing: (placing: boolean) => void;
   sidebarOpen: boolean;
@@ -38,6 +57,8 @@ const AnnotationContext = createContext<AnnotationContextType | null>(null);
 export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -61,10 +82,9 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
 
   const removeAnnotation = useCallback((commentId: string) => {
     setAnnotations((prev) => prev.filter((a) => a.commentId !== commentId));
-    if (selectedAnnotationId === commentId) {
-      setSelectedAnnotationId(null);
-    }
-  }, [selectedAnnotationId]);
+    if (selectedAnnotationId === commentId) setSelectedAnnotationId(null);
+    if (activeCommentId === commentId) setActiveCommentId(null);
+  }, [selectedAnnotationId, activeCommentId]);
 
   return (
     <AnnotationContext.Provider
@@ -76,6 +96,10 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         removeAnnotation,
         selectedAnnotationId,
         setSelectedAnnotationId,
+        activeCommentId,
+        setActiveCommentId,
+        pendingSelection,
+        setPendingSelection,
         isPlacing,
         setIsPlacing,
         sidebarOpen,
