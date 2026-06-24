@@ -5,8 +5,8 @@ import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/com
 import { NoteMarker } from "@/components/note-marker";
 import { NotesSidebar } from "@/components/notes-sidebar";
 import { CommentMarginColumn } from "@/components/comment-margin-column";
-import { SelectionTooltip } from "@/components/selection-tooltip";
 import { addComment } from "@/app/actions/social";
+import { cn } from "@/lib/utils";
 
 export type AnnotationData = {
   id: string;
@@ -30,32 +30,6 @@ export type AnnotationData = {
   createdAt: string;
 };
 
-function getXPath(node: Node | null): string {
-  if (!node) return "";
-  if (node.nodeType === Node.TEXT_NODE) {
-    let idx = 0;
-    let sib = node.parentNode?.firstChild ?? null;
-    while (sib) {
-      if (sib === node) break;
-      if (sib.nodeType === Node.TEXT_NODE) idx++;
-      sib = sib.nextSibling;
-    }
-    return getXPath(node.parentNode) + `/text()[${idx}]`;
-  }
-  const el = node as Element;
-  if (el === document.documentElement) return "/html";
-  if (!el.parentNode) return "";
-  const tag = el.tagName.toLowerCase();
-  let idx = 1;
-  let sib = el.parentNode.firstChild;
-  while (sib) {
-    if (sib === el) break;
-    if (sib.nodeType === Node.ELEMENT_NODE && (sib as Element).tagName === el.tagName) idx++;
-    sib = sib.nextSibling;
-  }
-  return getXPath(el.parentNode) + `/${tag}[${idx}]`;
-}
-
 function AnnotationInner({
   children,
   artifactId,
@@ -74,7 +48,6 @@ function AnnotationInner({
   initialAnnotations: AnnotationData[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const {
     annotations,
     setAnnotations,
@@ -85,18 +58,17 @@ function AnnotationInner({
     setSelectedAnnotationId,
     activeCommentId,
     setActiveCommentId,
-    pendingSelection,
-    setPendingSelection,
     setCommentDraft,
   } = useAnnotations();
-  const [placingCoords, setPlacingCoords] = useState<{ x: number; y: number } | null>(null);
+
   const [containerHeight, setContainerHeight] = useState(0);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setAnnotations(initialAnnotations);
   }, [initialAnnotations, setAnnotations]);
 
-  // Track container height for bubble positioning
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -107,206 +79,173 @@ function AnnotationInner({
     return () => ro.disconnect();
   }, []);
 
-  // Find the iframe element after render
+  // Cancel placing mode on Escape
   useEffect(() => {
-    if (artifactType !== "html") return;
-    const iframe = containerRef.current?.querySelector("iframe");
-    if (iframe) iframeRef.current = iframe as HTMLIFrameElement;
-  });
-
-  // Sync highlights to iframe when annotations or activeCommentId change
-  useEffect(() => {
-    if (artifactType !== "html") return;
-    const iframe = iframeRef.current;
-    if (!iframe?.contentWindow) return;
-    const textAnnotations = annotations
-      .filter((a) => a.targetType === "text" && a.anchorXPath)
-      .map((a) => ({
-        commentId: a.commentId,
-        anchorXPath: a.anchorXPath,
-        anchorOffset: a.anchorOffset ?? 0,
-        anchorEndXPath: a.anchorEndXPath,
-        anchorEndOffset: a.anchorEndOffset ?? 0,
-        active: a.commentId === activeCommentId,
-      }));
-    // Target "*": the sandboxed iframe has a null/opaque origin so a specific
-    // targetOrigin would silently drop the message.
-    iframe.contentWindow.postMessage({ type: "HIGHLIGHT_ANNOTATIONS", annotations: textAnnotations }, "*");
-  }, [annotations, activeCommentId, artifactType]);
-
-  // postMessage listener for iframe events
-  useEffect(() => {
-    if (artifactType !== "html") return;
-
-    const handler = (event: MessageEvent) => {
-      // The raw artifact route serves with CSP `sandbox allow-scripts`, giving
-      // the iframe a null/opaque origin. Guard on event.source when the ref is
-      // available; if not yet found, let known message types through anyway.
-      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
-      if (!event.data || typeof event.data !== "object") return;
-
-      if (event.data.type === "TEXT_SELECTION") {
-        setPendingSelection({
-          selectedText: event.data.selectedText,
-          anchorXPath: event.data.anchorXPath,
-          anchorOffset: event.data.anchorOffset,
-          anchorEndXPath: event.data.anchorEndXPath,
-          anchorEndOffset: event.data.anchorEndOffset,
-          rectY: event.data.rectY,
-          rectX: event.data.rectX,
-        });
-        return;
-      }
-      if (event.data.type === "SELECTION_CLEARED") {
-        setPendingSelection(null);
-        return;
-      }
-      if (event.data.type === "ANNOTATION_CLICK" && isPlacing) {
-        setPlacingCoords({ x: event.data.x, y: event.data.y });
+    if (!isPlacing) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsPlacing(false);
+        setDragStart(null);
+        setDragCurrent(null);
       }
     };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [artifactType, isPlacing, setPendingSelection]);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isPlacing, setIsPlacing]);
 
-  // Handle placing design-click annotation
-  useEffect(() => {
-    if (!placingCoords || !isPlacing) return;
-    const { x, y } = placingCoords;
+  const toNorm = useCallback((e: React.MouseEvent) => {
+    if (!containerRef.current) return { x: 0, y: 0 };
+    const r = containerRef.current.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)),
+      y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)),
+    };
+  }, []);
 
-    const formData = new FormData();
-    formData.set("artifactId", artifactId);
-    if (versionId) formData.set("versionId", versionId);
-    if (workspaceSlug) formData.set("workspaceSlug", workspaceSlug);
-    if (slug) formData.set("slug", slug);
-    formData.set("body", "Click to edit this note");
-    formData.set("x", String(x));
-    formData.set("y", String(y));
-    formData.set("targetType", "point");
-    if (artifactType === "html") {
-      formData.set("iframeX", String(x));
-      formData.set("iframeY", String(y));
-    }
+  const getLiveRect = (): PendingSelection | null => {
+    if (!dragStart || !dragCurrent) return null;
+    return {
+      x: Math.min(dragStart.x, dragCurrent.x),
+      y: Math.min(dragStart.y, dragCurrent.y),
+      width: Math.abs(dragCurrent.x - dragStart.x),
+      height: Math.abs(dragCurrent.y - dragStart.y),
+    };
+  };
 
-    addComment(formData).then(() => {
-      setIsPlacing(false);
-      setPlacingCoords(null);
-    }).catch(() => {
-      setIsPlacing(false);
-      setPlacingCoords(null);
-    });
-  }, [placingCoords, isPlacing, artifactId, versionId, workspaceSlug, slug, artifactType, setIsPlacing]);
-
-  // mouseup handler for non-iframe artifacts (markdown/code text selection)
-  const handleMouseUp = useCallback(() => {
-    if (artifactType === "html") return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !sel.toString().trim()) {
-      setPendingSelection(null);
-      return;
-    }
-    const range = sel.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const containerRect = containerRef.current?.getBoundingClientRect();
-    if (!containerRect) return;
-    setPendingSelection({
-      selectedText: sel.toString(),
-      anchorXPath: getXPath(sel.anchorNode),
-      anchorOffset: sel.anchorOffset,
-      anchorEndXPath: getXPath(sel.focusNode),
-      anchorEndOffset: sel.focusOffset,
-      rectY: (rect.top - containerRect.top) / containerRect.height,
-      rectX: (rect.left - containerRect.left) / containerRect.width,
-    });
-  }, [artifactType, setPendingSelection]);
-
-  // Click handler for markdown/code design-click
-  const handleContainerClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isPlacing || artifactType === "html") return;
-      if (!containerRef.current) return;
-      const sel = window.getSelection();
-      if (sel && sel.toString().trim()) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
-      setPlacingCoords({ x, y });
-    },
-    [isPlacing, artifactType]
-  );
-
-  const handleConfirmComment = useCallback(async (body: string, selection: PendingSelection) => {
+  const handleConfirmComment = useCallback(async (body: string, draft: PendingSelection) => {
     const formData = new FormData();
     formData.set("artifactId", artifactId);
     if (versionId) formData.set("versionId", versionId);
     if (workspaceSlug) formData.set("workspaceSlug", workspaceSlug);
     if (slug) formData.set("slug", slug);
     formData.set("body", body);
-    formData.set("x", String(selection.rectX));
-    formData.set("y", String(selection.rectY));
-    formData.set("targetType", "text");
-    formData.set("selectedText", selection.selectedText);
-    formData.set("anchorXPath", selection.anchorXPath);
-    formData.set("anchorOffset", String(selection.anchorOffset));
-    formData.set("anchorEndXPath", selection.anchorEndXPath);
-    formData.set("anchorEndOffset", String(selection.anchorEndOffset));
-    if (artifactType === "html") {
-      formData.set("iframeX", String(selection.rectX));
-      formData.set("iframeY", String(selection.rectY));
-    }
+    formData.set("x", String(draft.x));
+    formData.set("y", String(draft.y));
+    formData.set("width", String(draft.width));
+    formData.set("height", String(draft.height));
+    formData.set("targetType", "area");
     await addComment(formData);
-    setPendingSelection(null);
-  }, [artifactId, versionId, workspaceSlug, slug, artifactType, setPendingSelection]);
+  }, [artifactId, versionId, workspaceSlug, slug]);
 
-  const renderMarkers = () => {
-    if (artifactType === "html") return null;
-    return annotations
-      .filter((a) => a.targetType === "point" || a.targetType === "area")
-      .map((a) => (
-        <NoteMarker
-          key={a.commentId}
-          annotation={a}
-          artifactType={artifactType}
-          isActive={selectedAnnotationId === a.commentId}
-          onClick={(commentId) => {
-            setSelectedAnnotationId(commentId);
-            setActiveCommentId(commentId);
-          }}
-        />
-      ));
-  };
+  const liveRect = getLiveRect();
 
   return (
     <div className="flex w-full min-h-0">
       <div
         ref={containerRef}
         className="relative flex-1 min-w-0"
-        onClick={handleContainerClick}
-        onMouseUp={handleMouseUp}
-        style={isPlacing && artifactType !== "html" ? { cursor: "crosshair" } : undefined}
+        onClick={(e) => {
+          // Deselect when clicking outside annotations
+          if (!(e.target as HTMLElement).closest("[data-comment-id]")) {
+            setActiveCommentId(null);
+            setSelectedAnnotationId(null);
+          }
+        }}
       >
         {children}
-        {renderMarkers()}
-        {pendingSelection && (
-          <SelectionTooltip
-            pendingSelection={pendingSelection}
-            onAddComment={() => {
-              setCommentDraft(pendingSelection);
-              setPendingSelection(null);
+
+        {/* Saved area rect overlays */}
+        {annotations
+          .filter((a) => a.targetType === "area" && a.width !== null && a.height !== null)
+          .map((a) => (
+            <div
+              key={a.commentId}
+              data-comment-id={a.commentId}
+              className={cn(
+                "absolute border-2 border-primary/50 bg-primary/10 cursor-pointer transition-colors hover:bg-primary/20",
+                a.commentId === activeCommentId && "border-primary bg-primary/20 ring-2 ring-primary/30"
+              )}
+              style={{
+                left: `${a.x * 100}%`,
+                top: `${a.y * 100}%`,
+                width: `${(a.width ?? 0.1) * 100}%`,
+                height: `${(a.height ?? 0.1) * 100}%`,
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveCommentId(a.commentId);
+                setSelectedAnnotationId(a.commentId);
+              }}
+            />
+          ))}
+
+        {/* NoteMarker for non-html point/area annotations */}
+        {artifactType !== "html" &&
+          annotations
+            .filter((a) => a.targetType === "point")
+            .map((a) => (
+              <NoteMarker
+                key={a.commentId}
+                annotation={a}
+                artifactType={artifactType}
+                isActive={selectedAnnotationId === a.commentId}
+                onClick={(commentId) => {
+                  setSelectedAnnotationId(commentId);
+                  setActiveCommentId(commentId);
+                }}
+              />
+            ))}
+
+        {/* Drag-to-select overlay — active when isPlacing */}
+        {isPlacing && (
+          <div
+            className="absolute inset-0 z-40 select-none"
+            style={{ cursor: "crosshair" }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const p = toNorm(e);
+              setDragStart(p);
+              setDragCurrent(p);
             }}
-            onDismiss={() => setPendingSelection(null)}
-          />
+            onMouseMove={(e) => {
+              if (!dragStart) return;
+              setDragCurrent(toNorm(e));
+            }}
+            onMouseUp={(e) => {
+              if (!dragStart) return;
+              const end = toNorm(e);
+              const rect: PendingSelection = {
+                x: Math.min(dragStart.x, end.x),
+                y: Math.min(dragStart.y, end.y),
+                width: Math.abs(end.x - dragStart.x),
+                height: Math.abs(end.y - dragStart.y),
+              };
+              setDragStart(null);
+              setDragCurrent(null);
+              // Require a minimum size to avoid accidental clicks
+              if (rect.width > 0.02 && rect.height > 0.02) {
+                setCommentDraft(rect);
+                setIsPlacing(false);
+              }
+            }}
+          >
+            {/* Hint banner */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-foreground/90 text-background text-xs font-medium pointer-events-none select-none whitespace-nowrap shadow-lg">
+              Arrastra para seleccionar · Esc para cancelar
+            </div>
+            {/* Live drag rectangle */}
+            {liveRect && liveRect.width > 0.005 && liveRect.height > 0.005 && (
+              <div
+                className="absolute border-2 border-primary bg-primary/15 pointer-events-none"
+                style={{
+                  left: `${liveRect.x * 100}%`,
+                  top: `${liveRect.y * 100}%`,
+                  width: `${liveRect.width * 100}%`,
+                  height: `${liveRect.height * 100}%`,
+                }}
+              />
+            )}
+          </div>
         )}
       </div>
+
       <CommentMarginColumn
         annotations={annotations}
         containerHeight={containerHeight}
         activeCommentId={activeCommentId}
         onActivate={(id) => {
           setActiveCommentId(id);
-          if (id && artifactType === "html" && iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, "*");
-          }
+          setSelectedAnnotationId(id);
         }}
         onConfirmComment={handleConfirmComment}
         onDelete={async (commentId) => { removeAnnotation(commentId); }}

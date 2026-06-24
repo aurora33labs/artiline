@@ -19,6 +19,7 @@ import {
   Trash2,
   MoreHorizontal,
   ChevronRight,
+  Crosshair,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -123,7 +124,7 @@ export function FloatingActionCard({
   backHref: string;
   reactionsSlot: React.ReactNode;
 }) {
-  const { annotations, sidebarOpen, setSidebarOpen } = useAnnotations();
+  const { annotations, sidebarOpen, setSidebarOpen, isPlacing, setIsPlacing } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -222,6 +223,12 @@ export function FloatingActionCard({
             label={t("comments")}
             badge={annotations.length > 0 ? annotations.length : undefined}
             onClick={() => setSidebarOpen(!sidebarOpen)}
+          />
+          <DockButton
+            icon={<Crosshair className="size-5" />}
+            label={isPlacing ? "Cancelar" : "Anotar"}
+            selected={isPlacing}
+            onClick={() => setIsPlacing(!isPlacing)}
           />
           <DockButton
             icon={<Smile className="size-5" />}
@@ -688,6 +695,7 @@ function DockButton({
   as,
   disabled,
   accent,
+  selected,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -697,16 +705,16 @@ function DockButton({
   as?: "link";
   disabled?: boolean;
   accent?: boolean;
+  selected?: boolean;
 }) {
   const baseClasses = cn(
     DOCK_BASE,
-    // Accent buttons read as normal at rest. They turn primary only on keyboard
-    // focus or while pressed/active — never on hover, never by default.
     accent &&
       cn(
         "focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:border-primary",
         "active:bg-primary active:text-primary-foreground active:border-primary",
       ),
+    selected && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90",
     disabled && "opacity-50 cursor-not-allowed",
   );
 

@@ -24,14 +24,12 @@ export type Annotation = {
   createdAt: string;
 };
 
+// Normalized rect (all 0-1) for a dragged area selection
 export type PendingSelection = {
-  selectedText: string;
-  anchorXPath: string;
-  anchorOffset: number;
-  anchorEndXPath: string;
-  anchorEndOffset: number;
-  rectY: number;
-  rectX: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 type AnnotationContextType = {
@@ -44,8 +42,6 @@ type AnnotationContextType = {
   setSelectedAnnotationId: (id: string | null) => void;
   activeCommentId: string | null;
   setActiveCommentId: (id: string | null) => void;
-  pendingSelection: PendingSelection | null;
-  setPendingSelection: (s: PendingSelection | null) => void;
   commentDraft: PendingSelection | null;
   setCommentDraft: (s: PendingSelection | null) => void;
   isPlacing: boolean;
@@ -60,7 +56,6 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
-  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
   const [commentDraft, setCommentDraft] = useState<PendingSelection | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -102,8 +97,6 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setSelectedAnnotationId,
         activeCommentId,
         setActiveCommentId,
-        pendingSelection,
-        setPendingSelection,
         commentDraft,
         setCommentDraft,
         isPlacing,

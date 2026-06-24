@@ -30,7 +30,7 @@ interface CommentMarginColumnProps {
   containerHeight: number;
   activeCommentId: string | null;
   onActivate: (commentId: string | null) => void;
-  onConfirmComment: (body: string, selection: PendingSelection) => Promise<void>;
+  onConfirmComment: (body: string, draft: PendingSelection) => Promise<void>;
   onDelete: (commentId: string) => void;
   artifactId: string;
   versionId?: string | null;
@@ -46,7 +46,7 @@ export function CommentMarginColumn({
   onConfirmComment,
   onDelete,
 }: CommentMarginColumnProps) {
-  const { commentDraft, setCommentDraft, setPendingSelection } = useAnnotations();
+  const { commentDraft, setCommentDraft } = useAnnotations();
 
   const items = useMemo(() => {
     const base = annotations.map((a) => ({
@@ -55,7 +55,7 @@ export function CommentMarginColumn({
       isActive: a.commentId === activeCommentId,
     }));
     if (commentDraft) {
-      base.push({ commentId: "__draft__", y: commentDraft.rectY, isActive: true });
+      base.push({ commentId: "__draft__", y: commentDraft.y, isActive: true });
     }
     return base;
   }, [annotations, activeCommentId, commentDraft]);
@@ -70,7 +70,6 @@ export function CommentMarginColumn({
 
   const handleDraftCancel = () => {
     setCommentDraft(null);
-    setPendingSelection(null);
   };
 
   const hasBubbles = annotations.length > 0 || commentDraft !== null;
@@ -100,20 +99,19 @@ export function CommentMarginColumn({
         const draftAnnotation: Annotation = {
           id: "__draft__",
           commentId: "__draft__",
-          x: commentDraft.rectX,
-          y: commentDraft.rectY,
-          width: null, height: null,
-          targetType: "text",
+          x: commentDraft.x,
+          y: commentDraft.y,
+          width: commentDraft.width,
+          height: commentDraft.height,
+          targetType: "area",
           iframeX: null, iframeY: null,
-          selectedText: commentDraft.selectedText,
-          anchorXPath: commentDraft.anchorXPath,
-          anchorOffset: commentDraft.anchorOffset,
-          anchorEndXPath: commentDraft.anchorEndXPath,
-          anchorEndOffset: commentDraft.anchorEndOffset,
+          selectedText: null,
+          anchorXPath: null, anchorOffset: null,
+          anchorEndXPath: null, anchorEndOffset: null,
           body: "", authorName: null, userName: null, userEmail: null,
           createdAt: new Date().toISOString(),
         };
-        const top = tops.get("__draft__") ?? commentDraft.rectY * containerHeight;
+        const top = tops.get("__draft__") ?? commentDraft.y * containerHeight;
         return (
           <CommentBubble
             annotation={draftAnnotation}
