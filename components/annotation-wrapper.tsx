@@ -127,7 +127,9 @@ function AnnotationInner({
         anchorEndOffset: a.anchorEndOffset ?? 0,
         active: a.commentId === activeCommentId,
       }));
-    iframe.contentWindow.postMessage({ type: "HIGHLIGHT_ANNOTATIONS", annotations: textAnnotations }, window.location.origin);
+    // Target "*": the sandboxed iframe has a null/opaque origin so a specific
+    // targetOrigin would silently drop the message.
+    iframe.contentWindow.postMessage({ type: "HIGHLIGHT_ANNOTATIONS", annotations: textAnnotations }, "*");
   }, [annotations, activeCommentId, artifactType]);
 
   // postMessage listener for iframe events
@@ -135,8 +137,12 @@ function AnnotationInner({
     if (artifactType !== "html") return;
 
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+      // The raw artifact route serves with CSP `sandbox allow-scripts`, which
+      // gives the iframe document a null/opaque origin — event.origin is the
+      // string "null", not window.location.origin. Checking event.source is
+      // the reliable guard: it must come from our specific iframe window.
+      if (!iframeRef.current) return;
+      if (event.source !== iframeRef.current.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
 
       if (event.data.type === "TEXT_SELECTION") {
@@ -289,7 +295,7 @@ function AnnotationInner({
         onActivate={(id) => {
           setActiveCommentId(id);
           if (id && artifactType === "html" && iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, window.location.origin);
+            iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, "*");
           }
         }}
         pendingSelection={pendingSelection}
