@@ -13,6 +13,113 @@ import { slugify } from "@/lib/tenant";
 
 export const runtime = "nodejs";
 
+// Minimal script: reports the iframe document's full height to the parent so
+// the iframe element can be sized to its content (no internal iframe scroll).
+// Area annotation rects are rendered as overlays on the parent page — the
+// iframe just needs to be tall enough that parent-page coords match content coords.
+const ANNOTATION_SCRIPT = `<script>
+(function(){
+  // === HEIGHT REPORTING ===
+  function report(){
+    var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);
+    if(h>0)window.parent.postMessage({type:'IFRAME_HEIGHT',height:h},'*');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',report);
+  else report();
+  window.addEventListener('load',report);
+  var n=0;var iv=setInterval(function(){report();if(++n>=30)clearInterval(iv);},100);
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(report).observe(document.documentElement);
+
+  // === ELEMENT INSPECTOR ===
+  var inspectMode=false;
+  var watchedXPaths=[];
+  var overlay=null;
+
+  function getXPath(el){
+    if(!el||el.nodeType!==1)return'';
+    if(el===document.documentElement)return'/html';
+    if(el.id)return'//*[@id="'+el.id+'"]';
+    var parts=[];var cur=el;
+    while(cur&&cur.nodeType===1&&cur!==document.documentElement){
+      var tag=cur.tagName.toLowerCase();var idx=1;var sib=cur.previousSibling;
+      while(sib){if(sib.nodeType===1&&sib.tagName===cur.tagName)idx++;sib=sib.previousSibling;}
+      parts.unshift(tag+'['+idx+']');cur=cur.parentNode;
+    }
+    return'/html/'+parts.join('/');
+  }
+
+  function getRect(el){
+    var r=el.getBoundingClientRect();
+    return{top:Math.round(r.top),left:Math.round(r.left),width:Math.round(r.width),height:Math.round(r.height)};
+  }
+
+  function ensureOverlay(){
+    if(overlay)return overlay;
+    overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;pointer-events:none;z-index:99999;box-sizing:border-box;border:2px solid #f97316;background:rgba(249,115,22,0.1);display:none;transition:top 0.08s,left 0.08s,width 0.08s,height 0.08s;';
+    document.body.appendChild(overlay);return overlay;
+  }
+  function showOverlay(el){
+    var ov=ensureOverlay();var r=el.getBoundingClientRect();
+    ov.style.top=r.top+'px';ov.style.left=r.left+'px';
+    ov.style.width=r.width+'px';ov.style.height=r.height+'px';
+    ov.style.display='block';
+  }
+  function hideOverlay(){if(overlay)overlay.style.display='none';}
+
+  document.addEventListener('mouseover',function(e){
+    if(!inspectMode)return;
+    var el=e.target;
+    if(!el||el===document.body||el===document.documentElement||el===overlay)return;
+    showOverlay(el);
+    window.parent.postMessage({type:'ELEMENT_HOVER',xpath:getXPath(el),rect:getRect(el)},'*');
+  },true);
+
+  document.addEventListener('click',function(e){
+    if(!inspectMode)return;
+    e.preventDefault();e.stopPropagation();
+    var el=e.target;
+    if(!el||el===document.body||el===document.documentElement||el===overlay)return;
+    var xpath=getXPath(el);var rect=getRect(el);
+    window.parent.postMessage({type:'ELEMENT_SELECTED',xpath:xpath,rect:rect},'*');
+    inspectMode=false;hideOverlay();document.body.style.cursor='';
+  },true);
+
+  function resolveXPath(xpath){
+    try{
+      var r=document.evaluate(xpath,document,null,XPathResult.FIRST_ORDERED_NODE_TYPE,null);
+      return r.singleNodeValue;
+    }catch(e){return null;}
+  }
+
+  function reportPositions(){
+    if(watchedXPaths.length===0)return;
+    var positions=[];
+    for(var i=0;i<watchedXPaths.length;i++){
+      var item=watchedXPaths[i];var el=resolveXPath(item.xpath);
+      if(el)positions.push({commentId:item.commentId,xpath:item.xpath,rect:getRect(el)});
+    }
+    if(positions.length>0)window.parent.postMessage({type:'ELEMENT_POSITIONS',positions:positions},'*');
+  }
+
+  window.addEventListener('message',function(e){
+    var msg=e.data;if(!msg||typeof msg!=='object')return;
+    if(msg.type==='INSPECT_MODE'){
+      inspectMode=!!msg.active;
+      document.body.style.cursor=inspectMode?'crosshair':'';
+      if(!inspectMode)hideOverlay();
+    }
+    if(msg.type==='WATCH_XPATHS'){
+      watchedXPaths=msg.xpaths||[];
+      reportPositions();
+    }
+  });
+
+  window.addEventListener('scroll',reportPositions,true);
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(reportPositions).observe(document.documentElement);
+})();
+</script>`;
+
 /**
  * Streams an artifact version's raw content for the viewer iframe (and the edit
  * dialog), so the bytes never enter the page's RSC payload. Re-checks visibility
@@ -91,7 +198,16 @@ export async function GET(
   // React artifacts are wrapped in a self-contained HTML doc that transpiles and
   // mounts the component; both it and HTML are served as a sandboxed document.
   const serveAsDocument = isHtml || isReact;
-  const body = isReact ? renderReactWrapper(content) : content;
+  let body = isReact ? renderReactWrapper(content) : content;
+
+  if (serveAsDocument) {
+    // Case-insensitive match + fallback append for HTML fragments without </body>
+    if (/<\/body>/i.test(body)) {
+      body = body.replace(/<\/body>/i, ANNOTATION_SCRIPT + "</body>");
+    } else {
+      body = body + ANNOTATION_SCRIPT;
+    }
+  }
 
   // Cap browser/proxy caching for private artifacts; private content must not be
   // cached by shared caches.

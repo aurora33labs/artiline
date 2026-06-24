@@ -19,6 +19,8 @@ import {
   Trash2,
   MoreHorizontal,
   ChevronRight,
+  Crosshair,
+  MousePointer2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -40,13 +42,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAnnotations } from "@/components/annotation-provider";
 import { deleteArtifact } from "@/app/[workspace]/a/[slug]/actions";
 import {
   VISIBILITY_LABEL_KEYS,
   type Visibility,
 } from "@/components/visibility-badge";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
-import { CommentsModal } from "@/components/comments-modal";
 import { ReactionsModal } from "@/components/reactions-modal";
 import { ArtifactSettingsModal } from "@/components/artifact-settings-modal";
 import { PublishVersionDialog } from "@/components/publish-version-dialog";
@@ -89,7 +91,6 @@ export function FloatingActionCard({
   title,
   type,
   visibility,
-  commentsCount,
   artifactId,
   shareHref,
   downloadHref,
@@ -103,7 +104,6 @@ export function FloatingActionCard({
   updatedAt,
   versionCount,
   backHref,
-  commentsSlot,
   reactionsSlot,
 }: {
   title: string;
@@ -123,10 +123,9 @@ export function FloatingActionCard({
   updatedAt: Date;
   versionCount: number;
   backHref: string;
-  commentsSlot: React.ReactNode;
   reactionsSlot: React.ReactNode;
 }) {
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { annotations, sidebarOpen, setSidebarOpen, isPlacing, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -140,6 +139,7 @@ export function FloatingActionCard({
   const t = useTranslations("viewer");
   const tt = useTranslations("toasts");
   const tc = useTranslations("common");
+  const ta = useTranslations("annotations");
   const tv = useTranslations("visibility");
   const format = useFormatter();
   const fmtDate = (d: Date) =>
@@ -223,9 +223,67 @@ export function FloatingActionCard({
           <DockButton
             icon={<MessageSquare className="size-5" />}
             label={t("comments")}
-            badge={commentsCount > 0 ? commentsCount : undefined}
-            onClick={() => setCommentsOpen(true)}
+            badge={annotations.length > 0 ? annotations.length : undefined}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
           />
+          {/* Annotation mode — single entry point with popover */}
+          <DropdownMenu onOpenChange={(open) => { if (!open && !isPlacing && !isInspecting) return; }}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={ta("annotate")}
+                className={cn(
+                  DOCK_BASE,
+                  (isPlacing || isInspecting) && "bg-primary/10 border-primary/40 text-primary"
+                )}
+              >
+                {isPlacing ? (
+                  <Crosshair className="size-5" />
+                ) : isInspecting ? (
+                  <MousePointer2 className="size-5" />
+                ) : (
+                  <Crosshair className="size-5" />
+                )}
+                <span role="tooltip" className={DOCK_TOOLTIP}>
+                  {isPlacing ? ta("cancelAnnotation") : isInspecting ? ta("cancelInspect") : ta("annotate")}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="left" align="center" sideOffset={10} className="w-80 p-1.5">
+              <DropdownMenuLabel className={MENU_LABEL}>{ta("newComment")}</DropdownMenuLabel>
+              <DropdownMenuItem
+                className={cn(MENU_ROW, isInspecting && "bg-primary/10 text-primary")}
+                onSelect={() => {
+                  if (isInspecting) { setIsInspecting(false); return; }
+                  setIsInspecting(true);
+                  setIsPlacing(false);
+                }}
+              >
+                <MenuChip><MousePointer2 className="size-4" /></MenuChip>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{ta("anchorElement")}</span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">{ta("recommended")}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("anchorElementDesc")}</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={cn(MENU_ROW, isPlacing && "bg-primary/10 text-primary")}
+                onSelect={() => {
+                  if (isPlacing) { setIsPlacing(false); return; }
+                  setIsPlacing(true);
+                  setIsInspecting(false);
+                }}
+              >
+                <MenuChip><Crosshair className="size-4" /></MenuChip>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-sm">{ta("markArea")}</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("markAreaDesc")}</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DockButton
             icon={<Smile className="size-5" />}
             label={t("react")}
@@ -360,8 +418,8 @@ export function FloatingActionCard({
         <BarButton
           icon={<MessageSquare className="size-5" />}
           label={t("comments")}
-          badge={commentsCount > 0 ? commentsCount : undefined}
-          onClick={() => setCommentsOpen(true)}
+          badge={annotations.length > 0 ? annotations.length : undefined}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
         />
         <BarButton
           icon={<MoreHorizontal className="size-5" />}
@@ -466,10 +524,6 @@ export function FloatingActionCard({
           )}
         </div>
       </BottomSheet>
-
-      <CommentsModal open={commentsOpen} onOpenChange={setCommentsOpen}>
-        {commentsSlot}
-      </CommentsModal>
 
       <ReactionsModal open={reactionsOpen} onOpenChange={setReactionsOpen}>
         {reactionsSlot}
@@ -695,6 +749,7 @@ function DockButton({
   as,
   disabled,
   accent,
+  selected,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -704,16 +759,16 @@ function DockButton({
   as?: "link";
   disabled?: boolean;
   accent?: boolean;
+  selected?: boolean;
 }) {
   const baseClasses = cn(
     DOCK_BASE,
-    // Accent buttons read as normal at rest. They turn primary only on keyboard
-    // focus or while pressed/active — never on hover, never by default.
     accent &&
       cn(
         "focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:border-primary",
         "active:bg-primary active:text-primary-foreground active:border-primary",
       ),
+    selected && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90",
     disabled && "opacity-50 cursor-not-allowed",
   );
 
