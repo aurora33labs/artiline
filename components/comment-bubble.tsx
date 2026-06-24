@@ -181,10 +181,10 @@ export function CommentBubble({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onResolve(); }}
-                  className="p-0.5 text-green-600/60 hover:text-green-500 transition-colors rounded"
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-green-600/30 bg-green-600/10 text-green-600/80 hover:bg-green-600/20 hover:text-green-500 hover:border-green-500/50 transition-colors text-[10px] font-medium"
                   title="Marcar resuelto"
                 >
-                  <Check className="size-3.5" />
+                  <Check className="size-3" />
                 </button>
               )}
             </div>
