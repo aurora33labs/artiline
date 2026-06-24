@@ -77,7 +77,7 @@ export function CommentMarginColumn({
 
   return (
     <div
-      className="relative shrink-0 w-[280px] hidden md:block"
+      className="relative shrink-0 w-[280px] hidden md:block border-l border-border"
       style={{ minHeight: containerHeight || undefined }}
     >
       {annotations.map((annotation) => {
