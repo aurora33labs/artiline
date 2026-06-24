@@ -42,8 +42,8 @@ export function HtmlViewer({
       ref={iframeRef}
       src={src}
       sandbox="allow-scripts"
-      className={cn("w-full border-0 bg-white block", !contentHeight && "min-h-[70vh]")}
-      style={contentHeight ? { height: `${contentHeight}px` } : { minHeight: "70vh" }}
+      className="w-full border-0 bg-white block"
+      style={{ height: contentHeight ? `${contentHeight}px` : undefined, minHeight: "100vh" }}
       title="artifact-html"
     />
   );

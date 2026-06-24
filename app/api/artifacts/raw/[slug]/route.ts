@@ -21,11 +21,14 @@ const ANNOTATION_SCRIPT = `<script>
 (function(){
   function report(){
     var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);
-    window.parent.postMessage({type:'IFRAME_HEIGHT',height:h},'*');
+    if(h>0)window.parent.postMessage({type:'IFRAME_HEIGHT',height:h},'*');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',report);
   else report();
   window.addEventListener('load',report);
+  // Retry every 100ms for 3s — ensures parent listener catches the message
+  // regardless of which side finishes mounting first.
+  var n=0;var iv=setInterval(function(){report();if(++n>=30)clearInterval(iv);},100);
   if(typeof ResizeObserver!=='undefined')new ResizeObserver(report).observe(document.documentElement);
 })();
 </script>`;
