@@ -46,6 +46,8 @@ type AnnotationContextType = {
   setActiveCommentId: (id: string | null) => void;
   pendingSelection: PendingSelection | null;
   setPendingSelection: (s: PendingSelection | null) => void;
+  commentDraft: PendingSelection | null;
+  setCommentDraft: (s: PendingSelection | null) => void;
   isPlacing: boolean;
   setIsPlacing: (placing: boolean) => void;
   sidebarOpen: boolean;
@@ -59,6 +61,7 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
+  const [commentDraft, setCommentDraft] = useState<PendingSelection | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -101,6 +104,8 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setActiveCommentId,
         pendingSelection,
         setPendingSelection,
+        commentDraft,
+        setCommentDraft,
         isPlacing,
         setIsPlacing,
         sidebarOpen,

@@ -5,6 +5,7 @@ import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/com
 import { NoteMarker } from "@/components/note-marker";
 import { NotesSidebar } from "@/components/notes-sidebar";
 import { CommentMarginColumn } from "@/components/comment-margin-column";
+import { SelectionTooltip } from "@/components/selection-tooltip";
 import { addComment } from "@/app/actions/social";
 
 export type AnnotationData = {
@@ -86,6 +87,7 @@ function AnnotationInner({
     setActiveCommentId,
     pendingSelection,
     setPendingSelection,
+    setCommentDraft,
   } = useAnnotations();
   const [placingCoords, setPlacingCoords] = useState<{ x: number; y: number } | null>(null);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -137,12 +139,10 @@ function AnnotationInner({
     if (artifactType !== "html") return;
 
     const handler = (event: MessageEvent) => {
-      // The raw artifact route serves with CSP `sandbox allow-scripts`, which
-      // gives the iframe document a null/opaque origin — event.origin is the
-      // string "null", not window.location.origin. Checking event.source is
-      // the reliable guard: it must come from our specific iframe window.
-      if (!iframeRef.current) return;
-      if (event.source !== iframeRef.current.contentWindow) return;
+      // The raw artifact route serves with CSP `sandbox allow-scripts`, giving
+      // the iframe a null/opaque origin. Guard on event.source when the ref is
+      // available; if not yet found, let known message types through anyway.
+      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
 
       if (event.data.type === "TEXT_SELECTION") {
@@ -287,6 +287,16 @@ function AnnotationInner({
       >
         {children}
         {renderMarkers()}
+        {pendingSelection && (
+          <SelectionTooltip
+            pendingSelection={pendingSelection}
+            onAddComment={() => {
+              setCommentDraft(pendingSelection);
+              setPendingSelection(null);
+            }}
+            onDismiss={() => setPendingSelection(null)}
+          />
+        )}
       </div>
       <CommentMarginColumn
         annotations={annotations}
@@ -298,9 +308,7 @@ function AnnotationInner({
             iframeRef.current.contentWindow.postMessage({ type: "ACTIVATE_ANNOTATION", commentId: id }, "*");
           }
         }}
-        pendingSelection={pendingSelection}
         onConfirmComment={handleConfirmComment}
-        onDismissPending={() => setPendingSelection(null)}
         onDelete={async (commentId) => { removeAnnotation(commentId); }}
         artifactId={artifactId}
         versionId={versionId}

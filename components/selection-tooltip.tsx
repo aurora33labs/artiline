@@ -34,7 +34,7 @@ export function SelectionTooltip({ pendingSelection, onAddComment, onDismiss }: 
     <div
       ref={ref}
       className="absolute z-50 pointer-events-auto"
-      style={{ top: `calc(${pendingSelection.rectY * 100}% - 36px)`, right: -4 }}
+      style={{ top: `calc(${pendingSelection.rectY * 100}% - 36px)`, right: 8 }}
     >
       <button
         type="button"
