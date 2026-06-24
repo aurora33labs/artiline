@@ -44,6 +44,7 @@ export const annotationTargetTypeEnum = pgEnum("annotation_target_type", [
   "area",
   "global",
   "text",
+  "element",
 ]);
 
 export const users = pgTable("users", {

@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   ChevronRight,
   Crosshair,
+  MousePointer2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -124,7 +125,7 @@ export function FloatingActionCard({
   backHref: string;
   reactionsSlot: React.ReactNode;
 }) {
-  const { annotations, sidebarOpen, setSidebarOpen, isPlacing, setIsPlacing } = useAnnotations();
+  const { annotations, sidebarOpen, setSidebarOpen, isPlacing, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -228,7 +229,13 @@ export function FloatingActionCard({
             icon={<Crosshair className="size-5" />}
             label={isPlacing ? "Cancelar" : "Anotar"}
             selected={isPlacing}
-            onClick={() => setIsPlacing(!isPlacing)}
+            onClick={() => { setIsPlacing(!isPlacing); if (!isPlacing) setIsInspecting(false); }}
+          />
+          <DockButton
+            icon={<MousePointer2 className="size-5" />}
+            label={isInspecting ? "Cancelar" : "Inspeccionar"}
+            selected={isInspecting}
+            onClick={() => { setIsInspecting(!isInspecting); if (!isInspecting) setIsPlacing(false); }}
           />
           <DockButton
             icon={<Smile className="size-5" />}

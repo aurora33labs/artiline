@@ -35,7 +35,7 @@ const addCommentSchema = z.object({
   y: z.number().min(0).max(1).optional().nullable(),
   width: z.number().min(0).max(1).optional().nullable(),
   height: z.number().min(0).max(1).optional().nullable(),
-  targetType: z.enum(["point", "area", "global", "text"]).optional().nullable(),
+  targetType: z.enum(["point", "area", "global", "text", "element"]).optional().nullable(),
   iframeX: z.number().min(0).max(1).optional().nullable(),
   iframeY: z.number().min(0).max(1).optional().nullable(),
   selectedText: z.string().max(2000).optional().nullable(),
@@ -87,13 +87,14 @@ export async function addComment(formData: FormData) {
     .returning({ id: schema.comments.id });
 
   const isGlobal = data.targetType === "global";
-  if (isGlobal || (data.x !== null && data.y !== null)) {
+  const isElement = data.targetType === "element";
+  if (isGlobal || isElement || (data.x !== null && data.y !== null)) {
     const annotationValues = {
       commentId: comment.id,
-      x: isGlobal ? 0 : (data.x as number),
-      y: isGlobal ? 0 : (data.y as number),
-      width: isGlobal ? null : (data.width ?? null),
-      height: isGlobal ? null : (data.height ?? null),
+      x: isGlobal ? 0 : (data.x ?? 0),
+      y: isGlobal ? 0 : (data.y ?? 0),
+      width: (isGlobal || isElement) ? null : (data.width ?? null),
+      height: (isGlobal || isElement) ? null : (data.height ?? null),
       targetType: data.targetType ?? "point",
       iframeX: data.iframeX ?? null,
       iframeY: data.iframeY ?? null,

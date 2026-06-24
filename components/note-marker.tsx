@@ -10,7 +10,7 @@ interface NoteMarkerProps {
     y: number;
     width: number | null;
     height: number | null;
-    targetType: "point" | "area" | "global" | "text";
+    targetType: "point" | "area" | "global" | "text" | "element";
     commentId: string;
   };
   onClick: (commentId: string, e: MouseEvent<HTMLDivElement>) => void;

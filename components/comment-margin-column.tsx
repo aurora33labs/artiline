@@ -31,6 +31,7 @@ interface CommentMarginColumnProps {
   activeCommentId: string | null;
   onActivate: (commentId: string | null) => void;
   onConfirmComment: (body: string, draft: PendingSelection) => Promise<void>;
+  onConfirmElementComment: (body: string) => Promise<void>;
   onDelete: (commentId: string) => void;
   onResolve: (commentId: string) => void;
   artifactId: string;
@@ -45,27 +46,41 @@ export function CommentMarginColumn({
   activeCommentId,
   onActivate,
   onConfirmComment,
+  onConfirmElementComment,
   onDelete,
   onResolve,
   artifactId,
   workspaceSlug,
   slug,
 }: CommentMarginColumnProps) {
-  const { commentDraft, setCommentDraft } = useAnnotations();
+  const { commentDraft, setCommentDraft, pendingElementDraft, setPendingElementDraft, elementRects } = useAnnotations();
 
   const visibleAnnotations = annotations.filter((a) => !a.resolved && a.targetType !== "global");
+
+  // For sorting/layout: element annotations use live rect top if available, else normalized y
+  const getEffectiveY = (a: Annotation): number => {
+    if (a.targetType === "element" && elementRects[a.commentId]) {
+      return elementRects[a.commentId].top / (containerHeight || 1);
+    }
+    return a.y;
+  };
 
   const items = useMemo(() => {
     const base = visibleAnnotations.map((a) => ({
       commentId: a.commentId,
-      y: a.y,
+      y: getEffectiveY(a),
       isActive: a.commentId === activeCommentId,
     }));
     if (commentDraft) {
       base.push({ commentId: "__draft__", y: commentDraft.y, isActive: true });
     }
+    if (pendingElementDraft) {
+      const draftY = containerHeight > 0 ? pendingElementDraft.rect.top / containerHeight : 0;
+      base.push({ commentId: "__element_draft__", y: draftY, isActive: true });
+    }
     return base;
-  }, [visibleAnnotations, activeCommentId, commentDraft]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleAnnotations, activeCommentId, commentDraft, pendingElementDraft, elementRects, containerHeight]);
 
   const tops = useMemo(() => computeTops(items, containerHeight), [items, containerHeight]);
 
@@ -79,7 +94,11 @@ export function CommentMarginColumn({
     setCommentDraft(null);
   };
 
-  const hasBubbles = visibleAnnotations.length > 0 || commentDraft !== null;
+  const handleElementDraftCancel = () => {
+    setPendingElementDraft(null);
+  };
+
+  const hasBubbles = visibleAnnotations.length > 0 || commentDraft !== null || pendingElementDraft !== null;
   if (!hasBubbles) return null;
 
   return (
@@ -88,7 +107,13 @@ export function CommentMarginColumn({
       style={{ height: containerHeight || undefined }}
     >
       {visibleAnnotations.map((annotation) => {
-        const top = tops.get(annotation.commentId) ?? annotation.y * containerHeight;
+        // Use live rect top for element annotations
+        let top: number;
+        if (annotation.targetType === "element" && elementRects[annotation.commentId]) {
+          top = elementRects[annotation.commentId].top;
+        } else {
+          top = tops.get(annotation.commentId) ?? annotation.y * containerHeight;
+        }
         return (
           <div key={annotation.commentId} className="pointer-events-auto">
             <CommentBubble
@@ -107,6 +132,7 @@ export function CommentMarginColumn({
         );
       })}
 
+      {/* Area drag draft */}
       {commentDraft && (() => {
         const draftAnnotation: Annotation = {
           id: "__draft__",
@@ -138,6 +164,42 @@ export function CommentMarginColumn({
               isDraft
               onDraftSubmit={handleDraftSubmit}
               onDraftCancel={handleDraftCancel}
+            />
+          </div>
+        );
+      })()}
+
+      {/* Element inspect draft */}
+      {pendingElementDraft && (() => {
+        const draftAnnotation: Annotation = {
+          id: "__element_draft__",
+          commentId: "__element_draft__",
+          x: 0,
+          y: containerHeight > 0 ? pendingElementDraft.rect.top / containerHeight : 0,
+          width: null, height: null,
+          targetType: "element",
+          iframeX: null, iframeY: null,
+          selectedText: null,
+          anchorXPath: pendingElementDraft.xpath, anchorOffset: null,
+          anchorEndXPath: null, anchorEndOffset: null,
+          body: "", authorName: null, userName: null, userEmail: null,
+          createdAt: new Date().toISOString(),
+          resolved: false,
+          replies: [],
+        };
+        const top = tops.get("__element_draft__") ?? pendingElementDraft.rect.top;
+        return (
+          <div className="pointer-events-auto">
+            <CommentBubble
+              annotation={draftAnnotation}
+              top={top}
+              isActive
+              onActivate={() => {}}
+              onDeactivate={() => {}}
+              onDelete={() => {}}
+              isDraft
+              onDraftSubmit={onConfirmElementComment}
+              onDraftCancel={handleElementDraftCancel}
             />
           </div>
         );

@@ -18,7 +18,7 @@ export type Annotation = {
   y: number;
   width: number | null;
   height: number | null;
-  targetType: "point" | "area" | "global" | "text";
+  targetType: "point" | "area" | "global" | "text" | "element";
   iframeX: number | null;
   iframeY: number | null;
   selectedText: string | null;
@@ -43,6 +43,15 @@ export type PendingSelection = {
   height: number;
 };
 
+// Pending element annotation (xpath + pixel rect relative to container)
+export type PendingElementDraft = {
+  xpath: string;
+  rect: { top: number; left: number; width: number; height: number };
+};
+
+// Pixel rect for a live-tracked element annotation
+export type ElementRect = { top: number; left: number; width: number; height: number };
+
 type AnnotationContextType = {
   annotations: Annotation[];
   setAnnotations: (annotations: Annotation[]) => void;
@@ -57,6 +66,12 @@ type AnnotationContextType = {
   setCommentDraft: (s: PendingSelection | null) => void;
   isPlacing: boolean;
   setIsPlacing: (placing: boolean) => void;
+  isInspecting: boolean;
+  setIsInspecting: (v: boolean) => void;
+  pendingElementDraft: PendingElementDraft | null;
+  setPendingElementDraft: (d: PendingElementDraft | null) => void;
+  elementRects: Record<string, ElementRect>;
+  setElementRects: React.Dispatch<React.SetStateAction<Record<string, ElementRect>>>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 };
@@ -69,6 +84,9 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<PendingSelection | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [pendingElementDraft, setPendingElementDraft] = useState<PendingElementDraft | null>(null);
+  const [elementRects, setElementRects] = useState<Record<string, ElementRect>>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -112,6 +130,12 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setCommentDraft,
         isPlacing,
         setIsPlacing,
+        isInspecting,
+        setIsInspecting,
+        pendingElementDraft,
+        setPendingElementDraft,
+        elementRects,
+        setElementRects,
         sidebarOpen,
         setSidebarOpen,
       }}
@@ -127,4 +151,9 @@ export function useAnnotations() {
     throw new Error("useAnnotations must be used within an AnnotationProvider");
   }
   return context;
+}
+
+// Safe version — returns null if used outside AnnotationProvider (e.g. HtmlViewer in preview)
+export function useAnnotationsOptional() {
+  return useContext(AnnotationContext);
 }
