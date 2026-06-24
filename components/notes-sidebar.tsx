@@ -138,7 +138,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         >
           <div className="shrink-0 mt-0.5">{targetIcon(annotation)}</div>
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between text-base text-muted-foreground">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span className="truncate">
                 {annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? tc("anonymous")}
               </span>
@@ -206,7 +206,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                   {getInitials(reply.userName ?? reply.authorName)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 text-base text-muted-foreground">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
                       {reply.userName ?? reply.authorName ?? tc("anonymous")}
                     </span>
