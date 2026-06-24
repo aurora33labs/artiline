@@ -216,7 +216,6 @@ export default async function PublicArtifact({
             contentSrc: usesIframe ? rawContentPath({ slug, pw }) : null,
             content,
           }}
-          fullscreen
         />
         <PublicFooter />
         <FloatingActionCard

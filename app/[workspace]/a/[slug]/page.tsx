@@ -138,7 +138,6 @@ export default async function ArtifactInternalView({
             contentSrc: usesIframe ? rawSrc : null,
             content,
           }}
-          fullscreen
         />
         <FloatingActionCard
           title={version.title}
