@@ -173,9 +173,21 @@ export function CommentBubble({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <span className="text-xs font-medium truncate">{displayName}</span>
-            <span className="text-[10px] text-muted-foreground shrink-0">
-              {formatRelativeTime(annotation.createdAt)}
-            </span>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] text-muted-foreground">
+                {formatRelativeTime(annotation.createdAt)}
+              </span>
+              {onResolve && !isDraft && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onResolve(); }}
+                  className="p-0.5 text-green-600/60 hover:text-green-500 transition-colors rounded"
+                  title="Marcar resuelto"
+                >
+                  <Check className="size-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <p className={cn("text-xs text-muted-foreground mt-0.5", !isActive && "line-clamp-2")}>
             {annotation.body}
