@@ -17,6 +17,17 @@ export const runtime = "nodejs";
 // the iframe element can be sized to its content (no internal iframe scroll).
 // Area annotation rects are rendered as overlays on the parent page — the
 // iframe just needs to be tall enough that parent-page coords match content coords.
+// When prefers-reduced-motion:reduce is active (system setting or browser-enforced
+// inside doubly-sandboxed iframes), CSS animations are killed via `animation:none`.
+// Artifacts that start elements at opacity:0 and rely on animations to reveal them
+// end up permanently blank. This injection restores visibility by overriding opacity
+// after the artifact's own stylesheets, so !important here beats their opacity:0.
+const REDUCED_MOTION_FALLBACK = `<style>
+@media(prefers-reduced-motion:reduce){
+  *{opacity:1!important;transform:none!important;visibility:visible!important}
+}
+</style>`;
+
 const ANNOTATION_SCRIPT = `<script>
 (function(){
   // === HEIGHT REPORTING ===
@@ -202,10 +213,11 @@ export async function GET(
 
   if (serveAsDocument) {
     // Case-insensitive match + fallback append for HTML fragments without </body>
+    const inject = REDUCED_MOTION_FALLBACK + ANNOTATION_SCRIPT;
     if (/<\/body>/i.test(body)) {
-      body = body.replace(/<\/body>/i, ANNOTATION_SCRIPT + "</body>");
+      body = body.replace(/<\/body>/i, inject + "</body>");
     } else {
-      body = body + ANNOTATION_SCRIPT;
+      body = body + inject;
     }
   }
 
