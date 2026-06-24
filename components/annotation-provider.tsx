@@ -60,11 +60,12 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window === "undefined") return false;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
     const stored = sessionStorage.getItem("annotationsSidebarOpen");
-    return stored !== null ? JSON.parse(stored) : false;
-  });
+    if (stored !== null) setSidebarOpen(JSON.parse(stored));
+  }, []);
 
   useEffect(() => {
     sessionStorage.setItem("annotationsSidebarOpen", JSON.stringify(sidebarOpen));
