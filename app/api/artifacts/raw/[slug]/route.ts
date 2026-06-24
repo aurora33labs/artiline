@@ -111,7 +111,12 @@ export async function GET(
   let body = isReact ? renderReactWrapper(content) : content;
 
   if (serveAsDocument) {
-    body = body.replace("</body>", ANNOTATION_SCRIPT + "</body>");
+    // Case-insensitive match + fallback append for HTML fragments without </body>
+    if (/<\/body>/i.test(body)) {
+      body = body.replace(/<\/body>/i, ANNOTATION_SCRIPT + "</body>");
+    } else {
+      body = body + ANNOTATION_SCRIPT;
+    }
   }
 
   // Cap browser/proxy caching for private artifacts; private content must not be

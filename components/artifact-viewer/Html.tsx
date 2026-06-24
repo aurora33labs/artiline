@@ -16,7 +16,8 @@ export function HtmlViewer({
   useEffect(() => {
     if (fullscreen) return;
     const handler = (e: MessageEvent) => {
-      if (e.source !== iframeRef.current?.contentWindow) return;
+      // No source check: sandboxed iframes have a null/opaque origin which can
+      // make contentWindow comparisons unreliable. IFRAME_HEIGHT is harmless.
       if (e.data?.type === "IFRAME_HEIGHT" && typeof e.data.height === "number") {
         setContentHeight(e.data.height);
       }
