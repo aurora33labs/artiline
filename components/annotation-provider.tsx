@@ -87,12 +87,11 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [isInspecting, setIsInspecting] = useState(false);
   const [pendingElementDraft, setPendingElementDraft] = useState<PendingElementDraft | null>(null);
   const [elementRects, setElementRects] = useState<Record<string, ElementRect>>({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
     const stored = sessionStorage.getItem("annotationsSidebarOpen");
-    if (stored !== null) setSidebarOpen(JSON.parse(stored));
-  }, []);
+    return stored !== null ? (JSON.parse(stored) as boolean) : false;
+  });
 
   useEffect(() => {
     sessionStorage.setItem("annotationsSidebarOpen", JSON.stringify(sidebarOpen));

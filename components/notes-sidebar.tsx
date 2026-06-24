@@ -157,7 +157,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             {annotation.replies.length > 0 && !isExpanded && (
               <p className="text-base text-muted-foreground mt-1 flex items-center gap-1">
                 <MessageSquare className="size-3" />
-                {annotation.replies.length} {annotation.replies.length === 1 ? "respuesta" : "respuestas"}
+                {annotation.replies.length} {annotation.replies.length === 1 ? tn("replySingular") : tn("replyPlural")}
               </p>
             )}
           </div>
@@ -170,7 +170,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                 type="button"
                 onClick={() => handleResolve(annotation.commentId)}
                 className="p-1 text-green-500 hover:text-muted-foreground transition-colors rounded"
-                title="Re-abrir"
+                title={tn("reopen")}
               >
                 <RotateCcw className="size-3" />
               </button>
@@ -179,7 +179,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                 type="button"
                 onClick={() => handleResolve(annotation.commentId)}
                 className="p-1 text-green-600/60 hover:text-green-500 transition-colors rounded"
-                title="Marcar resuelto"
+                title={tn("markResolved")}
               >
                 <Check className="size-4" />
               </button>
@@ -190,7 +190,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               type="button"
               onClick={() => setPendingDeleteId(annotation.commentId)}
               className="p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors rounded"
-              title="Eliminar"
+              title={tn("delete")}
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -227,7 +227,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                   onChange={(e) =>
                     setReplyBodies((prev) => ({ ...prev, [annotation.commentId]: e.target.value }))
                   }
-                  placeholder="Responder..."
+                  placeholder={tn("replyPlaceholder")}
                   maxLength={500}
                   className="flex-1 text-sm bg-surface rounded-md border border-border px-2.5 py-1.5 outline-none placeholder:text-muted-foreground focus:border-primary/50 transition-colors"
                 />
@@ -267,10 +267,10 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               type="button"
               onClick={() => { setGlobalDraftOpen(true); }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              title="Nuevo comentario"
+              title={tn("newComment")}
             >
               <PlusCircle className="size-3.5 shrink-0" />
-              Nuevo
+              {tn("new")}
             </button>
           )}
           <button
@@ -290,12 +290,12 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             <form onSubmit={handleGlobalSubmit} className="space-y-2">
               <div className="flex items-center gap-1.5 text-base text-muted-foreground mb-1">
                 <Globe className="size-3.5" />
-                <span>Comentario general</span>
+                <span>{tn("globalType")}</span>
               </div>
               <Textarea
                 value={globalDraftBody}
                 onChange={(e) => setGlobalDraftBody(e.target.value)}
-                placeholder="Escribe un comentario..."
+                placeholder={tn("writePlaceholder")}
                 rows={3}
                 maxLength={2000}
                 autoFocus
@@ -303,7 +303,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" disabled={isSubmittingGlobal || !globalDraftBody.trim()}>
-                  {isSubmittingGlobal ? "Guardando..." : "Comentar"}
+                  {isSubmittingGlobal ? tn("saving") : tn("comment")}
                 </Button>
                 <Button
                   type="button"
@@ -311,7 +311,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                   size="sm"
                   onClick={() => { setGlobalDraftOpen(false); setGlobalDraftBody(""); }}
                 >
-                  Cancelar
+                  {tc("cancel")}
                 </Button>
               </div>
             </form>
@@ -339,7 +339,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             >
               <span className="flex items-center gap-1.5">
                 <Check className="size-3 text-green-500" />
-                Resueltos ({resolved.length})
+                {tn("resolved")} ({resolved.length})
               </span>
               {showResolved ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
             </button>
@@ -358,7 +358,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
         return (
           <div className="shrink-0 border-t border-destructive/30 bg-destructive/5 p-4 space-y-3">
             <div className="space-y-1">
-              <p className="text-base font-medium text-destructive">¿Eliminar comentario?</p>
+              <p className="text-base font-medium text-destructive">{tn("deleteTitle")}</p>
               {target && (
                 <p className="text-base text-muted-foreground line-clamp-2 italic">
                   &ldquo;{target.body.slice(0, 100)}{target.body.length > 100 ? "…" : ""}&rdquo;
@@ -371,14 +371,14 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
                 size="sm"
                 onClick={() => handleDelete(pendingDeleteId)}
               >
-                Eliminar
+                {tn("delete")}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setPendingDeleteId(null)}
               >
-                Cancelar
+                {tc("cancel")}
               </Button>
             </div>
           </div>
@@ -396,7 +396,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <PlusCircle className="size-4" />
-            Nuevo
+            {tn("new")}
           </button>
         )}
         {/* Right: close */}

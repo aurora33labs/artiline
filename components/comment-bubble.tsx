@@ -5,6 +5,7 @@ import { Trash2, MessageSquare, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslations } from "next-intl";
 import { deleteComment, addReply } from "@/app/actions/social";
 import type { Annotation } from "@/components/annotation-provider";
 
@@ -25,10 +26,10 @@ interface CommentBubbleProps {
   slug?: string;
 }
 
-function formatRelativeTime(dateStr: string) {
+function formatRelativeTime(dateStr: string, justNow: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "justo ahora";
+  if (mins < 1) return justNow;
   if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h`;
@@ -56,6 +57,8 @@ export function CommentBubble({
   workspaceSlug,
   slug,
 }: CommentBubbleProps) {
+  const tc = useTranslations("common");
+  const tn = useTranslations("comments");
   const [draftBody, setDraftBody] = useState(draftDefaultText);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +66,7 @@ export function CommentBubble({
   const [replyBody, setReplyBody] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
-  const displayName = annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? "Anónimo";
+  const displayName = annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? tc("anonymous");
 
   // Close on outside click when active
   useEffect(() => {
@@ -129,12 +132,12 @@ export function CommentBubble({
         <form onSubmit={handleDraftSubmit} className="p-3 space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <MessageSquare className="size-3 text-primary" />
-            <span className="font-medium text-foreground">Nuevo comentario</span>
+            <span className="font-medium text-foreground">{tn("newComment")}</span>
           </div>
           <Textarea
             value={draftBody}
             onChange={(e) => setDraftBody(e.target.value)}
-            placeholder="Escribe un comentario..."
+            placeholder={tn("writePlaceholder")}
             rows={3}
             maxLength={2000}
             autoFocus
@@ -142,10 +145,10 @@ export function CommentBubble({
           />
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={isSubmitting || !draftBody.trim()}>
-              {isSubmitting ? "Guardando..." : "Comentar"}
+              {isSubmitting ? tn("saving") : tn("comment")}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={onDraftCancel}>
-              Cancelar
+              {tc("cancel")}
             </Button>
           </div>
         </form>
@@ -175,14 +178,14 @@ export function CommentBubble({
             <span className="text-xs font-medium truncate">{displayName}</span>
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-[10px] text-muted-foreground">
-                {formatRelativeTime(annotation.createdAt)}
+                {formatRelativeTime(annotation.createdAt, tn("justNow"))}
               </span>
               {onResolve && !isDraft && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onResolve(); }}
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-green-600/30 bg-green-600/10 text-green-600/80 hover:bg-green-600/20 hover:text-green-500 hover:border-green-500/50 transition-colors text-[10px] font-medium"
-                  title="Marcar resuelto"
+                  title={tn("markResolved")}
                 >
                   <Check className="size-3" />
                 </button>
@@ -219,9 +222,9 @@ export function CommentBubble({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        {reply.userName ?? reply.authorName ?? "Anónimo"}
+                        {reply.userName ?? reply.authorName ?? tc("anonymous")}
                       </span>
-                      <span>{formatRelativeTime(reply.createdAt)}</span>
+                      <span>{formatRelativeTime(reply.createdAt, tn("justNow"))}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{reply.body}</p>
                   </div>
@@ -236,7 +239,7 @@ export function CommentBubble({
                 <input
                   value={replyBody}
                   onChange={(e) => setReplyBody(e.target.value)}
-                  placeholder="Responder..."
+                  placeholder={tn("replyPlaceholder")}
                   maxLength={500}
                   className="flex-1 text-xs bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
                 />
@@ -258,10 +261,10 @@ export function CommentBubble({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onResolve(); }}
                 className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-green-500 transition-colors rounded px-1 py-0.5"
-                title="Marcar resuelto"
+                title={tn("markResolved")}
               >
                 <Check className="size-3.5" />
-                Resolver
+                {tn("resolve")}
               </button>
             )}
 
@@ -271,7 +274,7 @@ export function CommentBubble({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setPendingDelete(true); }}
                 className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
-                title="Eliminar"
+                title={tn("delete")}
               >
                 <Trash2 className="size-3" />
               </button>
@@ -281,7 +284,7 @@ export function CommentBubble({
           {/* Confirmación de borrado — panel dentro de la burbuja */}
           {pendingDelete && (
             <div className="mx-3 mb-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
-              <p className="text-xs text-destructive font-medium">¿Eliminar este comentario?</p>
+              <p className="text-xs text-destructive font-medium">{tn("bubbleDeleteTitle")}</p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -289,14 +292,14 @@ export function CommentBubble({
                   disabled={isDeleting}
                   className="px-2.5 py-1 rounded text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                 >
-                  {isDeleting ? "Eliminando..." : "Eliminar"}
+                  {isDeleting ? tn("deleting") : tn("delete")}
                 </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setPendingDelete(false); }}
                   className="px-2.5 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
                 >
-                  Cancelar
+                  {tc("cancel")}
                 </button>
               </div>
             </div>

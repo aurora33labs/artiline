@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/components/annotation-provider";
 import { NoteMarker } from "@/components/note-marker";
 import { NotesSidebar } from "@/components/notes-sidebar";
@@ -75,6 +76,7 @@ function AnnotationInner({
   slug?: string;
   initialAnnotations: AnnotationData[];
 }) {
+  const ta = useTranslations("annotations");
   const containerRef = useRef<HTMLDivElement>(null);
   // Wraps only the artifact content — used for inspect-mode hit testing so that
   // app UI (dock, sidebar, overlays) is excluded from element selection.
@@ -408,7 +410,7 @@ function AnnotationInner({
             }}
           >
             <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-foreground/90 text-background text-xs font-medium pointer-events-none select-none whitespace-nowrap shadow-lg">
-              Arrastra para seleccionar · Esc para cancelar
+              {ta("dragHint")}
             </div>
             {liveRect && liveRect.width > 0.005 && liveRect.height > 0.005 && (
               <div
@@ -464,7 +466,7 @@ function AnnotationInner({
             }}
           >
             <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-foreground/90 text-background text-xs font-medium pointer-events-none select-none whitespace-nowrap shadow-lg">
-              Clic en un elemento · Esc para cancelar
+              {ta("inspectHint")}
             </div>
           </div>
         )}

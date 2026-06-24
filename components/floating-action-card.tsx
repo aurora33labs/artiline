@@ -139,6 +139,7 @@ export function FloatingActionCard({
   const t = useTranslations("viewer");
   const tt = useTranslations("toasts");
   const tc = useTranslations("common");
+  const ta = useTranslations("annotations");
   const tv = useTranslations("visibility");
   const format = useFormatter();
   const fmtDate = (d: Date) =>
@@ -230,7 +231,7 @@ export function FloatingActionCard({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label="Anotar"
+                aria-label={ta("annotate")}
                 className={cn(
                   DOCK_BASE,
                   (isPlacing || isInspecting) && "bg-primary/10 border-primary/40 text-primary"
@@ -244,12 +245,12 @@ export function FloatingActionCard({
                   <Crosshair className="size-5" />
                 )}
                 <span role="tooltip" className={DOCK_TOOLTIP}>
-                  {isPlacing ? "Cancelar anotación" : isInspecting ? "Cancelar inspección" : "Anotar"}
+                  {isPlacing ? ta("cancelAnnotation") : isInspecting ? ta("cancelInspect") : ta("annotate")}
                 </span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="left" align="center" sideOffset={10} className="w-80 p-1.5">
-              <DropdownMenuLabel className={MENU_LABEL}>Nuevo comentario</DropdownMenuLabel>
+              <DropdownMenuLabel className={MENU_LABEL}>{ta("newComment")}</DropdownMenuLabel>
               <DropdownMenuItem
                 className={cn(MENU_ROW, isInspecting && "bg-primary/10 text-primary")}
                 onSelect={() => {
@@ -261,10 +262,10 @@ export function FloatingActionCard({
                 <MenuChip><MousePointer2 className="size-4" /></MenuChip>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">Anclar a elemento</span>
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">Recomendado</span>
+                    <span className="font-medium text-sm">{ta("anchorElement")}</span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">{ta("recommended")}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground leading-relaxed">Selecciona cualquier elemento de la página. El comentario se mueve con él aunque cambie el tamaño de pantalla.</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("anchorElementDesc")}</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -277,8 +278,8 @@ export function FloatingActionCard({
               >
                 <MenuChip><Crosshair className="size-4" /></MenuChip>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-medium text-sm">Marcar área</span>
-                  <span className="text-xs text-muted-foreground leading-relaxed">Arrastra para encuadrar una zona específica. Útil para señalar espacios, alineaciones o regiones visuales.</span>
+                  <span className="font-medium text-sm">{ta("markArea")}</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("markAreaDesc")}</span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
