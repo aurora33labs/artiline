@@ -147,7 +147,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               </span>
             </div>
             {annotation.selectedText && (
-              <p className="text-[10px] text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
+              <p className="text-xs text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
                 &ldquo;{annotation.selectedText.slice(0, 50)}&rdquo;
               </p>
             )}
@@ -155,8 +155,8 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               {annotation.body}
             </p>
             {annotation.replies.length > 0 && !isExpanded && (
-              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                <MessageSquare className="size-2.5" />
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <MessageSquare className="size-3" />
                 {annotation.replies.length} {annotation.replies.length === 1 ? "respuesta" : "respuestas"}
               </p>
             )}
@@ -178,10 +178,10 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
               <button
                 type="button"
                 onClick={() => handleResolve(annotation.commentId)}
-                className="p-1 text-muted-foreground/50 hover:text-green-500 transition-colors rounded"
+                className="p-1 text-green-600/60 hover:text-green-500 transition-colors rounded"
                 title="Marcar resuelto"
               >
-                <Check className="size-3.5" />
+                <Check className="size-4" />
               </button>
             )}
 
@@ -189,10 +189,10 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
             <button
               type="button"
               onClick={() => setPendingDeleteId(annotation.commentId)}
-              className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
+              className="p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors rounded"
               title="Eliminar"
             >
-              <Trash2 className="size-3" />
+              <Trash2 className="size-3.5" />
             </button>
           </div>
         </div>
@@ -202,7 +202,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           <div className="mt-3 pl-5 space-y-3">
             {annotation.replies.map((reply) => (
               <div key={reply.id} className="flex gap-2">
-                <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold font-display">
+                <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold font-display">
                   {getInitials(reply.userName ?? reply.authorName)}
                 </div>
                 <div className="flex-1 min-w-0">
