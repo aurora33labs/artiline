@@ -248,22 +248,8 @@ export function FloatingActionCard({
                 </span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="left" align="center" sideOffset={10} className="min-w-52 p-1.5">
-              <DropdownMenuLabel className={MENU_LABEL}>Nueva anotación</DropdownMenuLabel>
-              <DropdownMenuItem
-                className={cn(MENU_ROW, isPlacing && "bg-primary/10 text-primary")}
-                onSelect={() => {
-                  if (isPlacing) { setIsPlacing(false); return; }
-                  setIsPlacing(true);
-                  setIsInspecting(false);
-                }}
-              >
-                <MenuChip><Crosshair className="size-4" /></MenuChip>
-                <div className="flex flex-col">
-                  <span className="font-medium text-sm">Seleccionar área</span>
-                  <span className="text-xs text-muted-foreground">Arrastra para encuadrar una región</span>
-                </div>
-              </DropdownMenuItem>
+            <DropdownMenuContent side="left" align="center" sideOffset={10} className="w-80 p-1.5">
+              <DropdownMenuLabel className={MENU_LABEL}>Nuevo comentario</DropdownMenuLabel>
               <DropdownMenuItem
                 className={cn(MENU_ROW, isInspecting && "bg-primary/10 text-primary")}
                 onSelect={() => {
@@ -273,9 +259,26 @@ export function FloatingActionCard({
                 }}
               >
                 <MenuChip><MousePointer2 className="size-4" /></MenuChip>
-                <div className="flex flex-col">
-                  <span className="font-medium text-sm">Inspeccionar elemento</span>
-                  <span className="text-xs text-muted-foreground">Clic en un componente de la página</span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Anclar a elemento</span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">Recomendado</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground leading-relaxed">Selecciona cualquier elemento de la página. El comentario se mueve con él aunque cambie el tamaño de pantalla.</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={cn(MENU_ROW, isPlacing && "bg-primary/10 text-primary")}
+                onSelect={() => {
+                  if (isPlacing) { setIsPlacing(false); return; }
+                  setIsPlacing(true);
+                  setIsInspecting(false);
+                }}
+              >
+                <MenuChip><Crosshair className="size-4" /></MenuChip>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-sm">Marcar área</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">Arrastra para encuadrar una zona específica. Útil para señalar espacios, alineaciones o regiones visuales.</span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
