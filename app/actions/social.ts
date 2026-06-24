@@ -114,6 +114,42 @@ const updateAnnotationPositionSchema = z.object({
   iframeY: z.number().min(0).max(1).optional().nullable(),
 });
 
+async function requireAnnotationAccess(commentId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+
+  const [row] = await db
+    .select({
+      artifactId: schema.comments.artifactId,
+      commentUserId: schema.comments.userId,
+      workspaceId: schema.artifacts.workspaceId,
+    })
+    .from(schema.annotations)
+    .innerJoin(schema.comments, eq(schema.comments.id, schema.annotations.commentId))
+    .innerJoin(schema.artifacts, eq(schema.artifacts.id, schema.comments.artifactId))
+    .where(eq(schema.annotations.commentId, commentId))
+    .limit(1);
+
+  if (!row) throw new Error("NOT_FOUND");
+
+  const isOwner = row.commentUserId === session.user.id;
+  if (!isOwner) {
+    const [member] = await db
+      .select({ userId: schema.workspaceMembers.userId })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, row.workspaceId),
+          eq(schema.workspaceMembers.userId, session.user.id),
+        ),
+      )
+      .limit(1);
+    if (!member) throw new Error("FORBIDDEN");
+  }
+
+  return session;
+}
+
 export async function updateAnnotationPosition(input: {
   commentId: string;
   x: number;
@@ -124,6 +160,7 @@ export async function updateAnnotationPosition(input: {
   iframeY?: number | null;
 }) {
   const data = updateAnnotationPositionSchema.parse(input);
+  await requireAnnotationAccess(data.commentId);
 
   await db
     .update(schema.annotations)
@@ -139,6 +176,7 @@ export async function updateAnnotationPosition(input: {
 }
 
 export async function deleteAnnotation(commentId: string) {
+  await requireAnnotationAccess(commentId);
   await db.delete(schema.annotations).where(eq(schema.annotations.commentId, commentId));
 }
 
