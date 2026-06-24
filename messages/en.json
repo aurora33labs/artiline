@@ -8,7 +8,8 @@
     "email": "Email",
     "password": "Password",
     "copyLink": "Copy link",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "back": "Back"
   },
   "metadata": {
     "title": "Artiline — Share AI artifacts with your team",
