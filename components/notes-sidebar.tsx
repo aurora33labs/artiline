@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { MessageSquare, Pin, Globe, ChevronRight, Trash2, Type, PlusCircle } from "lucide-react";
+import { useState, useCallback } from "react";
+import { MessageSquare, Pin, Globe, ChevronRight, ChevronDown, Trash2, Type, PlusCircle, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
-import { deleteComment, addComment, addReply } from "@/app/actions/social";
+import { deleteComment, addComment, addReply, toggleResolve } from "@/app/actions/social";
 import { useAnnotations, type Annotation } from "@/components/annotation-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,6 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
     setAnnotations,
     selectedAnnotationId,
     setSelectedAnnotationId,
-    activeCommentId,
     setActiveCommentId,
     sidebarOpen,
     setSidebarOpen,
@@ -43,14 +42,27 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
   const [isSubmittingGlobal, setIsSubmittingGlobal] = useState(false);
   const [replyBodies, setReplyBodies] = useState<Record<string, string>>({});
   const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showResolved, setShowResolved] = useState(false);
 
   const handleDelete = useCallback(
     async (commentId: string) => {
       await deleteComment(commentId);
       removeAnnotation(commentId);
       if (expandedId === commentId) setExpandedId(null);
+      setPendingDeleteId(null);
     },
     [removeAnnotation, expandedId]
+  );
+
+  const handleResolve = useCallback(
+    async (commentId: string) => {
+      await toggleResolve(commentId);
+      setAnnotations(annotations.map((a) =>
+        a.commentId === commentId ? { ...a, resolved: !a.resolved } : a
+      ));
+    },
+    [annotations, setAnnotations]
   );
 
   const handleGlobalSubmit = async (e: React.FormEvent) => {
@@ -98,6 +110,161 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
     return <Pin className="size-3.5 text-primary" />;
   };
 
+  const open = annotations.filter((a) => !a.resolved);
+  const resolved = annotations.filter((a) => a.resolved);
+
+  const renderAnnotationRow = (annotation: Annotation, isResolvedSection = false) => {
+    const isExpanded = expandedId === annotation.commentId;
+    const isPendingDelete = pendingDeleteId === annotation.commentId;
+
+    return (
+      <li
+        key={annotation.commentId}
+        className={cn(
+          "px-4 py-3 hover:bg-surface-2 transition-colors",
+          selectedAnnotationId === annotation.commentId && "bg-surface-2",
+          isResolvedSection && "opacity-60"
+        )}
+      >
+        <div
+          className="flex items-start gap-2 cursor-pointer"
+          onClick={() => {
+            if (isPendingDelete) { setPendingDeleteId(null); return; }
+            const next = isExpanded ? null : annotation.commentId;
+            setExpandedId(next);
+            setSelectedAnnotationId(annotation.commentId);
+            if (!isResolvedSection) setActiveCommentId(annotation.commentId);
+          }}
+        >
+          <div className="shrink-0 mt-0.5">{targetIcon(annotation)}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className="truncate">
+                {annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? tc("anonymous")}
+              </span>
+              <span className="shrink-0 ml-2">
+                {new Date(annotation.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+            {annotation.selectedText && (
+              <p className="text-[10px] text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
+                &ldquo;{annotation.selectedText.slice(0, 50)}&rdquo;
+              </p>
+            )}
+            <p className={cn("text-sm mt-1 line-clamp-2", isResolvedSection && "line-through decoration-muted-foreground/40")}>
+              {annotation.body}
+            </p>
+            {annotation.replies.length > 0 && !isExpanded && (
+              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                <MessageSquare className="size-2.5" />
+                {annotation.replies.length} {annotation.replies.length === 1 ? "respuesta" : "respuestas"}
+              </p>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+            {/* Resolve / Re-open */}
+            {isResolvedSection ? (
+              <button
+                type="button"
+                onClick={() => handleResolve(annotation.commentId)}
+                className="p-1 text-green-500 hover:text-muted-foreground transition-colors rounded"
+                title="Re-abrir"
+              >
+                <RotateCcw className="size-3" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleResolve(annotation.commentId)}
+                className="p-1 text-muted-foreground/50 hover:text-green-500 transition-colors rounded"
+                title="Marcar resuelto"
+              >
+                <Check className="size-3.5" />
+              </button>
+            )}
+
+            {/* Delete: 2-step */}
+            {isPendingDelete ? (
+              <span className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleDelete(annotation.commentId)}
+                  className="text-[10px] text-destructive hover:text-destructive/80 px-1 py-0.5"
+                >
+                  Sí
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingDeleteId(null)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5"
+                >
+                  No
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPendingDeleteId(annotation.commentId)}
+                className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
+                title="Eliminar"
+              >
+                <Trash2 className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Inline thread */}
+        {isExpanded && (
+          <div className="mt-3 pl-5 space-y-3">
+            {annotation.replies.map((reply) => (
+              <div key={reply.id} className="flex gap-2">
+                <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold font-display">
+                  {getInitials(reply.userName ?? reply.authorName)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      {reply.userName ?? reply.authorName ?? tc("anonymous")}
+                    </span>
+                    <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-xs mt-0.5 text-muted-foreground">{reply.body}</p>
+                </div>
+              </div>
+            ))}
+
+            {artifactId && !isResolvedSection && (
+              <form
+                onSubmit={(e) => handleReplySubmit(e, annotation.commentId)}
+                className="flex items-center gap-2 pt-1"
+              >
+                <input
+                  value={replyBodies[annotation.commentId] ?? ""}
+                  onChange={(e) =>
+                    setReplyBodies((prev) => ({ ...prev, [annotation.commentId]: e.target.value }))
+                  }
+                  placeholder="Responder..."
+                  maxLength={500}
+                  className="flex-1 text-xs bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
+                />
+                <button
+                  type="submit"
+                  disabled={!replyBodies[annotation.commentId]?.trim() || replyingId === annotation.commentId}
+                  className="text-xs text-primary disabled:opacity-40"
+                >
+                  ↩
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  };
+
   return (
     <aside
       className={cn(
@@ -110,7 +277,7 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
       <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
         <h2 className="font-display font-medium text-sm uppercase tracking-[0.06em]">
           {tn("modalTitle")}
-          <span className="ml-1.5 text-muted-foreground">({annotations.length})</span>
+          <span className="ml-1.5 text-muted-foreground">({open.length})</span>
         </h2>
         <div className="flex items-center gap-2">
           {artifactId && (
@@ -169,128 +336,37 @@ export function NotesSidebar({ artifactId, versionId, workspaceSlug, slug }: Not
           </div>
         )}
 
-        {annotations.length === 0 && !globalDraftOpen ? (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground">
+        {open.length === 0 && !globalDraftOpen ? (
+          <div className="flex flex-col items-center justify-center h-48 p-6 text-center text-muted-foreground">
             <MessageSquare className="size-8 mb-2 opacity-40" />
             <p className="text-sm">{tn("noComments")}</p>
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {annotations.map((annotation) => {
-              const isExpanded = expandedId === annotation.commentId;
-              return (
-                <li
-                  key={annotation.commentId}
-                  className={cn(
-                    "px-4 py-3 hover:bg-surface-2 transition-colors",
-                    selectedAnnotationId === annotation.commentId && "bg-surface-2"
-                  )}
-                >
-                  <div
-                    className="flex items-start gap-2 cursor-pointer"
-                    onClick={() => {
-                      const next = isExpanded ? null : annotation.commentId;
-                      setExpandedId(next);
-                      setSelectedAnnotationId(annotation.commentId);
-                      setActiveCommentId(annotation.commentId);
-                    }}
-                  >
-                    <div className="shrink-0 mt-0.5">{targetIcon(annotation)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span className="truncate">
-                          {annotation.userName ?? annotation.userEmail ?? annotation.authorName ?? tc("anonymous")}
-                        </span>
-                        <span className="shrink-0 ml-2">
-                          {new Date(annotation.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {annotation.selectedText && (
-                        <p className="text-[10px] text-muted-foreground/70 italic truncate mt-0.5 border-l-2 border-primary/30 pl-1.5">
-                          &ldquo;{annotation.selectedText.slice(0, 50)}&rdquo;
-                        </p>
-                      )}
-                      <p className="text-sm mt-1 line-clamp-2">{annotation.body}</p>
-                      {annotation.replies.length > 0 && !isExpanded && (
-                        <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                          <MessageSquare className="size-2.5" />
-                          {annotation.replies.length} {annotation.replies.length === 1 ? "respuesta" : "respuestas"}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(annotation.commentId); }}
-                      className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors rounded opacity-0 group-hover:opacity-100"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Inline thread */}
-                  {isExpanded && (
-                    <div className="mt-3 pl-5 space-y-3">
-                      {annotation.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-2">
-                          <div className="size-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold font-display">
-                            {getInitials(reply.userName ?? reply.authorName)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span className="font-medium text-foreground">
-                                {reply.userName ?? reply.authorName ?? tc("anonymous")}
-                              </span>
-                              <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-xs mt-0.5 text-muted-foreground">{reply.body}</p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {artifactId && (
-                        <form
-                          onSubmit={(e) => handleReplySubmit(e, annotation.commentId)}
-                          className="flex items-center gap-2 pt-1"
-                        >
-                          <input
-                            value={replyBodies[annotation.commentId] ?? ""}
-                            onChange={(e) =>
-                              setReplyBodies((prev) => ({
-                                ...prev,
-                                [annotation.commentId]: e.target.value,
-                              }))
-                            }
-                            placeholder="Responder..."
-                            maxLength={500}
-                            className="flex-1 text-xs bg-transparent border-b border-border outline-none placeholder:text-muted-foreground py-1"
-                          />
-                          <button
-                            type="submit"
-                            disabled={
-                              !replyBodies[annotation.commentId]?.trim() ||
-                              replyingId === annotation.commentId
-                            }
-                            className="text-xs text-primary disabled:opacity-40"
-                          >
-                            ↩
-                          </button>
-                        </form>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(annotation.commentId)}
-                        className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
-                      >
-                        <Trash2 className="size-2.5" /> Eliminar comentario
-                      </button>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+            {open.map((annotation) => renderAnnotationRow(annotation, false))}
           </ul>
+        )}
+
+        {/* Resolved section */}
+        {resolved.length > 0 && (
+          <div className="border-t border-border">
+            <button
+              type="button"
+              onClick={() => setShowResolved((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <Check className="size-3 text-green-500" />
+                Resueltos ({resolved.length})
+              </span>
+              {showResolved ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+            </button>
+            {showResolved && (
+              <ul className="divide-y divide-border">
+                {resolved.map((annotation) => renderAnnotationRow(annotation, true))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
     </aside>

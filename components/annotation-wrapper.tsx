@@ -5,7 +5,7 @@ import { AnnotationProvider, useAnnotations, type PendingSelection } from "@/com
 import { NoteMarker } from "@/components/note-marker";
 import { NotesSidebar } from "@/components/notes-sidebar";
 import { CommentMarginColumn } from "@/components/comment-margin-column";
-import { addComment } from "@/app/actions/social";
+import { addComment, toggleResolve } from "@/app/actions/social";
 import { cn } from "@/lib/utils";
 
 export type AnnotationData = {
@@ -28,6 +28,7 @@ export type AnnotationData = {
   userName: string | null;
   userEmail: string | null;
   createdAt: string;
+  resolved: boolean;
   replies: Array<{
     id: string;
     body: string;
@@ -59,6 +60,7 @@ function AnnotationInner({
   const {
     annotations,
     setAnnotations,
+    updateAnnotation,
     removeAnnotation,
     isPlacing,
     setIsPlacing,
@@ -155,6 +157,13 @@ function AnnotationInner({
     await addComment(formData);
   }, [artifactId, versionId, workspaceSlug, slug]);
 
+  const handleResolve = useCallback(async (commentId: string) => {
+    const annotation = annotations.find((a) => a.commentId === commentId);
+    if (!annotation) return;
+    await toggleResolve(commentId);
+    updateAnnotation(commentId, { resolved: !annotation.resolved });
+  }, [annotations, updateAnnotation]);
+
   const liveRect = getLiveRect();
 
   return (
@@ -172,9 +181,9 @@ function AnnotationInner({
       >
         {children}
 
-        {/* Saved area rect overlays */}
+        {/* Saved area rect overlays — only unresolved */}
         {annotations
-          .filter((a) => a.targetType === "area" && a.width !== null && a.height !== null)
+          .filter((a) => a.targetType === "area" && a.width !== null && a.height !== null && !a.resolved)
           .map((a) => (
             <div
               key={a.commentId}
@@ -200,7 +209,7 @@ function AnnotationInner({
         {/* NoteMarker for non-html point/area annotations */}
         {artifactType !== "html" &&
           annotations
-            .filter((a) => a.targetType === "point")
+            .filter((a) => a.targetType === "point" && !a.resolved)
             .map((a) => (
               <NoteMarker
                 key={a.commentId}
@@ -225,6 +234,7 @@ function AnnotationInner({
           }}
           onConfirmComment={handleConfirmComment}
           onDelete={async (commentId) => { removeAnnotation(commentId); }}
+          onResolve={handleResolve}
           artifactId={artifactId}
           versionId={versionId}
           workspaceSlug={workspaceSlug}

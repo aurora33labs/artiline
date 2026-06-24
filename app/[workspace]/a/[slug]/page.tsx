@@ -84,6 +84,7 @@ export default async function ArtifactInternalView({
       userName: schema.users.name,
       userEmail: schema.users.email,
       createdAt: schema.comments.createdAt,
+      resolved: schema.comments.resolved,
     })
     .from(schema.comments)
     .leftJoin(schema.annotations, eq(schema.annotations.commentId, schema.comments.id))
@@ -136,6 +137,7 @@ export default async function ArtifactInternalView({
       userName: r.userName,
       userEmail: r.userEmail,
       createdAt: r.createdAt.toISOString(),
+      resolved: r.resolved ?? false,
       replies: replyRows
         .filter((rr) => rr.parentCommentId === r.commentId)
         .map((rr) => ({

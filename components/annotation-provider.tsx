@@ -31,6 +31,7 @@ export type Annotation = {
   userName: string | null;
   userEmail: string | null;
   createdAt: string;
+  resolved: boolean;
   replies: Reply[];
 };
 

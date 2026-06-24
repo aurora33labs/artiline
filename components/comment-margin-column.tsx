@@ -32,6 +32,7 @@ interface CommentMarginColumnProps {
   onActivate: (commentId: string | null) => void;
   onConfirmComment: (body: string, draft: PendingSelection) => Promise<void>;
   onDelete: (commentId: string) => void;
+  onResolve: (commentId: string) => void;
   artifactId: string;
   versionId?: string | null;
   workspaceSlug?: string;
@@ -45,14 +46,17 @@ export function CommentMarginColumn({
   onActivate,
   onConfirmComment,
   onDelete,
+  onResolve,
   artifactId,
   workspaceSlug,
   slug,
 }: CommentMarginColumnProps) {
   const { commentDraft, setCommentDraft } = useAnnotations();
 
+  const visibleAnnotations = annotations.filter((a) => !a.resolved);
+
   const items = useMemo(() => {
-    const base = annotations.map((a) => ({
+    const base = visibleAnnotations.map((a) => ({
       commentId: a.commentId,
       y: a.y,
       isActive: a.commentId === activeCommentId,
@@ -61,7 +65,7 @@ export function CommentMarginColumn({
       base.push({ commentId: "__draft__", y: commentDraft.y, isActive: true });
     }
     return base;
-  }, [annotations, activeCommentId, commentDraft]);
+  }, [visibleAnnotations, activeCommentId, commentDraft]);
 
   const tops = useMemo(() => computeTops(items, containerHeight), [items, containerHeight]);
 
@@ -75,7 +79,7 @@ export function CommentMarginColumn({
     setCommentDraft(null);
   };
 
-  const hasBubbles = annotations.length > 0 || commentDraft !== null;
+  const hasBubbles = visibleAnnotations.length > 0 || commentDraft !== null;
   if (!hasBubbles) return null;
 
   return (
@@ -83,7 +87,7 @@ export function CommentMarginColumn({
       className="absolute right-16 top-0 w-[280px] hidden md:block pointer-events-none"
       style={{ height: containerHeight || undefined }}
     >
-      {annotations.map((annotation) => {
+      {visibleAnnotations.map((annotation) => {
         const top = tops.get(annotation.commentId) ?? annotation.y * containerHeight;
         return (
           <div key={annotation.commentId} className="pointer-events-auto">
@@ -94,6 +98,7 @@ export function CommentMarginColumn({
               onActivate={() => onActivate(annotation.commentId)}
               onDeactivate={() => onActivate(null)}
               onDelete={onDelete}
+              onResolve={() => onResolve(annotation.commentId)}
               artifactId={artifactId}
               workspaceSlug={workspaceSlug}
               slug={slug}
@@ -117,6 +122,7 @@ export function CommentMarginColumn({
           anchorEndXPath: null, anchorEndOffset: null,
           body: "", authorName: null, userName: null, userEmail: null,
           createdAt: new Date().toISOString(),
+          resolved: false,
           replies: [],
         };
         const top = tops.get("__draft__") ?? commentDraft.y * containerHeight;

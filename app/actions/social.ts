@@ -198,6 +198,20 @@ export async function deleteComment(commentId: string) {
   await db.delete(schema.comments).where(eq(schema.comments.id, commentId));
 }
 
+export async function toggleResolve(commentId: string) {
+  await requireCommentAccess(commentId);
+  const [current] = await db
+    .select({ resolved: schema.comments.resolved })
+    .from(schema.comments)
+    .where(eq(schema.comments.id, commentId))
+    .limit(1);
+  if (!current) throw new Error("NOT_FOUND");
+  await db
+    .update(schema.comments)
+    .set({ resolved: !current.resolved })
+    .where(eq(schema.comments.id, commentId));
+}
+
 // Alias kept for callers that still reference the old name
 export async function deleteAnnotation(commentId: string) {
   return deleteComment(commentId);

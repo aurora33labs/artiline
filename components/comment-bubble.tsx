@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trash2, MessageSquare } from "lucide-react";
+import { Trash2, MessageSquare, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,7 @@ interface CommentBubbleProps {
   onActivate: () => void;
   onDeactivate: () => void;
   onDelete: (commentId: string) => void;
+  onResolve?: () => void;
   isDraft?: boolean;
   draftDefaultText?: string;
   onDraftSubmit?: (body: string) => Promise<void>;
@@ -46,6 +47,7 @@ export function CommentBubble({
   onActivate,
   onDeactivate,
   onDelete,
+  onResolve,
   isDraft = false,
   draftDefaultText = "",
   onDraftSubmit,
@@ -57,6 +59,7 @@ export function CommentBubble({
   const [draftBody, setDraftBody] = useState(draftDefaultText);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
   const [replyBody, setReplyBody] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -68,13 +71,14 @@ export function CommentBubble({
     const handler = (e: MouseEvent) => {
       if (bubbleRef.current && !bubbleRef.current.contains(e.target as Node)) {
         onDeactivate();
+        setPendingDelete(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [isActive, isDraft, onDeactivate]);
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDeleteConfirmed = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDeleting(true);
     try {
@@ -82,6 +86,7 @@ export function CommentBubble({
       onDelete(annotation.commentId);
     } finally {
       setIsDeleting(false);
+      setPendingDelete(false);
     }
   };
 
@@ -189,7 +194,7 @@ export function CommentBubble({
         </div>
       </div>
 
-      {/* Expanded: replies + reply input + delete */}
+      {/* Expanded: replies + reply input + actions */}
       {isActive && (
         <div onClick={(e) => e.stopPropagation()}>
           {annotation.replies.length > 0 && (
@@ -234,16 +239,52 @@ export function CommentBubble({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-1 px-3 pb-2 border-t border-border pt-2">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
-              title="Eliminar"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+          <div className="flex items-center justify-between px-3 pb-2 border-t border-border pt-2">
+            {/* Resolve button */}
+            {onResolve && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onResolve(); }}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-green-500 transition-colors rounded px-1 py-0.5"
+                title="Marcar resuelto"
+              >
+                <Check className="size-3.5" />
+                Resolver
+              </button>
+            )}
+
+            {/* Delete: 2-step confirmation */}
+            <div className="flex items-center gap-1 ml-auto">
+              {pendingDelete ? (
+                <>
+                  <span className="text-[10px] text-muted-foreground">¿Borrar?</span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteConfirmed}
+                    disabled={isDeleting}
+                    className="text-[10px] text-destructive hover:text-destructive/80 transition-colors px-1"
+                  >
+                    Sí
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setPendingDelete(false); }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1"
+                  >
+                    No
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setPendingDelete(true); }}
+                  className="p-1 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors rounded"
+                  title="Eliminar"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

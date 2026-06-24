@@ -257,6 +257,7 @@ export const comments = pgTable(
       (): AnyPgColumn => comments.id,
       { onDelete: "cascade" },
     ),
+    resolved: boolean("resolved").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [
