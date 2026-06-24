@@ -79,6 +79,16 @@ function AnnotationInner({
     return () => ro.disconnect();
   }, []);
 
+  // Scroll to annotation when activeCommentId changes (e.g. clicked from sidebar)
+  useEffect(() => {
+    if (!activeCommentId) return;
+    const annotation = annotations.find((a) => a.commentId === activeCommentId);
+    if (!annotation || !containerRef.current) return;
+    const contentHeight = containerRef.current.offsetHeight;
+    const top = annotation.y * contentHeight;
+    window.scrollTo({ top: Math.max(0, top - window.innerHeight / 3), behavior: "smooth" });
+  }, [activeCommentId]);
+
   // Cancel placing mode on Escape
   useEffect(() => {
     if (!isPlacing) return;
