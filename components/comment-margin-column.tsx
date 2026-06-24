@@ -77,21 +77,22 @@ export function CommentMarginColumn({
 
   return (
     <div
-      className="relative shrink-0 w-[280px] hidden md:block border-l border-border"
-      style={{ minHeight: containerHeight || undefined }}
+      className="absolute right-0 top-0 w-[280px] hidden md:block pointer-events-none"
+      style={{ height: containerHeight || undefined }}
     >
       {annotations.map((annotation) => {
         const top = tops.get(annotation.commentId) ?? annotation.y * containerHeight;
         return (
-          <CommentBubble
-            key={annotation.commentId}
-            annotation={annotation}
-            top={top}
-            isActive={annotation.commentId === activeCommentId}
-            onActivate={() => onActivate(annotation.commentId)}
-            onDeactivate={() => onActivate(null)}
-            onDelete={onDelete}
-          />
+          <div key={annotation.commentId} className="pointer-events-auto">
+            <CommentBubble
+              annotation={annotation}
+              top={top}
+              isActive={annotation.commentId === activeCommentId}
+              onActivate={() => onActivate(annotation.commentId)}
+              onDeactivate={() => onActivate(null)}
+              onDelete={onDelete}
+            />
+          </div>
         );
       })}
 
@@ -113,17 +114,19 @@ export function CommentMarginColumn({
         };
         const top = tops.get("__draft__") ?? commentDraft.y * containerHeight;
         return (
-          <CommentBubble
-            annotation={draftAnnotation}
-            top={top}
-            isActive
-            onActivate={() => {}}
-            onDeactivate={() => {}}
-            onDelete={() => {}}
-            isDraft
-            onDraftSubmit={handleDraftSubmit}
-            onDraftCancel={handleDraftCancel}
-          />
+          <div className="pointer-events-auto">
+            <CommentBubble
+              annotation={draftAnnotation}
+              top={top}
+              isActive
+              onActivate={() => {}}
+              onDeactivate={() => {}}
+              onDelete={() => {}}
+              isDraft
+              onDraftSubmit={handleDraftSubmit}
+              onDraftCancel={handleDraftCancel}
+            />
+          </div>
         );
       })()}
     </div>

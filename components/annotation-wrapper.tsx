@@ -130,10 +130,10 @@ function AnnotationInner({
   const liveRect = getLiveRect();
 
   return (
-    <div className="flex w-full min-h-0">
+    <div className="w-full min-h-0">
       <div
         ref={containerRef}
-        className="relative flex-1 min-w-0"
+        className="relative w-full"
         onClick={(e) => {
           // Deselect when clicking outside annotations
           if (!(e.target as HTMLElement).closest("[data-comment-id]")) {
@@ -185,6 +185,23 @@ function AnnotationInner({
                 }}
               />
             ))}
+
+        {/* Comment bubbles — overlaid on right edge, no reserved space */}
+        <CommentMarginColumn
+          annotations={annotations}
+          containerHeight={containerHeight}
+          activeCommentId={activeCommentId}
+          onActivate={(id) => {
+            setActiveCommentId(id);
+            setSelectedAnnotationId(id);
+          }}
+          onConfirmComment={handleConfirmComment}
+          onDelete={async (commentId) => { removeAnnotation(commentId); }}
+          artifactId={artifactId}
+          versionId={versionId}
+          workspaceSlug={workspaceSlug}
+          slug={slug}
+        />
 
         {/* Drag-to-select overlay — active when isPlacing */}
         {isPlacing && (
@@ -238,22 +255,6 @@ function AnnotationInner({
           </div>
         )}
       </div>
-
-      <CommentMarginColumn
-        annotations={annotations}
-        containerHeight={containerHeight}
-        activeCommentId={activeCommentId}
-        onActivate={(id) => {
-          setActiveCommentId(id);
-          setSelectedAnnotationId(id);
-        }}
-        onConfirmComment={handleConfirmComment}
-        onDelete={async (commentId) => { removeAnnotation(commentId); }}
-        artifactId={artifactId}
-        versionId={versionId}
-        workspaceSlug={workspaceSlug}
-        slug={slug}
-      />
       <NotesSidebar />
     </div>
   );
