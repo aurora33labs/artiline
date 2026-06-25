@@ -1,0 +1,1 @@
+ALTER TYPE "public"."annotation_target_type" ADD VALUE 'element';

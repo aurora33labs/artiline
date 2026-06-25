@@ -8,7 +8,8 @@
     "email": "Email",
     "password": "Password",
     "copyLink": "Copiar link",
-    "signIn": "Iniciar sesión"
+    "signIn": "Iniciar sesión",
+    "back": "Volver"
   },
   "metadata": {
     "title": "Artiline — Comparte artifacts de IA con tu equipo",
@@ -391,7 +392,41 @@
     "yourName": "Tu nombre",
     "body": "Comentario",
     "submit": "Comentar",
-    "modalTitle": "Comentarios"
+    "modalTitle": "Comentarios",
+    "addComment": "Añadir nota",
+    "commentPlaceholder": "Escribe una nota…",
+    "noComments": "Aún no hay notas",
+    "new": "Nuevo",
+    "newComment": "Nuevo comentario",
+    "comment": "Comentar",
+    "saving": "Guardando…",
+    "writePlaceholder": "Escribe un comentario…",
+    "replyPlaceholder": "Responder…",
+    "replySingular": "respuesta",
+    "replyPlural": "respuestas",
+    "resolve": "Resolver",
+    "markResolved": "Marcar resuelto",
+    "resolved": "Resueltos",
+    "reopen": "Re-abrir",
+    "globalType": "Comentario general",
+    "delete": "Eliminar",
+    "deleteTitle": "¿Eliminar comentario?",
+    "bubbleDeleteTitle": "¿Eliminar este comentario?",
+    "deleting": "Eliminando…",
+    "justNow": "justo ahora"
+  },
+  "annotations": {
+    "newComment": "Nuevo comentario",
+    "annotate": "Anotar",
+    "cancelAnnotation": "Cancelar anotación",
+    "cancelInspect": "Cancelar inspección",
+    "dragHint": "Arrastra para seleccionar · Esc para cancelar",
+    "inspectHint": "Clic en un elemento · Esc para cancelar",
+    "anchorElement": "Anclar a elemento",
+    "anchorElementDesc": "Selecciona cualquier elemento de la página. El comentario se mueve con él aunque cambie el tamaño de pantalla.",
+    "recommended": "Recomendado",
+    "markArea": "Marcar área",
+    "markAreaDesc": "Arrastra para encuadrar una zona específica. Útil para señalar espacios, alineaciones o regiones visuales."
   },
   "reactions": {
     "modalTitle": "Reacciones",

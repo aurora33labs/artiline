@@ -9,7 +9,9 @@ import {
   integer,
   boolean,
   jsonb,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 
 const id = () => text("id").$defaultFn(() => nanoid(21)).primaryKey();
@@ -36,6 +38,13 @@ export const reviewStatusEnum = pgEnum("review_status", [
   "pending",
   "approved",
   "changes_requested",
+]);
+export const annotationTargetTypeEnum = pgEnum("annotation_target_type", [
+  "point",
+  "area",
+  "global",
+  "text",
+  "element",
 ]);
 
 export const users = pgTable("users", {
@@ -245,11 +254,43 @@ export const comments = pgTable(
     userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
     authorName: text("author_name"),
     body: text("body").notNull(),
+    parentCommentId: text("parent_comment_id").references(
+      (): AnyPgColumn => comments.id,
+      { onDelete: "cascade" },
+    ),
+    resolved: boolean("resolved").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [
     index("comments_artifact_idx").on(t.artifactId),
     index("comments_version_idx").on(t.versionId),
+    index("comments_parent_idx").on(t.parentCommentId),
+  ],
+);
+
+export const annotations = pgTable(
+  "annotations",
+  {
+    id: id(),
+    commentId: text("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    x: doublePrecision("x").notNull(),
+    y: doublePrecision("y").notNull(),
+    width: doublePrecision("width"),
+    height: doublePrecision("height"),
+    targetType: annotationTargetTypeEnum("target_type").notNull().default("point"),
+    iframeX: doublePrecision("iframe_x"),
+    iframeY: doublePrecision("iframe_y"),
+    selectedText: text("selected_text"),
+    anchorXPath: text("anchor_xpath"),
+    anchorOffset: integer("anchor_offset"),
+    anchorEndXPath: text("anchor_end_xpath"),
+    anchorEndOffset: integer("anchor_end_offset"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("annotations_comment_idx").on(t.commentId),
   ],
 );
 
