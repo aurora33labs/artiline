@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
+import { sanitizeCallbackUrl } from "@/lib/safe-redirect";
 import { signInWithPassword } from "./actions";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, callbackUrl: rawCallback } = await searchParams;
+  const callbackUrl = sanitizeCallbackUrl(rawCallback);
   const t = await getTranslations("auth");
   const tc = await getTranslations("common");
   // Magic link only works when an email provider is configured. On self-host
@@ -35,6 +37,7 @@ export default async function LoginPage({
       }
     >
       <form action={signInWithPassword} className="space-y-4">
+        <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <div className="space-y-2">
           <Label htmlFor="email">{tc("email")}</Label>
           <Input
@@ -92,11 +95,14 @@ export default async function LoginPage({
               "use server";
               await signIn("resend", {
                 email: formData.get("email"),
-                redirectTo: "/",
+                redirectTo: sanitizeCallbackUrl(
+                  formData.get("callbackUrl") as string | null,
+                ),
               });
             }}
             className="space-y-4"
           >
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <div className="space-y-2">
               <Label htmlFor="magic-email">{tc("email")}</Label>
               <Input

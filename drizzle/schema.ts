@@ -158,6 +158,171 @@ export const authAttempts = pgTable(
   (t) => [index("auth_attempts_key_idx").on(t.key, t.kind, t.createdAt)],
 );
 
+// Workspace-scoped API tokens for programmatic ingestion (e.g. an MCP server
+// that lets Claude create artifacts directly). Only a sha256 hash of the raw
+// token is stored — the plaintext (`artl_<hex>`) is shown once at creation and
+// never persisted. Lookups are by `tokenHash` on every request, hence sha256
+// (indexable) rather than bcrypt. `userId` attributes token-created artifacts to
+// a real member; `role` is the permission ceiling for the key.
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: id(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    role: roleEnum("role").notNull().default("member"),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("api_keys_token_hash_idx").on(t.tokenHash),
+    index("api_keys_workspace_idx").on(t.workspaceId),
+    index("api_keys_prefix_idx").on(t.tokenPrefix),
+  ],
+);
+
+// --- OAuth 2.1 Authorization Server ---------------------------------------
+// Lets the Claude.ai web app connect as an OAuth client: the user logs in with
+// their Artiline account, picks a workspace, consents, and Claude receives a
+// workspace-scoped access token for the MCP server. Static `api_keys` (Bearer)
+// stays for Claude Desktop. All secrets are stored as sha256 hashes + a short
+// display prefix; the MCP resolver branches on prefix (`art_at_` vs `artl_`).
+
+// Registered OAuth clients (RFC 7591 Dynamic Client Registration). `id` doubles
+// as the public `client_id`. Public clients (Claude) use PKCE and have no secret.
+export const oauthClients = pgTable("oauth_clients", {
+  id: id(),
+  clientSecretHash: text("client_secret_hash"),
+  clientSecretPrefix: text("client_secret_prefix"),
+  redirectUris: jsonb("redirect_uris").$type<string[]>().notNull(),
+  clientName: text("client_name"),
+  grantTypes: jsonb("grant_types")
+    .$type<string[]>()
+    .notNull()
+    .default(["authorization_code", "refresh_token"]),
+  responseTypes: jsonb("response_types")
+    .$type<string[]>()
+    .notNull()
+    .default(["code"]),
+  tokenEndpointAuthMethod: text("token_endpoint_auth_method")
+    .notNull()
+    .default("none"),
+  scope: text("scope"),
+  createdAt: createdAt(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+
+// Single-use authorization codes bound to a client + user + workspace + PKCE
+// challenge. Short TTL (~60s); `consumedAt` guards replay.
+export const oauthAuthorizationCodes = pgTable(
+  "oauth_authorization_codes",
+  {
+    id: id(),
+    codeHash: text("code_hash").notNull(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    role: roleEnum("role").notNull(),
+    redirectUri: text("redirect_uri").notNull(),
+    codeChallenge: text("code_challenge").notNull(),
+    codeChallengeMethod: text("code_challenge_method").notNull().default("S256"),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    resource: text("resource"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("oauth_auth_codes_code_hash_idx").on(t.codeHash),
+    index("oauth_auth_codes_client_idx").on(t.clientId),
+    index("oauth_auth_codes_expires_idx").on(t.expiresAt),
+  ],
+);
+
+// Short-lived (~1h) OAuth access tokens. `userId` (restrict) attributes created
+// artifacts to a real member; `role` is a ceiling re-capped live at resolve time.
+export const oauthAccessTokens = pgTable(
+  "oauth_access_tokens",
+  {
+    id: id(),
+    tokenHash: text("token_hash").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    role: roleEnum("role").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("oauth_access_tokens_hash_idx").on(t.tokenHash),
+    index("oauth_access_tokens_client_idx").on(t.clientId),
+    index("oauth_access_tokens_workspace_idx").on(t.workspaceId),
+    index("oauth_access_tokens_user_idx").on(t.userId),
+    index("oauth_access_tokens_prefix_idx").on(t.tokenPrefix),
+  ],
+);
+
+// Long-lived (~30d) rotating refresh tokens. `rotatedToId` enables reuse
+// detection: presenting an already-rotated token revokes the whole family.
+export const oauthRefreshTokens = pgTable(
+  "oauth_refresh_tokens",
+  {
+    id: id(),
+    tokenHash: text("token_hash").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    role: roleEnum("role").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    accessTokenId: text("access_token_id").references(
+      () => oauthAccessTokens.id,
+      { onDelete: "set null" },
+    ),
+    rotatedToId: text("rotated_to_id"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("oauth_refresh_tokens_hash_idx").on(t.tokenHash),
+    index("oauth_refresh_tokens_client_idx").on(t.clientId),
+    index("oauth_refresh_tokens_workspace_idx").on(t.workspaceId),
+    index("oauth_refresh_tokens_user_idx").on(t.userId),
+  ],
+);
+
 export const artifacts = pgTable(
   "artifacts",
   {

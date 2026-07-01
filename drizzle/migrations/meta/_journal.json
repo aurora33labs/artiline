@@ -134,6 +134,20 @@
       "when": 1782329206147,
       "tag": "0018_amusing_union_jack",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782757346358,
+      "tag": "0019_striped_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782887054882,
+      "tag": "0020_graceful_pandemic",
+      "breakpoints": true
     }
   ]
 }
