@@ -113,11 +113,17 @@ const verifyToken = async (
   _req: Request,
   bearerToken?: string,
 ): Promise<AuthInfo | undefined> => {
-  if (!bearerToken) return undefined;
+  if (!bearerToken) {
+    console.log("[mcp-auth] no bearer token");
+    return undefined;
+  }
+  // Diagnostic: log only the token *kind* prefix (not the secret) + outcome.
+  const kind = bearerToken.slice(0, 7);
   try {
     // OAuth access token (Claude.ai web connector).
     if (bearerToken.startsWith(ACCESS_TOKEN_PREFIX)) {
       const r = await resolveAccessToken(bearerToken);
+      console.log(`[mcp-auth] ok oauth kind=${kind} ws=${r.workspace.slug} role=${r.role}`);
       return {
         token: bearerToken,
         scopes: r.scopes,
@@ -130,13 +136,17 @@ const verifyToken = async (
     }
     // Static API key (`artl_`, Claude Desktop via mcp-remote).
     const ctx = await resolveApiKey(bearerToken);
+    console.log(`[mcp-auth] ok apikey kind=${kind} ws=${ctx.workspace.slug}`);
     return {
       token: bearerToken,
       scopes: [],
       clientId: ctx.workspace.id,
       extra: { ctx },
     };
-  } catch {
+  } catch (e) {
+    console.log(
+      `[mcp-auth] reject kind=${kind} reason=${(e as Error)?.message ?? "unknown"}`,
+    );
     return undefined;
   }
 };
