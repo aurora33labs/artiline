@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import { NextResponse } from "next/server";
@@ -5,6 +6,31 @@ import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
+
+type Workspace = typeof schema.workspaces.$inferSelect;
+
+/**
+ * The minimal authenticated context the artifact routes and services need. Both
+ * `requireMember` (session cookie) and `requireApiKey` (Bearer token) resolve to
+ * this shape, so downstream code is agnostic to how the caller authenticated.
+ * The full Auth.js `Session` is assignable to `session` (it only reads `user.id`).
+ */
+export type AuthContext = {
+  session: { user: { id: string } };
+  workspace: Workspace;
+  role: WorkspaceRole;
+};
+
+const ROLE_RANK: Record<WorkspaceRole, number> = {
+  member: 0,
+  admin: 1,
+  owner: 2,
+};
+
+/** The less-privileged of two roles — used to cap a token by its ceiling. */
+export function minRole(a: WorkspaceRole, b: WorkspaceRole): WorkspaceRole {
+  return ROLE_RANK[a] <= ROLE_RANK[b] ? a : b;
+}
 
 export async function requireSession() {
   const session = await auth();
@@ -48,6 +74,153 @@ export async function requireMember(workspaceSlug: string) {
 
   if (!row) throw new Error("NOT_A_MEMBER");
   return { session, workspace: row.workspace, role: row.role };
+}
+
+/** Extract the raw token from an `Authorization: Bearer artl_...` header. */
+export function bearerToken(authHeader: string | null | undefined): string | null {
+  if (!authHeader) return null;
+  const m = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  const token = m?.[1]?.trim();
+  return token && token.startsWith("artl_") ? token : null;
+}
+
+/**
+ * Resolve a workspace API token to an `AuthContext`. The token grants access to
+ * exactly one workspace; passing a `workspaceSlug` that doesn't match the key's
+ * workspace 404s (no existence leak). The effective role is the lesser of the
+ * key's ceiling and the attributed member's live role, so revoking/downgrading
+ * the member tightens the key automatically.
+ *
+ * Throws `INVALID_TOKEN` (→401) for unknown/revoked/expired tokens and
+ * `NOT_A_MEMBER` (→404) when the token doesn't belong to the requested
+ * workspace or the member no longer belongs to it.
+ */
+export async function requireApiKey(
+  workspaceSlug: string,
+  rawToken: string,
+): Promise<AuthContext> {
+  const ctx = await resolveApiKey(rawToken);
+  // Scope check after validity so a valid token aimed at the wrong workspace
+  // 404s rather than leaking that the token itself is good.
+  if (ctx.workspace.slug !== workspaceSlug) throw new Error("NOT_A_MEMBER");
+  return ctx;
+}
+
+/**
+ * Resolve a raw API token to its `AuthContext` with no workspace-slug check —
+ * the workspace is taken from the token itself. Used by the MCP server, where
+ * the workspace is implicit in the credential. Throws `INVALID_TOKEN` for
+ * unknown/revoked/expired tokens.
+ */
+export async function resolveApiKey(rawToken: string): Promise<AuthContext> {
+  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+  const [row] = await db
+    .select({
+      key: schema.apiKeys,
+      workspace: schema.workspaces,
+      memberRole: schema.workspaceMembers.role,
+    })
+    .from(schema.apiKeys)
+    .innerJoin(
+      schema.workspaces,
+      eq(schema.workspaces.id, schema.apiKeys.workspaceId),
+    )
+    .innerJoin(
+      schema.workspaceMembers,
+      and(
+        eq(schema.workspaceMembers.workspaceId, schema.apiKeys.workspaceId),
+        eq(schema.workspaceMembers.userId, schema.apiKeys.userId),
+      ),
+    )
+    .where(eq(schema.apiKeys.tokenHash, tokenHash))
+    .limit(1);
+
+  if (!row) throw new Error("INVALID_TOKEN");
+  if (row.key.revokedAt) throw new Error("INVALID_TOKEN");
+  if (row.key.expiresAt && row.key.expiresAt.getTime() <= Date.now()) {
+    throw new Error("INVALID_TOKEN");
+  }
+
+  // Best-effort last-used stamp; never block the request on it.
+  void db
+    .update(schema.apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(schema.apiKeys.id, row.key.id))
+    .catch(() => {});
+
+  return {
+    session: { user: { id: row.key.userId } },
+    workspace: row.workspace,
+    role: minRole(row.key.role, row.memberRole),
+  };
+}
+
+/**
+ * Accept either a session cookie or a Bearer API token. Pass the request's raw
+ * `Authorization` header; if it carries an `artl_` token the token path is used,
+ * otherwise it falls back to the session path. Both return the same
+ * `AuthContext`, so callers are auth-method agnostic.
+ */
+export async function requireMemberOrToken(
+  workspaceSlug: string,
+  authHeader: string | null | undefined,
+): Promise<AuthContext> {
+  const token = bearerToken(authHeader);
+  if (token) return requireApiKey(workspaceSlug, token);
+  return requireMember(workspaceSlug);
+}
+
+/**
+ * Resolve an OAuth access token (`art_at_...`) to an `AuthContext`, plus the
+ * `clientId`/`scopes`/`expiresAt` the MCP layer needs to populate `AuthInfo`.
+ * Mirrors `resolveApiKey`: reject revoked/expired, cap the role to the member's
+ * live role, and best-effort stamp `lastUsedAt`. Throws `INVALID_TOKEN`.
+ */
+export async function resolveAccessToken(rawToken: string): Promise<
+  AuthContext & { clientId: string; scopes: string[]; expiresAt: Date }
+> {
+  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+  const [row] = await db
+    .select({
+      token: schema.oauthAccessTokens,
+      workspace: schema.workspaces,
+      memberRole: schema.workspaceMembers.role,
+    })
+    .from(schema.oauthAccessTokens)
+    .innerJoin(
+      schema.workspaces,
+      eq(schema.workspaces.id, schema.oauthAccessTokens.workspaceId),
+    )
+    .innerJoin(
+      schema.workspaceMembers,
+      and(
+        eq(schema.workspaceMembers.workspaceId, schema.oauthAccessTokens.workspaceId),
+        eq(schema.workspaceMembers.userId, schema.oauthAccessTokens.userId),
+      ),
+    )
+    .where(eq(schema.oauthAccessTokens.tokenHash, tokenHash))
+    .limit(1);
+
+  if (!row) throw new Error("INVALID_TOKEN");
+  if (row.token.revokedAt) throw new Error("INVALID_TOKEN");
+  if (row.token.expiresAt.getTime() <= Date.now()) {
+    throw new Error("INVALID_TOKEN");
+  }
+
+  void db
+    .update(schema.oauthAccessTokens)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(schema.oauthAccessTokens.id, row.token.id))
+    .catch(() => {});
+
+  return {
+    session: { user: { id: row.token.userId } },
+    workspace: row.workspace,
+    role: minRole(row.token.role, row.memberRole),
+    clientId: row.token.clientId,
+    scopes: row.token.scopes,
+    expiresAt: row.token.expiresAt,
+  };
 }
 
 export function requireRole(
@@ -144,6 +317,8 @@ export function guardErrorResponse(e: unknown): NextResponse | undefined {
   const msg = (e as { message?: string } | null)?.message;
   if (msg === "UNAUTHENTICATED")
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+  if (msg === "INVALID_TOKEN")
+    return NextResponse.json({ error: "INVALID_TOKEN" }, { status: 401 });
   if (msg === "NOT_A_MEMBER")
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   if (msg === "FORBIDDEN")
