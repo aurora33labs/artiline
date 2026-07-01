@@ -9,10 +9,19 @@ import {
   liveMemberRole,
   revokeTokenFamily,
 } from "@/lib/oauth-tokens";
+import { corsHeaders, corsPreflight } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
-const NO_STORE = { "Cache-Control": "no-store", Pragma: "no-cache" };
+const NO_STORE = {
+  "Cache-Control": "no-store",
+  Pragma: "no-cache",
+  ...corsHeaders(),
+};
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 function oauthError(
   error: string,
