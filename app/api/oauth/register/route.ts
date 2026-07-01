@@ -9,8 +9,13 @@ import {
   newSecret,
   sha256,
 } from "@/lib/oauth";
+import { corsHeaders, corsPreflight } from "@/lib/cors";
 
 export const runtime = "nodejs";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 /**
  * Dynamic Client Registration (RFC 7591). Claude's web connector self-registers
@@ -35,7 +40,7 @@ export async function POST(req: Request) {
   if (buckets.length && (await isRateLimited(buckets)).limited) {
     return NextResponse.json(
       { error: "temporarily_unavailable" },
-      { status: 429 },
+      { status: 429, headers: corsHeaders() },
     );
   }
 
@@ -44,7 +49,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_client_metadata" },
-      { status: 400 },
+      { status: 400, headers: corsHeaders() },
     );
   }
   const data = parsed.data;
@@ -55,7 +60,7 @@ export async function POST(req: Request) {
         error: "invalid_redirect_uri",
         error_description: "redirect_uris must be https (or http on localhost).",
       },
-      { status: 400 },
+      { status: 400, headers: corsHeaders() },
     );
   }
 
@@ -93,6 +98,6 @@ export async function POST(req: Request) {
       token_endpoint_auth_method: client.tokenEndpointAuthMethod,
       ...(client.scope ? { scope: client.scope } : {}),
     },
-    { status: 201, headers: { "Cache-Control": "no-store" } },
+    { status: 201, headers: { "Cache-Control": "no-store", ...corsHeaders() } },
   );
 }
