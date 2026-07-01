@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage, requireRolePage } from "@/lib/tenant";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiKeyCreateForm } from "@/components/settings/api-key-create-form";
 import { revokeApiKey } from "./actions";
@@ -50,23 +51,43 @@ export default async function ApiKeysPage({
 
       <section className="space-y-3 border border-border bg-surface p-6">
         <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
-          Conectar Claude (MCP)
+          Claude Desktop (un clic)
         </h2>
         <p className="text-muted-foreground text-sm">
-          En Claude.ai → Settings → Connectors → Add custom connector, pega esta
-          URL y usa el token como Bearer. Funciona igual en Claude Desktop y
-          Claude Code. Luego, en cualquier chat: «guarda este artifact en
-          Artiline».
+          La forma más fácil de conectar. Descarga la extensión, ábrela en Claude
+          Desktop y pega tu token cuando te lo pida.
+        </p>
+        <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
+          <li>Genera un token arriba y cópialo.</li>
+          <li>Descarga la extensión y ábrela (doble clic).</li>
+          <li>
+            Claude Desktop te pedirá el «Artiline API token» → pégalo. Listo.
+          </li>
+        </ol>
+        <a href="/api/mcpb" download>
+          <Button type="button">
+            <Download className="size-4" />
+            Descargar extensión (.mcpb)
+          </Button>
+        </a>
+        <p className="text-xs text-muted-foreground">
+          Requiere Claude Desktop. Luego, en cualquier chat: «guarda este HTML en
+          Artiline» → Claude llama a <code>create_artifact</code>.
+        </p>
+      </section>
+
+      <section className="space-y-3 border border-border bg-surface p-6">
+        <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
+          Avanzado · URL del servidor MCP
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Para Claude Code (<code>claude mcp add</code>) u otros clientes MCP. El
+          conector OAuth de la app web de Claude tiene un bug abierto de Anthropic
+          y hoy no es confiable — usa la extensión de arriba para Claude Desktop.
         </p>
         <code className="block font-mono text-xs bg-background border border-border px-3 py-2">
           {mcpUrl}
         </code>
-        <p className="text-xs text-muted-foreground">
-          Un artifact dentro de un chat no puede exportarse solo: Claude debe
-          llamar a la tool <code>create_artifact</code> (vía este conector) o
-          puedes copiar el código fuente y pegarlo en{" "}
-          <code>/{slug}/new</code>.
-        </p>
       </section>
 
       <section className="space-y-3">
