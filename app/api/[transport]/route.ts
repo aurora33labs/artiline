@@ -7,7 +7,6 @@ import {
   type AuthContext,
 } from "@/lib/tenant";
 import { ACCESS_TOKEN_PREFIX } from "@/lib/oauth";
-import { withCors, corsPreflight } from "@/lib/cors";
 import { createArtifact } from "@/lib/artifacts/create";
 
 export const runtime = "nodejs";
@@ -153,14 +152,7 @@ const verifyToken = async (
 
 const authHandler = withMcpAuth(handler, verifyToken, { required: true });
 
-// The Claude.ai web connector fetches this cross-origin, so responses (incl. the
-// 401 OAuth challenge) need CORS with WWW-Authenticate exposed, plus a preflight.
-export async function GET(req: Request) {
-  return withCors(await authHandler(req));
-}
-export async function POST(req: Request) {
-  return withCors(await authHandler(req));
-}
-export function OPTIONS() {
-  return corsPreflight();
-}
+// Claude's MCP client is server-side (python-httpx), so no CORS is needed here —
+// and re-wrapping mcp-handler's streamed response would risk mangling the
+// Streamable HTTP / SSE body. Pass the handler through untouched.
+export { authHandler as GET, authHandler as POST };
