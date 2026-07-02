@@ -13,6 +13,16 @@ export function HtmlViewer({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const [iframeReady, setIframeReady] = useState(false);
+  // When the artifact sizes itself with viewport units (100vh/svh/dvh), the
+  // seamless auto-height loop runs away: each height we apply enlarges the
+  // iframe's own viewport, which re-inflates those units, which reports a taller
+  // height, and so on — leaving a giant blank page with a spurious scrollbar.
+  // We detect that feedback (content that keeps growing *after* we already sized
+  // the iframe to it) and switch to a fixed viewport height with internal scroll,
+  // exactly like the fullscreen branch, which renders such artifacts correctly.
+  const [scrollMode, setScrollMode] = useState(false);
+  const scrollModeRef = useRef(false);
+  const appliedHeightRef = useRef(0);
   const ctx = useAnnotationsOptional();
 
   // Height reporting + element message handling
@@ -21,7 +31,21 @@ export function HtmlViewer({
     const handler = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== "object") return;
       if (e.data.type === "IFRAME_HEIGHT" && typeof e.data.height === "number") {
-        setContentHeight(e.data.height);
+        if (scrollModeRef.current) return; // frozen once we detect viewport-unit runaway
+        const h = e.data.height as number;
+        // A large jump *after* we already sized the iframe to its reported height
+        // is the signature of viewport-unit feedback: applying the height enlarged
+        // the iframe's viewport, which re-inflated the artifact's vh/svh sections.
+        // Static content reports a steady height once measured, so this never fires
+        // for it (minor settling between DOMContentLoaded and load stays well under
+        // the threshold). Switch to a fixed viewport height with internal scroll.
+        if (appliedHeightRef.current > 0 && h > appliedHeightRef.current * 1.5) {
+          scrollModeRef.current = true;
+          setScrollMode(true);
+          return;
+        }
+        appliedHeightRef.current = h;
+        setContentHeight(h);
       }
       if (!ctx) return;
       if (e.data.type === "ELEMENT_SELECTED") {
@@ -70,6 +94,22 @@ export function HtmlViewer({
         sandbox="allow-scripts"
         className="w-screen h-screen border-0 bg-white"
         title="artifact-html"
+      />
+    );
+  }
+
+  // Viewport-unit artifact: pin the iframe to the visible viewport and let it
+  // scroll internally so vh/svh/dvh resolve against a stable height.
+  if (scrollMode) {
+    return (
+      <iframe
+        ref={iframeRef}
+        src={src}
+        sandbox="allow-scripts"
+        className="w-full border-0 bg-white block"
+        style={{ height: "100dvh" }}
+        title="artifact-html"
+        onLoad={() => setIframeReady(true)}
       />
     );
   }
