@@ -5,6 +5,7 @@ export type EventType =
   | "artifact.created"
   | "artifact.deleted"
   | "version.published"
+  | "version.proposed"
   | "version.approved"
   | "version.changes_requested"
   | "version.rolled_back"

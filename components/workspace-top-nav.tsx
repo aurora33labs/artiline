@@ -7,6 +7,8 @@ import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { WorkspaceMobileNav } from "@/components/workspace-mobile-nav";
+import { NotificationBell } from "@/components/notification-bell";
+import { getUnreadCount, listNotifications } from "@/lib/notifications";
 import { resolveTheme } from "@/lib/theme.server";
 
 /**
@@ -20,6 +22,10 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
   const t = await getTranslations("navTop");
   const theme = await resolveTheme();
   const canAdmin = data.role === "owner" || data.role === "admin";
+  const [unread, notifItems] = await Promise.all([
+    getUnreadCount(data.session.user.id, data.workspace.id),
+    listNotifications(data.session.user.id, data.workspace.id, 15),
+  ]);
 
   return (
     <>
@@ -65,6 +71,11 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
             <ThemeSwitcher variant="nav-inline" current={theme} />
             <LocaleSwitcher variant="nav-inline" />
           </div>
+          <NotificationBell
+            workspaceSlug={slug}
+            initialUnread={unread}
+            initialItems={notifItems}
+          />
           <UserMenu
             name={data.session.user.name ?? null}
             email={data.session.user.email ?? ""}

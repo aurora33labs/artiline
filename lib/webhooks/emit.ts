@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 
 export type WebhookEvent =
   | "version.published"
+  | "version.proposed"
   | "version.approved"
   | "version.changes_requested"
   | "comment.created"
@@ -12,6 +13,7 @@ export type WebhookEvent =
 
 export const ALL_EVENTS: WebhookEvent[] = [
   "version.published",
+  "version.proposed",
   "version.approved",
   "version.changes_requested",
   "comment.created",

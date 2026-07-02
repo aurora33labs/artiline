@@ -63,6 +63,19 @@ export default async function ArtifactInternalView({
     .from(schema.artifactVersions)
     .where(eq(schema.artifactVersions.artifactId, artifact.id));
 
+  // Pending proposals awaiting review — surfaced to author/admin on the card.
+  const [{ count: pendingProposals }] = canEdit
+    ? await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.artifactVersions)
+        .where(
+          and(
+            eq(schema.artifactVersions.artifactId, artifact.id),
+            eq(schema.artifactVersions.reviewStatus, "pending"),
+          ),
+        )
+    : [{ count: 0 }];
+
   // Fetch annotations with comments
   const annotationRows = await db
     .select({
@@ -185,6 +198,8 @@ export default async function ArtifactInternalView({
           canExport={usesIframe}
           canEdit={canEdit}
           canDelete={canEdit}
+          canPropose={!canEdit}
+          pendingProposals={pendingProposals}
           hasPassword={!!artifact.passwordHash}
           workspaceSlug={workspace}
           artifactSlug={artifact.slug}

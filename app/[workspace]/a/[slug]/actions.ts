@@ -10,6 +10,7 @@ import { requireMemberPage } from "@/lib/tenant";
 import { deleteObjects } from "@/lib/r2";
 import { emitEvent } from "@/lib/webhooks/emit";
 import { recordEvent } from "@/lib/activity";
+import { notifyDecision } from "@/lib/notifications";
 import { getContent, newVersionId, prepareContent } from "@/lib/artifact-content";
 import { generateThumbnail } from "@/lib/artifact-thumb-gen";
 import { isReactRenderable } from "@/lib/detect-artifact";
@@ -332,6 +333,19 @@ export async function setReviewStatus(formData: FormData) {
         slug: version.artifact.slug,
         versionNumber: version.version.versionNumber,
         title: version.version.title,
+      },
+    }).catch(() => {});
+    await notifyDecision({
+      workspaceId: workspace.id,
+      actorUserId: session.user.id,
+      proposerUserId: version.version.authorUserId,
+      artifactId: version.artifact.id,
+      type: eventName,
+      payload: {
+        actorName: session.user.name ?? session.user.email ?? undefined,
+        artifactSlug: version.artifact.slug,
+        artifactTitle: version.version.title,
+        versionNumber: version.version.versionNumber,
       },
     }).catch(() => {});
   }

@@ -15,6 +15,7 @@ import {
   Info,
   X,
   GitBranch,
+  GitPullRequestArrow,
   RefreshCw,
   Trash2,
   MoreHorizontal,
@@ -52,6 +53,7 @@ import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
 import { ReactionsModal } from "@/components/reactions-modal";
 import { ArtifactSettingsModal } from "@/components/artifact-settings-modal";
 import { PublishVersionDialog } from "@/components/publish-version-dialog";
+import { ProposeVersionDialog } from "@/components/propose-version-dialog";
 
 // Shared so the "Edit" dropdown trigger matches the dock buttons exactly.
 const DOCK_BASE =
@@ -97,6 +99,8 @@ export function FloatingActionCard({
   canExport,
   canEdit,
   canDelete,
+  canPropose,
+  pendingProposals = 0,
   hasPassword,
   workspaceSlug,
   artifactSlug,
@@ -116,6 +120,8 @@ export function FloatingActionCard({
   canExport: boolean;
   canEdit: boolean;
   canDelete?: boolean;
+  canPropose?: boolean;
+  pendingProposals?: number;
   hasPassword: boolean;
   workspaceSlug?: string;
   artifactSlug?: string;
@@ -130,6 +136,7 @@ export function FloatingActionCard({
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [proposeOpen, setProposeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -148,7 +155,10 @@ export function FloatingActionCard({
   const canManage = !!canEdit && !!workspaceSlug && !!artifactSlug;
   const canChangeAccess = !!canEdit && !!workspaceSlug;
   const canRemove = !!canDelete && !!workspaceSlug;
-  const hasEditorItems = canManage || canChangeAccess || canRemove;
+  // A member who isn't an editor may propose a version (review flow).
+  const canProposeChanges = !!canPropose && !!workspaceSlug && !!artifactSlug;
+  const hasEditorItems =
+    canManage || canChangeAccess || canRemove || canProposeChanges;
 
   async function copyLink() {
     const url = new URL(shareHref, window.location.origin).toString();
@@ -361,6 +371,34 @@ export function FloatingActionCard({
                           <MenuChip>
                             <GitBranch />
                           </MenuChip>
+                          <span className="flex-1">{t("versions")}</span>
+                          {pendingProposals > 0 && (
+                            <span className="meta text-warning border border-warning px-1.5 py-0.5">
+                              {pendingProposals}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {canProposeChanges && !canManage && (
+                    <>
+                      <DropdownMenuItem
+                        className={MENU_ROW}
+                        onSelect={() => setTimeout(() => setProposeOpen(true))}
+                      >
+                        <MenuChip>
+                          <GitPullRequestArrow />
+                        </MenuChip>
+                        {t("propose")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={MENU_ROW}>
+                        <Link
+                          href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
+                        >
+                          <MenuChip>
+                            <GitBranch />
+                          </MenuChip>
                           {t("versions")}
                         </Link>
                       </DropdownMenuItem>
@@ -476,7 +514,18 @@ export function FloatingActionCard({
                 }}
               />
             )}
-            {canEdit && workspaceSlug && artifactSlug && (
+            {canProposeChanges && !canManage && (
+              <SheetRow
+                icon={<GitPullRequestArrow className="size-4" />}
+                label={t("propose")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  setProposeOpen(true);
+                }}
+              />
+            )}
+            {((canEdit && workspaceSlug && artifactSlug) ||
+              canProposeChanges) && (
               <SheetRow
                 icon={<GitBranch className="size-4" />}
                 label={t("versions")}
@@ -547,6 +596,16 @@ export function FloatingActionCard({
           defaultTitle={title}
           open={publishOpen}
           onOpenChange={setPublishOpen}
+        />
+      )}
+
+      {canProposeChanges && workspaceSlug && (
+        <ProposeVersionDialog
+          artifactId={artifactId}
+          workspaceSlug={workspaceSlug}
+          defaultTitle={title}
+          open={proposeOpen}
+          onOpenChange={setProposeOpen}
         />
       )}
 

@@ -562,6 +562,40 @@ export const reactions = pgTable(
   (t) => [primaryKey({ columns: [t.artifactId, t.userId, t.emoji] })],
 );
 
+// Per-user in-app notifications (e.g. "someone proposed a version of your
+// artifact"). Distinct from the workspace `events` audit log: these have a
+// recipient and an unread state (`readAt`). Payload carries display fields
+// (actor name, artifact slug/title, version number) so rendering needs no joins.
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: id(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    recipientUserId: text("recipient_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    actorUserId: text("actor_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").notNull(), // version.proposed|version.approved|version.changes_requested
+    artifactId: text("artifact_id").references(() => artifacts.id, {
+      onDelete: "cascade",
+    }),
+    payload: jsonb("payload").notNull().default({}),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("notifications_recipient_unread_idx").on(t.recipientUserId, t.readAt),
+    index("notifications_recipient_created_idx").on(
+      t.recipientUserId,
+      t.createdAt,
+    ),
+  ],
+);
+
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trialing",
   "active",

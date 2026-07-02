@@ -270,6 +270,7 @@
     "artifacts": "Library",
     "team": "Team",
     "mcp": "MCP",
+    "notifications": "Notifications",
     "admin": "Admin",
     "new": "New",
     "uploadNew": "Upload new",
@@ -480,6 +481,20 @@
     "activate": "Activate",
     "delete": "Delete"
   },
+  "notifications": {
+    "eyebrow": "YOUR ACTIVITY",
+    "title": "Notifications",
+    "bellLabel": "Notifications",
+    "empty": "You have no notifications.",
+    "markAllRead": "Mark all read",
+    "viewAll": "View all",
+    "someone": "Someone",
+    "type": {
+      "proposed": "{actor} proposed a version of “{title}”",
+      "approved": "{actor} approved your version of “{title}”",
+      "changesRequested": "{actor} requested changes on your version of “{title}”"
+    }
+  },
   "visibility": {
     "internal": "Team only",
     "internalPw": "Team + password",
@@ -617,6 +632,11 @@
     "messageLabel": "Message",
     "messagePlaceholder": "Change summary (optional)",
     "publishing": "Publishing…",
+    "propose": "Propose changes",
+    "proposeTitle": "Propose a version",
+    "proposeDesc": "Upload the file with your changes. It's sent for review and does NOT go live until the author or an admin approves it.",
+    "proposing": "Sending…",
+    "proposed": "Proposal sent for review",
     "status": {
       "draft": "DRAFT",
       "pending": "PENDING",

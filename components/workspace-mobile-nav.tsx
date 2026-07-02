@@ -6,6 +6,7 @@ import {
   Menu,
   Library,
   KeyRound,
+  Bell,
   ShieldCheck,
   ChevronRight,
   Check,
@@ -149,6 +150,15 @@ export function WorkspaceMobileNav({
                 >
                   <KeyRound className="size-4 text-muted-foreground shrink-0" />
                   <span className="flex-1">{t("mcp")}</span>
+                  <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                </Link>
+                <Link
+                  href={`/${slug}/notifications`}
+                  onClick={() => setOpen(false)}
+                  className={rowClass}
+                >
+                  <Bell className="size-4 text-muted-foreground shrink-0" />
+                  <span className="flex-1">{t("notifications")}</span>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 </Link>
                 {canAdmin && (

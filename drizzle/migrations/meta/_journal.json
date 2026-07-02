@@ -155,6 +155,13 @@
       "when": 1782991784621,
       "tag": "0021_secret_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1783022766163,
+      "tag": "0022_marvelous_magdalene",
+      "breakpoints": true
     }
   ]
 }

@@ -270,6 +270,7 @@
     "artifacts": "Librería",
     "team": "Equipo",
     "mcp": "MCP",
+    "notifications": "Notificaciones",
     "admin": "Admin",
     "new": "Nuevo",
     "uploadNew": "Subir nuevo",
@@ -480,6 +481,20 @@
     "activate": "Activar",
     "delete": "Eliminar"
   },
+  "notifications": {
+    "eyebrow": "TU ACTIVIDAD",
+    "title": "Notificaciones",
+    "bellLabel": "Notificaciones",
+    "empty": "No tienes notificaciones.",
+    "markAllRead": "Marcar todo leído",
+    "viewAll": "Ver todas",
+    "someone": "Alguien",
+    "type": {
+      "proposed": "{actor} propuso una versión de «{title}»",
+      "approved": "{actor} aprobó tu versión de «{title}»",
+      "changesRequested": "{actor} pidió cambios en tu versión de «{title}»"
+    }
+  },
   "visibility": {
     "internal": "Solo equipo",
     "internalPw": "Equipo + password",
@@ -617,6 +632,11 @@
     "messageLabel": "Mensaje",
     "messagePlaceholder": "Resumen del cambio (opcional)",
     "publishing": "Publicando…",
+    "propose": "Proponer cambios",
+    "proposeTitle": "Proponer una versión",
+    "proposeDesc": "Sube el archivo con tus cambios. Se envía a revisión y NO va live hasta que el autor o un admin la apruebe.",
+    "proposing": "Enviando…",
+    "proposed": "Propuesta enviada a revisión",
     "status": {
       "draft": "DRAFT",
       "pending": "PENDIENTE",
