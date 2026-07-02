@@ -258,6 +258,64 @@ const setStatusSchema = z.object({
   status: z.enum(["pending", "approved", "changes_requested"]),
 });
 
+const discardSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  versionId: z.string().min(1),
+});
+
+/**
+ * Discard a proposed version (pending / changes_requested) that never went
+ * live — cleans up rejected or withdrawn proposals so history doesn't fill with
+ * them. Author/admin may discard any proposal; the proposer may withdraw their
+ * own. Refuses to touch an approved or currently-live version. Deletes the row
+ * (DB children cascade) and its object storage.
+ */
+export async function discardVersion(formData: FormData) {
+  const data = discardSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    versionId: formData.get("versionId"),
+  });
+
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
+
+  const [row] = await db
+    .select({
+      version: schema.artifactVersions,
+      artifact: schema.artifacts,
+    })
+    .from(schema.artifactVersions)
+    .innerJoin(
+      schema.artifacts,
+      eq(schema.artifacts.id, schema.artifactVersions.artifactId),
+    )
+    .where(eq(schema.artifactVersions.id, data.versionId))
+    .limit(1);
+  if (!row) throw new Error("NOT_FOUND");
+  if (row.artifact.workspaceId !== workspace.id) throw new Error("FORBIDDEN");
+
+  // Only proposals can be discarded — never the live version or an approved one.
+  const isProposal =
+    row.version.reviewStatus === "pending" ||
+    row.version.reviewStatus === "changes_requested";
+  const isLive = row.artifact.currentVersionId === row.version.id;
+  if (!isProposal || isLive) throw new Error("FORBIDDEN");
+
+  const isManager = role === "owner" || role === "admin";
+  const isArtifactAuthor = row.artifact.authorUserId === session.user.id;
+  const isProposer = row.version.authorUserId === session.user.id;
+  if (!isManager && !isArtifactAuthor && !isProposer)
+    throw new Error("FORBIDDEN");
+
+  await deleteObjects([row.version.contentKey, row.version.thumbKey]);
+  await db
+    .delete(schema.artifactVersions)
+    .where(eq(schema.artifactVersions.id, row.version.id));
+
+  revalidatePath(`/${workspace.slug}/a/${row.artifact.slug}/versions`);
+}
+
 export async function setReviewStatus(formData: FormData) {
   const data = setStatusSchema.parse({
     workspaceSlug: formData.get("workspaceSlug"),

@@ -624,6 +624,7 @@
     "rollback": "Rollback",
     "approve": "Aprobar",
     "requestChanges": "Pedir cambios",
+    "discard": "Descartar",
     "publish": "Publicar versión",
     "publishTitle": "Nueva versión",
     "publishDesc": "Sube los cambios, deja un mensaje opcional. Cliente verá la nueva versión solo al aprobarla.",

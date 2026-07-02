@@ -624,6 +624,7 @@
     "rollback": "Rollback",
     "approve": "Approve",
     "requestChanges": "Request changes",
+    "discard": "Discard",
     "publish": "Publish version",
     "publishTitle": "New version",
     "publishDesc": "Push changes with an optional message. The client only sees the new version once you approve it.",

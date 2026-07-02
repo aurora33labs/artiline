@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
+  discardVersion,
   rollbackToVersion,
   setReviewStatus,
 } from "@/app/[workspace]/a/[slug]/actions";
@@ -20,6 +21,7 @@ export function VersionRowActions({
   reviewStatus,
   isCurrent,
   canEdit,
+  canDiscard = false,
 }: {
   workspaceSlug: string;
   artifactId: string;
@@ -28,6 +30,7 @@ export function VersionRowActions({
   reviewStatus: Status;
   isCurrent: boolean;
   canEdit: boolean;
+  canDiscard?: boolean;
 }) {
   const [pending, start] = useTransition();
   const t = useTranslations("versions");
@@ -54,11 +57,14 @@ export function VersionRowActions({
     });
   }
 
-  if (!canEdit) return null;
+  if (!canEdit && !canDiscard) return null;
+
+  const isProposal =
+    reviewStatus === "pending" || reviewStatus === "changes_requested";
 
   return (
     <div className="flex items-center gap-2">
-      {!isCurrent && (
+      {canEdit && !isCurrent && (
         <Button
           variant="ghost"
           size="sm"
@@ -75,7 +81,7 @@ export function VersionRowActions({
           {t("rollback")}
         </Button>
       )}
-      {reviewStatus === "pending" && (
+      {canEdit && reviewStatus === "pending" && (
         <>
           <Button
             size="sm"
@@ -106,6 +112,23 @@ export function VersionRowActions({
             {t("requestChanges")}
           </Button>
         </>
+      )}
+      {canDiscard && isProposal && !isCurrent && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive hover:text-destructive"
+          disabled={pending}
+          onClick={() => {
+            const fd = new FormData();
+            fd.set("workspaceSlug", workspaceSlug);
+            fd.set("versionId", versionId);
+            runAction(fd, discardVersion);
+          }}
+        >
+          {pending && <Loader2 className="size-3 animate-spin" />}
+          {t("discard")}
+        </Button>
       )}
     </div>
   );

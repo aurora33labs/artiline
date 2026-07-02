@@ -172,6 +172,13 @@ export default async function VersionsListPage({
                   reviewStatus={version.reviewStatus}
                   isCurrent={isCurrent}
                   canEdit={canEdit}
+                  canDiscard={
+                    (canEdit ||
+                      version.authorUserId === session.user.id) &&
+                    (version.reviewStatus === "pending" ||
+                      version.reviewStatus === "changes_requested") &&
+                    !isCurrent
+                  }
                 />
               </div>
             </li>
