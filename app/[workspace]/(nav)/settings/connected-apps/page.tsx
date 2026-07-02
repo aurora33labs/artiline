@@ -1,12 +1,13 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
+import { getLocale, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
 import { revokeConnectedApp } from "./actions";
 
-function formatDate(d: Date | null): string {
-  if (!d) return "nunca";
-  return new Intl.DateTimeFormat("es", {
+function formatDate(d: Date | null, locale: string, never: string): string {
+  if (!d) return never;
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(d);
@@ -32,6 +33,9 @@ export default async function ConnectedAppsPage({
 }) {
   const { workspace: slug } = await params;
   const { workspace, session } = await requireMemberPage(slug);
+  const t = await getTranslations("connectedApps");
+  const locale = await getLocale();
+  const never = t("never");
 
   const tokens = await db
     .select({
@@ -57,23 +61,24 @@ export default async function ConnectedAppsPage({
 
   // Aggregate by client: earliest connection + latest use across its tokens.
   const byClient = new Map<string, ConnectedApp>();
-  for (const t of tokens) {
-    const existing = byClient.get(t.clientId);
+  for (const tok of tokens) {
+    const existing = byClient.get(tok.clientId);
     if (!existing) {
-      byClient.set(t.clientId, {
-        clientId: t.clientId,
-        clientName: t.clientName ?? "Aplicación sin nombre",
-        scopes: t.scopes,
-        connectedAt: t.createdAt,
-        lastUsedAt: t.lastUsedAt,
+      byClient.set(tok.clientId, {
+        clientId: tok.clientId,
+        clientName: tok.clientName ?? "",
+        scopes: tok.scopes,
+        connectedAt: tok.createdAt,
+        lastUsedAt: tok.lastUsedAt,
       });
     } else {
-      if (t.createdAt < existing.connectedAt) existing.connectedAt = t.createdAt;
+      if (tok.createdAt < existing.connectedAt)
+        existing.connectedAt = tok.createdAt;
       if (
-        t.lastUsedAt &&
-        (!existing.lastUsedAt || t.lastUsedAt > existing.lastUsedAt)
+        tok.lastUsedAt &&
+        (!existing.lastUsedAt || tok.lastUsedAt > existing.lastUsedAt)
       ) {
-        existing.lastUsedAt = t.lastUsedAt;
+        existing.lastUsedAt = tok.lastUsedAt;
       }
     }
   }
@@ -82,22 +87,17 @@ export default async function ConnectedAppsPage({
   return (
     <div className="space-y-8 max-w-4xl">
       <header className="space-y-2 border-b border-border pb-6">
-        <div className="meta">SETTINGS · APPS CONECTADAS</div>
-        <h1 className="text-3xl">Apps conectadas</h1>
-        <p className="text-muted-foreground text-sm">
-          Aplicaciones OAuth (como el conector de Claude.ai) a las que diste
-          acceso a este workspace. Revocar corta la conexión de inmediato.
-        </p>
+        <div className="meta">{t("eyebrow")}</div>
+        <h1 className="text-3xl">{t("title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
       </header>
 
       <section className="space-y-3">
         <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
-          Conexiones ({apps.length})
+          {t("connectionsTitle", { count: apps.length })}
         </h2>
         {apps.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No has conectado ninguna aplicación.
-          </p>
+          <p className="text-muted-foreground text-sm">{t("noConnections")}</p>
         ) : (
           <ul className="border border-border bg-surface divide-y divide-border">
             {apps.map((a) => (
@@ -107,18 +107,19 @@ export default async function ConnectedAppsPage({
               >
                 <div className="space-y-1 min-w-0">
                   <span className="font-mono text-sm truncate">
-                    {a.clientName}
+                    {a.clientName || t("unnamedApp")}
                   </span>
                   <div className="meta">
-                    {a.scopes.join(", ")} · conectada {formatDate(a.connectedAt)}{" "}
-                    · usada {formatDate(a.lastUsedAt)}
+                    {a.scopes.join(", ")} · {t("connected")}{" "}
+                    {formatDate(a.connectedAt, locale, never)} · {t("used")}{" "}
+                    {formatDate(a.lastUsedAt, locale, never)}
                   </div>
                 </div>
                 <form action={revokeConnectedApp}>
                   <input type="hidden" name="workspaceSlug" value={slug} />
                   <input type="hidden" name="clientId" value={a.clientId} />
                   <Button type="submit" variant="outline" size="sm">
-                    Revocar
+                    {t("revoke")}
                   </Button>
                 </form>
               </li>

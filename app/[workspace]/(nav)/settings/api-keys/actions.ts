@@ -3,6 +3,7 @@
 import { randomBytes, createHash } from "node:crypto";
 import { and, count, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { MEMBER_KEY_LIMIT } from "@/lib/api-keys";
@@ -28,9 +29,10 @@ export async function createApiKey(
   // (`role: "member"` below) and attributed to the creator, so this grants no
   // privilege the caller doesn't already have.
   const { workspace, role, session } = await requireMemberPage(workspaceSlug);
+  const t = await getTranslations("mcp");
 
   if (name.length < 1 || name.length > 80) {
-    return { ok: false, error: "El nombre debe tener entre 1 y 80 caracteres." };
+    return { ok: false, error: t("errNameLength") };
   }
 
   // Members are capped to a small number of active tokens; owner/admin unlimited.
@@ -49,7 +51,7 @@ export async function createApiKey(
     if (n >= MEMBER_KEY_LIMIT) {
       return {
         ok: false,
-        error: `Alcanzaste el límite de ${MEMBER_KEY_LIMIT} tokens MCP. Revoca uno para crear otro.`,
+        error: t("limitReached", { limit: MEMBER_KEY_LIMIT }),
       };
     }
   }

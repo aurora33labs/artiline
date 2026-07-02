@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export default async function WebhooksPage({
   // via a direct URL.
   const { workspace, role } = await requireMemberPage(slug);
   requireRolePage(role, ["owner", "admin"]);
+  const t = await getTranslations("webhooks");
 
   const list = await db
     .select()
@@ -32,22 +34,21 @@ export default async function WebhooksPage({
   return (
     <div className="space-y-8 max-w-4xl">
       <header className="space-y-2 border-b border-border pb-6">
-        <div className="meta">SETTINGS · WEBHOOKS</div>
-        <h1 className="text-3xl">Webhooks</h1>
+        <div className="meta">{t("eyebrow")}</div>
+        <h1 className="text-3xl">{t("title")}</h1>
         <p className="text-muted-foreground text-sm">
-          Suscríbete a eventos de tu workspace. Cada delivery se firma con HMAC
-          SHA-256 (header <code>x-artiline-signature</code>).
+          {t.rich("subtitle", { code: (chunks) => <code>{chunks}</code> })}
         </p>
       </header>
 
       <section className="space-y-4 border border-border bg-surface p-6">
         <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
-          Nuevo webhook
+          {t("newWebhook")}
         </h2>
         <form action={createWebhook} className="space-y-4">
           <input type="hidden" name="workspaceSlug" value={slug} />
           <div className="space-y-2">
-            <Label htmlFor="url">Endpoint URL</Label>
+            <Label htmlFor="url">{t("endpointUrl")}</Label>
             <Input
               id="url"
               name="url"
@@ -58,7 +59,7 @@ export default async function WebhooksPage({
             />
           </div>
           <fieldset className="space-y-2">
-            <legend className="meta">EVENTOS</legend>
+            <legend className="meta">{t("eventsLegend")}</legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ALL_EVENTS.map((ev) => (
                 <label
@@ -77,16 +78,16 @@ export default async function WebhooksPage({
               ))}
             </div>
           </fieldset>
-          <Button type="submit">Crear webhook</Button>
+          <Button type="submit">{t("createBtn")}</Button>
         </form>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
-          Endpoints configurados ({list.length})
+          {t("configuredTitle", { count: list.length })}
         </h2>
         {list.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Aún no hay webhooks.</p>
+          <p className="text-muted-foreground text-sm">{t("noWebhooks")}</p>
         ) : (
           <ul className="border border-border bg-surface divide-y divide-border">
             {list.map((w) => (
@@ -99,7 +100,7 @@ export default async function WebhooksPage({
                     <span
                       className={`meta border px-2 py-0.5 ${w.enabled ? "text-success border-success" : "text-muted-foreground border-border"}`}
                     >
-                      {w.enabled ? "ACTIVO" : "PAUSADO"}
+                      {w.enabled ? t("statusActive") : t("statusPaused")}
                     </span>
                     <span className="font-mono text-sm truncate">{w.url}</span>
                   </div>
@@ -118,14 +119,14 @@ export default async function WebhooksPage({
                       value={w.enabled ? "false" : "true"}
                     />
                     <Button type="submit" variant="ghost" size="sm">
-                      {w.enabled ? "Pausar" : "Activar"}
+                      {w.enabled ? t("pause") : t("activate")}
                     </Button>
                   </form>
                   <form action={deleteWebhook}>
                     <input type="hidden" name="workspaceSlug" value={slug} />
                     <input type="hidden" name="webhookId" value={w.id} />
                     <Button type="submit" variant="outline" size="sm">
-                      Eliminar
+                      {t("delete")}
                     </Button>
                   </form>
                 </div>
