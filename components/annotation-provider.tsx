@@ -74,6 +74,11 @@ type AnnotationContextType = {
   setElementRects: React.Dispatch<React.SetStateAction<Record<string, ElementRect>>>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  // True when the HTML viewer switched to fixed-viewport scroll mode (viewport-
+  // unit artifact). Positioned overlays can't be mapped correctly there, so the
+  // wrapper suppresses them while this is set.
+  htmlScrollMode: boolean;
+  setHtmlScrollMode: (v: boolean) => void;
 };
 
 const AnnotationContext = createContext<AnnotationContextType | null>(null);
@@ -87,6 +92,7 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [isInspecting, setIsInspecting] = useState(false);
   const [pendingElementDraft, setPendingElementDraft] = useState<PendingElementDraft | null>(null);
   const [elementRects, setElementRects] = useState<Record<string, ElementRect>>({});
+  const [htmlScrollMode, setHtmlScrollMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = sessionStorage.getItem("annotationsSidebarOpen");
@@ -137,6 +143,8 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setElementRects,
         sidebarOpen,
         setSidebarOpen,
+        htmlScrollMode,
+        setHtmlScrollMode,
       }}
     >
       {children}

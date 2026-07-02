@@ -55,7 +55,10 @@ export function CommentMarginColumn({
 }: CommentMarginColumnProps) {
   const { commentDraft, setCommentDraft, pendingElementDraft, setPendingElementDraft, elementRects } = useAnnotations();
 
-  const visibleAnnotations = annotations.filter((a) => !a.resolved && a.targetType !== "global");
+  // `area` is hidden (mode removed); `global` has no anchor position.
+  const visibleAnnotations = annotations.filter(
+    (a) => !a.resolved && a.targetType !== "global" && a.targetType !== "area",
+  );
 
   // For sorting/layout: element annotations use live rect top if available, else normalized y
   const getEffectiveY = (a: Annotation): number => {

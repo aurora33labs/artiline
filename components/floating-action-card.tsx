@@ -20,7 +20,6 @@ import {
   Trash2,
   MoreHorizontal,
   ChevronRight,
-  Crosshair,
   MousePointer2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -131,7 +130,7 @@ export function FloatingActionCard({
   backHref: string;
   reactionsSlot: React.ReactNode;
 }) {
-  const { annotations, sidebarOpen, setSidebarOpen, isPlacing, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
+  const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -236,64 +235,25 @@ export function FloatingActionCard({
             badge={annotations.length > 0 ? annotations.length : undefined}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           />
-          {/* Annotation mode — single entry point with popover */}
-          <DropdownMenu onOpenChange={(open) => { if (!open && !isPlacing && !isInspecting) return; }}>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={ta("annotate")}
-                className={cn(
-                  DOCK_BASE,
-                  (isPlacing || isInspecting) && "bg-primary/10 border-primary/40 text-primary"
-                )}
-              >
-                {isPlacing ? (
-                  <Crosshair className="size-5" />
-                ) : isInspecting ? (
-                  <MousePointer2 className="size-5" />
-                ) : (
-                  <Crosshair className="size-5" />
-                )}
-                <span role="tooltip" className={DOCK_TOOLTIP}>
-                  {isPlacing ? ta("cancelAnnotation") : isInspecting ? ta("cancelInspect") : ta("annotate")}
-                </span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="left" align="center" sideOffset={10} className="w-80 p-1.5">
-              <DropdownMenuLabel className={MENU_LABEL}>{ta("newComment")}</DropdownMenuLabel>
-              <DropdownMenuItem
-                className={cn(MENU_ROW, isInspecting && "bg-primary/10 text-primary")}
-                onSelect={() => {
-                  if (isInspecting) { setIsInspecting(false); return; }
-                  setIsInspecting(true);
-                  setIsPlacing(false);
-                }}
-              >
-                <MenuChip><MousePointer2 className="size-4" /></MenuChip>
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{ta("anchorElement")}</span>
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">{ta("recommended")}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("anchorElementDesc")}</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className={cn(MENU_ROW, isPlacing && "bg-primary/10 text-primary")}
-                onSelect={() => {
-                  if (isPlacing) { setIsPlacing(false); return; }
-                  setIsPlacing(true);
-                  setIsInspecting(false);
-                }}
-              >
-                <MenuChip><Crosshair className="size-4" /></MenuChip>
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-medium text-sm">{ta("markArea")}</span>
-                  <span className="text-xs text-muted-foreground leading-relaxed">{ta("markAreaDesc")}</span>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Annotation — single mode: anchor to element (Mark Area removed) */}
+          <button
+            type="button"
+            aria-label={ta("annotate")}
+            onClick={() => {
+              if (isInspecting) { setIsInspecting(false); return; }
+              setIsInspecting(true);
+              setIsPlacing(false);
+            }}
+            className={cn(
+              DOCK_BASE,
+              isInspecting && "bg-primary/10 border-primary/40 text-primary"
+            )}
+          >
+            <MousePointer2 className="size-5" />
+            <span role="tooltip" className={DOCK_TOOLTIP}>
+              {isInspecting ? ta("cancelInspect") : ta("annotate")}
+            </span>
+          </button>
           <DockButton
             icon={<Smile className="size-5" />}
             label={t("react")}

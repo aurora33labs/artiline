@@ -170,7 +170,11 @@ export default async function ArtifactInternalView({
   const content = isHtml ? null : await getContent(version);
 
   return (
-    <main className="fixed inset-0 bg-background overflow-auto">
+    <main
+      className={`fixed inset-0 overflow-auto ${
+        version.type === "html" ? "bg-white" : "bg-background"
+      }`}
+    >
       <AnnotationWrapper
         artifactId={artifact.id}
         versionId={version.id}

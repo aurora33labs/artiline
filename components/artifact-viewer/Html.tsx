@@ -23,6 +23,11 @@ export function HtmlViewer({
   const [scrollMode, setScrollMode] = useState(false);
   const scrollModeRef = useRef(false);
   const appliedHeightRef = useRef(0);
+  // Viewport-unit runaway grows on *consecutive* apply cycles (each applied
+  // height re-inflates the vh sections); a static page that just loads late
+  // grows at most once and stabilizes. Require two consecutive runaway jumps
+  // before switching so tall-but-static pages keep the auto-height path.
+  const runawayHitsRef = useRef(0);
   const ctx = useAnnotationsOptional();
 
   // Height reporting + element message handling
@@ -34,15 +39,21 @@ export function HtmlViewer({
         if (scrollModeRef.current) return; // frozen once we detect viewport-unit runaway
         const h = e.data.height as number;
         // A large jump *after* we already sized the iframe to its reported height
-        // is the signature of viewport-unit feedback: applying the height enlarged
-        // the iframe's viewport, which re-inflated the artifact's vh/svh sections.
-        // Static content reports a steady height once measured, so this never fires
-        // for it (minor settling between DOMContentLoaded and load stays well under
-        // the threshold). Switch to a fixed viewport height with internal scroll.
+        // may be viewport-unit feedback (applying the height enlarged the iframe's
+        // viewport, re-inflating vh/svh sections) OR just a static page finishing
+        // an async load. The two look identical on the first jump, but only the
+        // runaway keeps growing on the *next* apply cycle — so we apply the height
+        // and require a second consecutive runaway jump before switching modes.
         if (appliedHeightRef.current > 0 && h > appliedHeightRef.current * 1.5) {
-          scrollModeRef.current = true;
-          setScrollMode(true);
-          return;
+          runawayHitsRef.current += 1;
+          if (runawayHitsRef.current >= 2) {
+            scrollModeRef.current = true;
+            setScrollMode(true);
+            ctx?.setHtmlScrollMode(true);
+            return;
+          }
+        } else {
+          runawayHitsRef.current = 0; // stabilized — not a runaway
         }
         appliedHeightRef.current = h;
         setContentHeight(h);

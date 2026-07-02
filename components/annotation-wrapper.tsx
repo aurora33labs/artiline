@@ -100,7 +100,15 @@ function AnnotationInner({
     setPendingElementDraft,
     elementRects,
     setElementRects,
+    htmlScrollMode,
   } = useAnnotations();
+
+  // In HTML scroll-mode (viewport-unit artifact, iframe pinned to 100dvh) the
+  // iframe scrolls internally, so page-absolute overlays computed from the
+  // iframe's viewport-relative rects land in the wrong place and push the page
+  // background into view. Hide the positioned overlays there; comments stay in
+  // the sidebar.
+  const suppressOverlays = artifactType === "html" && htmlScrollMode;
 
   const [containerHeight, setContainerHeight] = useState(0);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
@@ -280,33 +288,12 @@ function AnnotationInner({
       >
         <div ref={contentRef}>{children}</div>
 
-        {/* Saved area rect overlays — only unresolved */}
-        {annotations
-          .filter((a) => a.targetType === "area" && a.width !== null && a.height !== null && !a.resolved)
-          .map((a) => (
-            <div
-              key={a.commentId}
-              data-comment-id={a.commentId}
-              className={cn(
-                "absolute border-2 border-primary/50 bg-primary/10 cursor-pointer transition-colors hover:bg-primary/20",
-                a.commentId === activeCommentId && "border-primary bg-primary/20 ring-2 ring-primary/30"
-              )}
-              style={{
-                left: `${a.x * 100}%`,
-                top: `${a.y * 100}%`,
-                width: `${(a.width ?? 0.1) * 100}%`,
-                height: `${(a.height ?? 0.1) * 100}%`,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveCommentId(a.commentId);
-                setSelectedAnnotationId(a.commentId);
-              }}
-            />
-          ))}
+        {/* Area annotations are hidden — the mode was removed (fraction-based
+            overlays de-anchor on iframe reflow). Text stays in the sidebar. */}
 
         {/* Element annotation outlines — unresolved only */}
-        {annotations
+        {!suppressOverlays &&
+          annotations
           .filter((a) => a.targetType === "element" && !a.resolved && elementRects[a.commentId])
           .map((a) => {
             const r = elementRects[a.commentId];
@@ -329,7 +316,7 @@ function AnnotationInner({
           })}
 
         {/* Pending element draft outline */}
-        {pendingElementDraft && (
+        {pendingElementDraft && !suppressOverlays && (
           <div
             className="absolute pointer-events-none border-2 border-primary bg-primary/10 z-30"
             style={{
@@ -358,7 +345,9 @@ function AnnotationInner({
               />
             ))}
 
-        {/* Comment bubbles overlay */}
+        {/* Comment bubbles overlay — suppressed in HTML scroll-mode (positions
+            can't be mapped; comments remain in the sidebar) */}
+        {!suppressOverlays && (
         <CommentMarginColumn
           annotations={annotations}
           containerHeight={containerHeight}
@@ -376,6 +365,7 @@ function AnnotationInner({
           workspaceSlug={workspaceSlug}
           slug={slug}
         />
+        )}
 
         {/* Drag-to-select overlay */}
         {isPlacing && (
