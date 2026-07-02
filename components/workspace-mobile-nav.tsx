@@ -7,6 +7,8 @@ import {
   Library,
   KeyRound,
   Bell,
+  Plug,
+  Webhook,
   ShieldCheck,
   ChevronRight,
   Check,
@@ -40,6 +42,8 @@ export function WorkspaceMobileNav({
   workspace,
   workspaces,
   canAdmin,
+  hasConnectedApps = false,
+  ssoEnabled = false,
   theme,
   user,
 }: {
@@ -47,6 +51,8 @@ export function WorkspaceMobileNav({
   workspace: WorkspaceOption;
   workspaces: WorkspaceOption[];
   canAdmin: boolean;
+  hasConnectedApps?: boolean;
+  ssoEnabled?: boolean;
   theme: Theme;
   user: { name: string | null; email: string; image: string | null };
 }) {
@@ -161,6 +167,17 @@ export function WorkspaceMobileNav({
                   <span className="flex-1">{t("notifications")}</span>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 </Link>
+                {hasConnectedApps && (
+                  <Link
+                    href={`/${slug}/settings/connected-apps`}
+                    onClick={() => setOpen(false)}
+                    className={rowClass}
+                  >
+                    <Plug className="size-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1">{t("connectedApps")}</span>
+                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                  </Link>
+                )}
                 {canAdmin && (
                   <Link
                     href={`/${slug}/settings`}
@@ -169,6 +186,28 @@ export function WorkspaceMobileNav({
                   >
                     <ShieldCheck className="size-4 text-muted-foreground shrink-0" />
                     <span className="flex-1">{t("admin")}</span>
+                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                  </Link>
+                )}
+                {canAdmin && (
+                  <Link
+                    href={`/${slug}/settings/webhooks`}
+                    onClick={() => setOpen(false)}
+                    className={rowClass}
+                  >
+                    <Webhook className="size-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1">{t("webhooks")}</span>
+                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                  </Link>
+                )}
+                {ssoEnabled && (
+                  <Link
+                    href={`/${slug}/settings/sso`}
+                    onClick={() => setOpen(false)}
+                    className={rowClass}
+                  >
+                    <ShieldCheck className="size-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1">{t("sso")}</span>
                     <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                   </Link>
                 )}

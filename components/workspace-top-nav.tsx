@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { requireMember, getMyWorkspaces } from "@/lib/tenant";
+import { db, schema } from "@/lib/db";
+import { currentEdition, isFeatureEnabled } from "@/lib/license";
 import { BrandLogo } from "@/components/brand-logo";
 import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
@@ -26,6 +29,24 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
     getUnreadCount(data.session.user.id, data.workspace.id),
     listNotifications(data.session.user.id, data.workspace.id, 15),
   ]);
+
+  // Header-level items that used to be settings tabs. Connected apps is per-user
+  // (only when the user has ≥1 grant); SSO is a gated cloud feature.
+  const [{ n: connectedCount }] = await db
+    .select({ n: count() })
+    .from(schema.oauthAccessTokens)
+    .where(
+      and(
+        eq(schema.oauthAccessTokens.workspaceId, data.workspace.id),
+        eq(schema.oauthAccessTokens.userId, data.session.user.id),
+        isNull(schema.oauthAccessTokens.revokedAt),
+      ),
+    );
+  const hasConnectedApps = connectedCount > 0;
+  const ssoEnabled =
+    canAdmin &&
+    (currentEdition() !== "oss" ||
+      (await isFeatureEnabled("sso_saml", { workspaceId: data.workspace.id })));
 
   return (
     <>
@@ -56,12 +77,36 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
           >
             {t("mcp")}
           </Link>
+          {hasConnectedApps && (
+            <Link
+              href={`/${slug}/settings/connected-apps`}
+              className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {t("connectedApps")}
+            </Link>
+          )}
           {canAdmin && (
             <Link
               href={`/${slug}/settings`}
               className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
             >
               {t("admin")}
+            </Link>
+          )}
+          {canAdmin && (
+            <Link
+              href={`/${slug}/settings/webhooks`}
+              className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {t("webhooks")}
+            </Link>
+          )}
+          {ssoEnabled && (
+            <Link
+              href={`/${slug}/settings/sso`}
+              className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {t("sso")}
             </Link>
           )}
         </nav>
@@ -91,6 +136,8 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
       workspace={{ slug: data.workspace.slug, name: data.workspace.name }}
       workspaces={workspaces.map((w) => ({ slug: w.slug, name: w.name }))}
       canAdmin={canAdmin}
+      hasConnectedApps={hasConnectedApps}
+      ssoEnabled={ssoEnabled}
       theme={theme}
       user={{
         name: data.session.user.name ?? null,
