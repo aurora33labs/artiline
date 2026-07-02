@@ -17,6 +17,20 @@ export const runtime = "nodejs";
  * both the cloud and self-host deployments produce a correct bundle.
  */
 function buildManifest(origin: string): string {
+  // Shared args for the mcp-remote bridge. On macOS/Linux Claude Desktop runs
+  // `npx` directly; on Windows `npx` is `npx.cmd` and a bare `spawn("npx")`
+  // fails with ENOENT, so the win32 override wraps it in `cmd /c` (the pattern
+  // Anthropic recommends for npx-based servers). Only the Windows path is added
+  // — the default (macOS/Linux) command is unchanged.
+  const npxArgs = [
+    "-y",
+    "mcp-remote",
+    `${origin}/api/mcp`,
+    "--header",
+    "Authorization: Bearer ${user_config.token}",
+    "--transport",
+    "http-only",
+  ];
   const manifest = {
     manifest_version: "0.3",
     name: "artiline",
@@ -29,15 +43,13 @@ function buildManifest(origin: string): string {
       entry_point: "server/index.js",
       mcp_config: {
         command: "npx",
-        args: [
-          "-y",
-          "mcp-remote",
-          `${origin}/api/mcp`,
-          "--header",
-          "Authorization: Bearer ${user_config.token}",
-          "--transport",
-          "http-only",
-        ],
+        args: npxArgs,
+        platform_overrides: {
+          win32: {
+            command: "cmd",
+            args: ["/c", "npx", ...npxArgs],
+          },
+        },
       },
     },
     user_config: {
@@ -67,7 +79,13 @@ const args = ["-y", "mcp-remote"];
 if (url) args.push(url);
 if (token) args.push("--header", "Authorization: Bearer " + token);
 args.push("--transport", "http-only");
-const child = spawn("npx", args, { stdio: "inherit" });
+// On Windows npx is npx.cmd; a bare spawn("npx") throws ENOENT, so wrap in
+// "cmd /c". Passing args as an array (no shell:true) keeps the header token,
+// which contains spaces, as a single argument on both platforms.
+const isWin = process.platform === "win32";
+const child = isWin
+  ? spawn("cmd", ["/c", "npx"].concat(args), { stdio: "inherit" })
+  : spawn("npx", args, { stdio: "inherit" });
 child.on("exit", (code) => process.exit(code ?? 0));
 `;
 
