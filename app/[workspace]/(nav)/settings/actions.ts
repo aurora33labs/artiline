@@ -15,6 +15,7 @@ import {
 import { assertCanAddMember } from "@/lib/limits";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
+import { parseAllowedDomains } from "@/lib/join-requests";
 
 const maxVersionsSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -106,6 +107,116 @@ export async function revokeInvitation(formData: FormData) {
       and(
         eq(schema.invitations.id, data.invitationId),
         eq(schema.invitations.workspaceId, workspace.id),
+      ),
+    );
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
+
+// --- Join requests (self-serve access) -------------------------------------
+
+const joinPolicySchema = z.object({
+  workspaceSlug: z.string().min(1),
+  enabled: z.coerce.boolean(),
+  domains: z.string().max(2000).optional(),
+});
+
+/** Owner/admin: toggle the /join link and set the optional allowed-domains list. */
+export async function updateJoinPolicy(formData: FormData) {
+  const data = joinPolicySchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    // an unchecked checkbox sends nothing → treat absence as false
+    enabled: formData.get("enabled") === "on" || formData.get("enabled") === "true",
+    domains: formData.get("domains") ?? "",
+  });
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
+
+  await db
+    .update(schema.workspaces)
+    .set({
+      joinRequestsEnabled: data.enabled,
+      allowedEmailDomains: parseAllowedDomains(data.domains ?? ""),
+    })
+    .where(eq(schema.workspaces.id, workspace.id));
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
+
+const joinDecisionSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  requestId: z.string().min(1),
+  role: z.enum(["admin", "member"]).optional(),
+});
+
+/** Owner/admin: approve a pending request → add the user as a workspace member. */
+export async function approveJoinRequest(formData: FormData) {
+  const data = joinDecisionSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    requestId: formData.get("requestId"),
+    role: formData.get("role") || "member",
+  });
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
+  requireRolePage(role, ["owner", "admin"]);
+
+  const [req] = await db
+    .select({ id: schema.joinRequests.id, userId: schema.joinRequests.userId })
+    .from(schema.joinRequests)
+    .where(
+      and(
+        eq(schema.joinRequests.id, data.requestId),
+        eq(schema.joinRequests.workspaceId, workspace.id),
+        eq(schema.joinRequests.status, "pending"),
+      ),
+    )
+    .limit(1);
+  if (!req) throw new Error("NOT_FOUND");
+
+  await assertCanAddMember(workspace.id);
+
+  await db
+    .insert(schema.workspaceMembers)
+    .values({
+      workspaceId: workspace.id,
+      userId: req.userId,
+      role: data.role ?? "member",
+    })
+    .onConflictDoNothing();
+
+  await db
+    .update(schema.joinRequests)
+    .set({
+      status: "approved",
+      decidedByUserId: session.user.id,
+      decidedAt: new Date(),
+    })
+    .where(eq(schema.joinRequests.id, req.id));
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
+
+/** Owner/admin: deny a pending request. The user keeps their account. */
+export async function denyJoinRequest(formData: FormData) {
+  const data = joinDecisionSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    requestId: formData.get("requestId"),
+  });
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
+  requireRolePage(role, ["owner", "admin"]);
+
+  await db
+    .update(schema.joinRequests)
+    .set({
+      status: "denied",
+      decidedByUserId: session.user.id,
+      decidedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.joinRequests.id, data.requestId),
+        eq(schema.joinRequests.workspaceId, workspace.id),
+        eq(schema.joinRequests.status, "pending"),
       ),
     );
   revalidatePath(`/${data.workspaceSlug}/settings`);

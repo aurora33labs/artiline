@@ -148,6 +148,13 @@
       "when": 1782887054882,
       "tag": "0020_graceful_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782991784621,
+      "tag": "0021_secret_tarantula",
+      "breakpoints": true
     }
   ]
 }

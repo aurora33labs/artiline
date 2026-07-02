@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Menu,
   Library,
+  KeyRound,
   ShieldCheck,
   ChevronRight,
   Check,
@@ -139,6 +140,15 @@ export function WorkspaceMobileNav({
                 >
                   <Library className="size-4 text-muted-foreground shrink-0" />
                   <span className="flex-1">{t("artifacts")}</span>
+                  <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                </Link>
+                <Link
+                  href={`/${slug}/settings/api-keys`}
+                  onClick={() => setOpen(false)}
+                  className={rowClass}
+                >
+                  <KeyRound className="size-4 text-muted-foreground shrink-0" />
+                  <span className="flex-1">{t("mcp")}</span>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 </Link>
                 {canAdmin && (

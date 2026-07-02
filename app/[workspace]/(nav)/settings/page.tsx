@@ -1,7 +1,16 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { History, Mail, ShieldCheck, Star, UserPlus, Users } from "lucide-react";
+import {
+  History,
+  Link2,
+  Mail,
+  ShieldCheck,
+  Star,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
+import { redirect } from "next/navigation";
 import { memberManagementRights, requireMemberPage } from "@/lib/tenant";
 import { planLimitsForWorkspace } from "@/lib/limits";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
@@ -16,9 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { ManageMemberDialog } from "@/components/settings/manage-member-dialog";
-import { inviteMember, revokeInvitation, updateMaxVersions } from "./actions";
+import {
+  approveJoinRequest,
+  denyJoinRequest,
+  inviteMember,
+  revokeInvitation,
+  updateJoinPolicy,
+  updateMaxVersions,
+} from "./actions";
 
 function initials(src: string): string {
   const parts = src.trim().split(/\s+/);
@@ -35,6 +52,9 @@ export default async function SettingsPage({
   const { session, workspace, role: myRole } = await requireMemberPage(slug);
   const myUserId = session.user.id;
   const canManage = myRole === "owner" || myRole === "admin";
+  // The settings root is member management (admin only). Plain members reach
+  // settings only for their own MCP tokens — send them straight there.
+  if (!canManage) redirect(`/${slug}/settings/api-keys`);
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
 
@@ -83,6 +103,27 @@ export default async function SettingsPage({
         isNull(schema.invitations.acceptedAt),
       ),
     );
+
+  const pendingJoinRequests = canManage
+    ? await db
+        .select({
+          id: schema.joinRequests.id,
+          createdAt: schema.joinRequests.createdAt,
+          email: schema.users.email,
+          name: schema.users.name,
+        })
+        .from(schema.joinRequests)
+        .innerJoin(
+          schema.users,
+          eq(schema.users.id, schema.joinRequests.userId),
+        )
+        .where(
+          and(
+            eq(schema.joinRequests.workspaceId, workspace.id),
+            eq(schema.joinRequests.status, "pending"),
+          ),
+        )
+    : [];
 
   const seatLimit = (await planLimitsForWorkspace(workspace.id)).members;
   const seatsUsed = members.length + pendingInvites.length;
@@ -190,6 +231,110 @@ export default async function SettingsPage({
             </Button>
           </form>
           )}
+        </section>
+      )}
+
+      {canManage && (
+        <section className="border border-border bg-surface p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-sm border border-border-strong bg-surface-2 flex items-center justify-center">
+              <Link2 className="size-4 text-primary" />
+            </div>
+            <div className="space-y-0.5">
+              <h2 className="text-sm font-sans font-semibold normal-case tracking-normal">
+                {t("joinLinkTitle")}
+              </h2>
+              <p className="meta">{t("joinLinkSubtitle")}</p>
+            </div>
+          </div>
+          <form action={updateJoinPolicy} className="space-y-4">
+            <input type="hidden" name="workspaceSlug" value={slug} />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="enabled"
+                defaultChecked={workspace.joinRequestsEnabled}
+                className="size-4 accent-primary"
+              />
+              {t("joinLinkEnable")}
+            </label>
+            <p className="meta">{t("joinLinkEnabledHint")}</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="domains">{t("joinDomainsLabel")}</Label>
+              <Textarea
+                id="domains"
+                name="domains"
+                rows={2}
+                defaultValue={workspace.allowedEmailDomains.join("\n")}
+                placeholder={t("joinDomainsPlaceholder")}
+              />
+              <p className="meta">{t("joinDomainsHint")}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button type="submit">{t("joinPolicySave")}</Button>
+              {workspace.joinRequestsEnabled && (
+                <CopyLinkButton path={`/join/${slug}`} />
+              )}
+            </div>
+          </form>
+        </section>
+      )}
+
+      {canManage && pendingJoinRequests.length > 0 && (
+        <section className="space-y-3">
+          <div className="meta">
+            {t("joinRequestsLabel", {
+              count: String(pendingJoinRequests.length).padStart(2, "0"),
+            })}
+          </div>
+          <ul className="border border-border bg-surface divide-y divide-border">
+            {pendingJoinRequests.map((r) => (
+              <li
+                key={r.id}
+                className="px-4 py-3 flex flex-wrap items-center gap-3"
+              >
+                <div className="size-9 rounded-sm border border-border bg-surface-2 flex items-center justify-center">
+                  <UserPlus className="size-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">
+                    {r.name ?? r.email}
+                  </div>
+                  <div className="meta truncate">
+                    {r.email} · {t("joinRequestBadge")}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <form
+                    action={approveJoinRequest}
+                    className="flex items-center gap-2"
+                  >
+                    <input type="hidden" name="workspaceSlug" value={slug} />
+                    <input type="hidden" name="requestId" value={r.id} />
+                    <Select name="role" defaultValue="member">
+                      <SelectTrigger className="h-9 w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">{t("memberRole")}</SelectItem>
+                        <SelectItem value="admin">{t("adminRole")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button type="submit" size="sm">
+                      {t("approveBtn")}
+                    </Button>
+                  </form>
+                  <form action={denyJoinRequest}>
+                    <input type="hidden" name="workspaceSlug" value={slug} />
+                    <input type="hidden" name="requestId" value={r.id} />
+                    <Button variant="ghost" size="sm" type="submit">
+                      {t("denyBtn")}
+                    </Button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

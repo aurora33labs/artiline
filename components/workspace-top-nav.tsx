@@ -44,6 +44,12 @@ export async function WorkspaceTopNav({ slug }: { slug: string }) {
           >
             {t("artifacts")}
           </Link>
+          <Link
+            href={`/${slug}/settings/api-keys`}
+            className="px-3 py-1.5 rounded-sm hover:bg-surface-2 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {t("mcp")}
+          </Link>
           {canAdmin && (
             <Link
               href={`/${slug}/settings`}

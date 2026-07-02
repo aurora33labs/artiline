@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireMemberPage } from "@/lib/tenant";
+import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,11 @@ export default async function WebhooksPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace } = await requireMemberPage(slug);
+  // Workspace-level infra (not per-user): owner/admin only. Actions already
+  // enforce this; the page guard keeps a member from reading webhook secrets
+  // via a direct URL.
+  const { workspace, role } = await requireMemberPage(slug);
+  requireRolePage(role, ["owner", "admin"]);
 
   const list = await db
     .select()

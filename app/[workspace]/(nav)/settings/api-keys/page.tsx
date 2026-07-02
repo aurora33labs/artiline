@@ -1,9 +1,10 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireMemberPage, requireRolePage } from "@/lib/tenant";
+import { requireMemberPage } from "@/lib/tenant";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiKeyCreateForm } from "@/components/settings/api-key-create-form";
+import { MEMBER_KEY_LIMIT } from "@/lib/api-keys";
 import { revokeApiKey } from "./actions";
 
 function formatDate(d: Date | null): string {
@@ -20,33 +21,74 @@ export default async function ApiKeysPage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
-  const { workspace, role } = await requireMemberPage(slug);
-  requireRolePage(role, ["owner", "admin"]);
+  const { workspace, role, session } = await requireMemberPage(slug);
+  // Any member manages their own keys; owner/admin see the whole workspace's.
+  const canManageAll = role === "owner" || role === "admin";
+  const myUserId = session.user.id;
 
   const list = await db
-    .select()
+    .select({
+      id: schema.apiKeys.id,
+      name: schema.apiKeys.name,
+      tokenPrefix: schema.apiKeys.tokenPrefix,
+      role: schema.apiKeys.role,
+      createdAt: schema.apiKeys.createdAt,
+      lastUsedAt: schema.apiKeys.lastUsedAt,
+      revokedAt: schema.apiKeys.revokedAt,
+      userId: schema.apiKeys.userId,
+      ownerEmail: schema.users.email,
+    })
     .from(schema.apiKeys)
-    .where(eq(schema.apiKeys.workspaceId, workspace.id))
+    .innerJoin(schema.users, eq(schema.users.id, schema.apiKeys.userId))
+    .where(
+      canManageAll
+        ? eq(schema.apiKeys.workspaceId, workspace.id)
+        : and(
+            eq(schema.apiKeys.workspaceId, workspace.id),
+            eq(schema.apiKeys.userId, myUserId),
+          ),
+    )
     .orderBy(desc(schema.apiKeys.createdAt));
 
   const mcpUrl = `${process.env.AUTH_URL ?? "https://<tu-dominio>"}/api/mcp`;
 
+  // Members are capped to MEMBER_KEY_LIMIT active tokens; owner/admin unlimited.
+  const myActiveCount = list.filter(
+    (k) => k.userId === myUserId && k.revokedAt == null,
+  ).length;
+  const atLimit = !canManageAll && myActiveCount >= MEMBER_KEY_LIMIT;
+
   return (
     <div className="space-y-8 max-w-4xl">
       <header className="space-y-2 border-b border-border pb-6">
-        <div className="meta">SETTINGS · API KEYS</div>
-        <h1 className="text-3xl">API keys</h1>
+        <div className="meta">SETTINGS · MCP</div>
+        <h1 className="text-3xl">MCP</h1>
         <p className="text-muted-foreground text-sm">
-          Tokens para crear artifacts por programa — por ejemplo desde Claude vía
-          MCP. Cada token está limitado a este workspace y hereda tu identidad.
+          Conecta Claude a tu workspace vía MCP. Genera un token, úsalo en la
+          extensión de Claude Desktop y crea artifacts desde cualquier chat. Cada
+          token está limitado a este workspace y hereda tu identidad.
         </p>
       </header>
 
       <section className="space-y-4 border border-border bg-surface p-6">
-        <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
-          Nuevo token
-        </h2>
-        <ApiKeyCreateForm workspaceSlug={slug} />
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
+            Nuevo token
+          </h2>
+          {!canManageAll && (
+            <span className="meta">
+              {myActiveCount}/{MEMBER_KEY_LIMIT} activos
+            </span>
+          )}
+        </div>
+        {atLimit ? (
+          <p className="text-sm text-muted-foreground">
+            Alcanzaste el límite de {MEMBER_KEY_LIMIT} tokens MCP activos. Revoca
+            uno abajo para crear otro.
+          </p>
+        ) : (
+          <ApiKeyCreateForm workspaceSlug={slug} />
+        )}
       </section>
 
       <section className="space-y-3 border border-border bg-surface p-6">
@@ -121,6 +163,9 @@ export default async function ApiKeysPage({
                       <code className="font-mono">{k.tokenPrefix}…</code> ·{" "}
                       {k.role} · creado {formatDate(k.createdAt)} · usado{" "}
                       {formatDate(k.lastUsedAt)}
+                      {canManageAll && k.userId !== myUserId && (
+                        <> · {k.ownerEmail}</>
+                      )}
                     </div>
                   </div>
                   {active && (

@@ -77,6 +77,18 @@ export const workspaces = pgTable(
     // Max retained versions per artifact. Older versions (and their storage) are
     // pruned past this. Owner-configurable in workspace settings; default 5.
     maxVersions: integer("max_versions").notNull().default(5),
+    // Self-serve access: when on, a stable /join/<slug> link lets anyone request
+    // membership (admin still approves each one). Off by default.
+    joinRequestsEnabled: boolean("join_requests_enabled")
+      .notNull()
+      .default(false),
+    // Optional allow-list of email domains that may submit a join request. Empty
+    // = any email may request. NOT an auto-approve — there's no email
+    // verification, so a domain match only gates who can ask; an admin approves.
+    allowedEmailDomains: jsonb("allowed_email_domains")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("workspaces_slug_idx").on(t.slug)],
@@ -141,6 +153,34 @@ export const invitations = pgTable(
   (t) => [
     uniqueIndex("invitations_token_idx").on(t.token),
     index("invitations_workspace_idx").on(t.workspaceId),
+  ],
+);
+
+// Self-serve access requests (the inverse of an invitation): a prospective
+// member asks to join via /join/<slug>, an owner/admin approves or denies. The
+// requester already has an account (created on the join page if needed); we
+// never add them to `workspaceMembers` until approval. `status` gates the admin
+// list; the unique (workspace,user) index collapses repeat asks into one row.
+export const joinRequests = pgTable(
+  "join_requests",
+  {
+    id: id(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("pending"), // pending|approved|denied
+    decidedByUserId: text("decided_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("join_requests_workspace_user_idx").on(t.workspaceId, t.userId),
+    index("join_requests_workspace_status_idx").on(t.workspaceId, t.status),
   ],
 );
 
