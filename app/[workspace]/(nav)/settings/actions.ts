@@ -16,6 +16,7 @@ import { assertCanAddMember } from "@/lib/limits";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
 import { parseAllowedDomains } from "@/lib/join-requests";
+import { listAddableUsers } from "@/lib/members";
 
 const maxVersionsSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -109,6 +110,47 @@ export async function revokeInvitation(formData: FormData) {
         eq(schema.invitations.workspaceId, workspace.id),
       ),
     );
+  revalidatePath(`/${data.workspaceSlug}/settings`);
+}
+
+const addExistingSchema = z.object({
+  workspaceSlug: z.string().min(1),
+  role: z.enum(["admin", "member"]),
+  userIds: z.array(z.string().min(1)).min(1),
+});
+
+/**
+ * Owner/admin: add users who already have an account to this workspace directly,
+ * no invite + no acceptance. Candidates are restricted to people who already
+ * share a workspace with the actor (recomputed here — never trust client ids),
+ * so this can't enumerate or add arbitrary accounts. Seat quota still applies.
+ */
+export async function addExistingMembers(formData: FormData) {
+  const data = addExistingSchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    role: formData.get("role") || "member",
+    userIds: formData.getAll("userIds").map(String),
+  });
+  const { session, workspace, role } = await requireMemberPage(
+    data.workspaceSlug,
+  );
+  requireRolePage(role, ["owner", "admin"]);
+
+  // Re-derive the allowed set server-side; ignore any id outside it.
+  const addable = await listAddableUsers(session.user.id, workspace.id);
+  const allowed = new Set(addable.map((u) => u.id));
+  const toAdd = data.userIds.filter((id) => allowed.has(id));
+
+  for (const userId of toAdd) {
+    // Per-insert so the live member count enforces the seat cap in cloud;
+    // no-op in OSS. Stop on LIMIT_MEMBERS, keeping whoever was already added.
+    await assertCanAddMember(workspace.id);
+    await db
+      .insert(schema.workspaceMembers)
+      .values({ workspaceId: workspace.id, userId, role: data.role })
+      .onConflictDoNothing();
+  }
+
   revalidatePath(`/${data.workspaceSlug}/settings`);
 }
 

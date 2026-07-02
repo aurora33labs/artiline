@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { ManageMemberDialog } from "@/components/settings/manage-member-dialog";
+import { AddExistingMemberDialog } from "@/components/settings/add-existing-member-dialog";
+import { listAddableUsers } from "@/lib/members";
 import {
   approveJoinRequest,
   denyJoinRequest,
@@ -129,6 +131,11 @@ export default async function SettingsPage({
   const seatsUsed = members.length + pendingInvites.length;
   const atSeatCap = seatLimit >= 0 && seatsUsed >= seatLimit;
 
+  // Existing users the admin may add directly (share a workspace, not here yet).
+  const addableUsers = canManage
+    ? await listAddableUsers(myUserId, workspace.id)
+    : [];
+
   return (
     <div className="space-y-10 max-w-4xl">
       <header className="space-y-2">
@@ -183,7 +190,7 @@ export default async function SettingsPage({
             <div className="size-9 rounded-sm border border-border-strong bg-surface-2 flex items-center justify-center">
               <UserPlus className="size-4 text-primary" />
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 flex-1 min-w-0">
               <h2 className="text-sm font-sans font-semibold normal-case tracking-normal">
                 {t("inviteTitle")}
               </h2>
@@ -192,6 +199,12 @@ export default async function SettingsPage({
                 {seatLimit >= 0 && ` · ${seatsUsed}/${seatLimit}`}
               </p>
             </div>
+            {!atSeatCap && (
+              <AddExistingMemberDialog
+                workspaceSlug={slug}
+                candidates={addableUsers}
+              />
+            )}
           </div>
           {atSeatCap ? (
             <div className="meta text-warning border border-warning px-3 py-2">
