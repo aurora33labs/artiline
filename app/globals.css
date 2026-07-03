@@ -457,6 +457,63 @@
   }
 }
 
+/* Code viewer — Shiki dual-theme colors + line-number gutter. Shiki emits
+   per-token --shiki-light/--shiki-dark custom props (defaultColor:false);
+   without these rules the tokens fall back to the inherited color (flat). */
+@layer components {
+  .code-viewer .shiki {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    line-height: 1.6;
+    overflow-x: auto;
+    counter-reset: line;
+    tab-size: 2;
+  }
+  .code-viewer .shiki code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+  }
+  /* Default (dark) uses the dark token; .light flips to the light token */
+  .code-viewer .shiki,
+  .code-viewer .shiki span {
+    color: var(--shiki-dark);
+    background-color: transparent !important;
+  }
+  .light .code-viewer .shiki,
+  .light .code-viewer .shiki span {
+    color: var(--shiki-light);
+  }
+  /* Line-number gutter via CSS counter — no JS, no markup change */
+  .code-viewer .shiki .line {
+    display: inline-block;
+    width: 100%;
+    counter-increment: line;
+  }
+  .code-viewer .shiki .line::before {
+    content: counter(line);
+    display: inline-block;
+    width: 3rem;
+    margin-right: 1rem;
+    padding-right: 0.75rem;
+    text-align: right;
+    color: var(--muted-foreground);
+    border-right: 1px solid var(--border);
+    opacity: 0.55;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* Trailing empty line Shiki appends — hide its phantom number */
+  .code-viewer .shiki .line:last-child:empty::before {
+    content: none;
+  }
+}
+
 /* Lenis smooth scroll (marketing landing). Intentionally omit the
    `iframe{pointer-events:none}` rule so the interactive demo preview stays
    usable. */

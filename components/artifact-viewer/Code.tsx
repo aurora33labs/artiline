@@ -18,14 +18,14 @@ export async function CodeViewer({
     defaultColor: false,
   });
   return (
-    <div
-      className={cn(
-        "text-sm overflow-auto",
-        fullscreen
-          ? "max-w-5xl mx-auto px-4 py-8"
-          : "rounded-md border p-4",
-      )}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className="w-full px-5 sm:px-8 py-8 md:py-10">
+      <div
+        className={cn(
+          "code-viewer mx-auto text-sm",
+          fullscreen ? "max-w-5xl" : "max-w-4xl",
+        )}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
   );
 }
