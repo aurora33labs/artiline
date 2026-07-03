@@ -162,6 +162,13 @@
       "when": 1783022766163,
       "tag": "0022_marvelous_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1783121217813,
+      "tag": "0023_external_reviews_and_wireup",
+      "breakpoints": true
     }
   ]
 }
