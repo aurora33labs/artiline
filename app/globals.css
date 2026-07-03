@@ -264,6 +264,199 @@
   }
 }
 
+/* Full markdown reading view (artifact viewer) — token-based, no typography
+   plugin. Reading measure + rhythm + on-system headings/tables/code. */
+@layer components {
+  .markdown-body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--foreground);
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+  /* Base vertical rhythm between blocks */
+  .markdown-body > * + * {
+    margin-top: 1.15em;
+  }
+  .markdown-body > :first-child {
+    margin-top: 0;
+  }
+
+  /* Headings — extra breathing room above, tight below */
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    font-family: var(--font-sans);
+    text-transform: none;
+    line-height: 1.25;
+    scroll-margin-top: 2rem;
+  }
+  .markdown-body > h1 + *,
+  .markdown-body > h2 + *,
+  .markdown-body > h3 + *,
+  .markdown-body > h4 + * {
+    margin-top: 0.5em;
+  }
+  .markdown-body h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 0;
+  }
+  .markdown-body h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-top: 2.2em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--border);
+  }
+  .markdown-body h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: 1.8em;
+  }
+  .markdown-body h4 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-top: 1.5em;
+  }
+  .markdown-body h5,
+  .markdown-body h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    margin-top: 1.4em;
+  }
+
+  /* Paragraphs & inline emphasis */
+  .markdown-body p {
+    margin: 0;
+  }
+  .markdown-body strong {
+    font-weight: 650;
+    color: var(--foreground);
+  }
+  .markdown-body em {
+    font-style: italic;
+  }
+  .markdown-body a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  .markdown-body a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* Lists */
+  .markdown-body ul,
+  .markdown-body ol {
+    padding-left: 1.4rem;
+    list-style: revert;
+  }
+  .markdown-body li + li {
+    margin-top: 0.35em;
+  }
+  .markdown-body li::marker {
+    color: var(--muted-foreground);
+  }
+  .markdown-body li > ul,
+  .markdown-body li > ol {
+    margin-top: 0.35em;
+  }
+  /* GFM task lists */
+  .markdown-body li:has(> input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.4rem;
+    padding-left: 1.4rem;
+  }
+  .markdown-body input[type="checkbox"] {
+    margin-right: 0.5em;
+    accent-color: var(--primary);
+  }
+
+  /* Inline & block code */
+  .markdown-body code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius-sm);
+  }
+  .markdown-body pre {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  .markdown-body pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* Tables */
+  .markdown-body table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .markdown-body thead {
+    background: var(--surface-2);
+  }
+  .markdown-body th {
+    font-weight: 600;
+    text-align: left;
+  }
+  .markdown-body th,
+  .markdown-body td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+  }
+  .markdown-body tbody tr:hover {
+    background: var(--surface-2);
+  }
+
+  /* Blockquotes */
+  .markdown-body blockquote {
+    border-left: 2px solid var(--primary);
+    padding: 0.2rem 0 0.2rem 1rem;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+  .markdown-body blockquote > * + * {
+    margin-top: 0.6em;
+  }
+
+  /* Rules, images, misc */
+  .markdown-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5em 0;
+  }
+  .markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+}
+
 /* Lenis smooth scroll (marketing landing). Intentionally omit the
    `iframe{pointer-events:none}` rule so the interactive demo preview stays
    usable. */

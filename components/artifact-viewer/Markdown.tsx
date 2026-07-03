@@ -11,18 +11,20 @@ export function MarkdownViewer({
   fullscreen?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "prose dark:prose-invert",
-        fullscreen ? "max-w-3xl mx-auto px-6 py-12" : "max-w-none",
-      )}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
+    <div className="w-full px-5 sm:px-8 py-12 md:py-16">
+      <article
+        className={cn(
+          "markdown-body mx-auto",
+          fullscreen ? "max-w-3xl" : "max-w-[46rem]",
+        )}
       >
-        {md}
-      </ReactMarkdown>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeSanitize]}
+        >
+          {md}
+        </ReactMarkdown>
+      </article>
     </div>
   );
 }
