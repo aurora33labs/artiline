@@ -18,8 +18,8 @@ export type ArtifactCardData = {
   thumbKey: string | null;
   language: string | null;
   visibility: Visibility;
+  versionNumber: number;
   views: number;
-  createdAt: Date;
   updatedAt: Date;
   authorName: string | null;
   authorEmail: string;
@@ -57,7 +57,7 @@ export async function ArtifactCard({
           />
         </div>
 
-        <div className="px-3 py-2.5 border-t border-border space-y-2">
+        <div className="px-3 py-2.5 border-t border-border space-y-1.5">
           <h3 className="font-sans font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors normal-case tracking-normal">
             {artifact.title}
           </h3>
@@ -68,6 +68,9 @@ export async function ArtifactCard({
               language={artifact.language}
               size="xs"
             />
+            <span className="inline-flex items-center rounded-xs border border-border bg-surface font-display font-medium uppercase tracking-[0.06em] px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              v{artifact.versionNumber}
+            </span>
           </div>
           <div className="flex items-center justify-between gap-2 meta">
             <span className="inline-flex items-center gap-1.5 min-w-0">
@@ -87,28 +90,18 @@ export async function ArtifactCard({
                 {artifact.authorName ?? artifact.authorEmail}
               </span>
             </span>
-            <span className="inline-flex items-center gap-1 shrink-0">
-              <Eye className="size-3" />
-              {artifact.views}
+            <span className="inline-flex items-center gap-2 shrink-0">
+              <span className="inline-flex items-center gap-1">
+                <Eye className="size-3" />
+                {artifact.views}
+              </span>
+              <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
             </span>
-          </div>
-          <div className="flex items-center justify-end gap-2 meta">
-            <span>{fmtDate(artifact.createdAt, formatter)}</span>
-            <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
           </div>
         </div>
       </article>
     </Link>
   );
-}
-
-function fmtDate(
-  date: Date,
-  formatter: Awaited<ReturnType<typeof getFormatter>>,
-): string {
-  return formatter
-    .dateTime(date, { day: "numeric", month: "short", year: "numeric" })
-    .toUpperCase();
 }
 
 function shortRelative(
