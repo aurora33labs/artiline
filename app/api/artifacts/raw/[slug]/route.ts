@@ -276,7 +276,10 @@ export async function GET(
   if (serveAsDocument) {
     // Sandbox the document at the HTTP layer so a direct navigation can't run on
     // our origin; allow-scripts keeps interactive artifacts working in the iframe.
-    headers["Content-Security-Policy"] = "sandbox allow-scripts";
+    // frame-ancestors * is required here (not restricted via next.config headers())
+    // because when /embed/[slug] is itself embedded in a third-party site, this
+    // raw document sits one level deeper in that same external ancestor chain.
+    headers["Content-Security-Policy"] = "sandbox allow-scripts; frame-ancestors *";
   } else {
     headers["Content-Security-Policy"] = "default-src 'none'; sandbox";
   }

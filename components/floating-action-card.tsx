@@ -21,6 +21,7 @@ import {
   MoreHorizontal,
   ChevronRight,
   MousePointer2,
+  Code2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -167,6 +168,19 @@ export function FloatingActionCard({
     setTimeout(() => setCopied(false), 1500);
   }
 
+  const isPublic = visibility === "public" || visibility === "public_pw";
+
+  async function copyEmbed() {
+    // shareHref is always `.../a/{slug}` (workspace-scoped or public) — the
+    // embed route mirrors the same slug regardless of which page linked here.
+    const embedSlug = shareHref.split("/a/")[1];
+    if (!embedSlug) return;
+    const url = new URL(`/embed/${embedSlug}`, window.location.origin).toString();
+    const snippet = `<iframe src="${url}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
+    await navigator.clipboard.writeText(snippet);
+    toast.success(tt("embedCopied"));
+  }
+
   const te = useTranslations("errors");
 
   function translateError(code: string): string {
@@ -310,6 +324,17 @@ export function FloatingActionCard({
                 </MenuChip>
                 {t("info")}
               </DropdownMenuItem>
+              {isPublic && (
+                <DropdownMenuItem
+                  className={MENU_ROW}
+                  onSelect={() => setTimeout(copyEmbed)}
+                >
+                  <MenuChip>
+                    <Code2 />
+                  </MenuChip>
+                  {t("copyEmbed")}
+                </DropdownMenuItem>
+              )}
 
               {hasEditorItems && (
                 <>
@@ -516,6 +541,16 @@ export function FloatingActionCard({
                 setInfoOpen(true);
               }}
             />
+            {isPublic && (
+              <SheetRow
+                icon={<Code2 className="size-4" />}
+                label={t("copyEmbed")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  void copyEmbed();
+                }}
+              />
+            )}
           </div>
 
           {canDelete && workspaceSlug && (
