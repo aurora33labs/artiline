@@ -21,7 +21,16 @@ export type ArtifactCardData = {
   views: number;
   createdAt: Date;
   updatedAt: Date;
+  authorName: string | null;
+  authorEmail: string;
+  authorImage: string | null;
 };
+
+function initials(src: string): string {
+  const parts = src.trim().split(/\s+/);
+  if (parts.length === 1) return (parts[0][0] ?? "?").toUpperCase();
+  return ((parts[0][0] ?? "") + (parts[1][0] ?? "")).toUpperCase();
+}
 
 export async function ArtifactCard({
   artifact,
@@ -60,15 +69,32 @@ export async function ArtifactCard({
               size="xs"
             />
           </div>
-          <div className="flex items-center justify-between meta">
-            <span className="inline-flex items-center gap-1">
+          <div className="flex items-center justify-between gap-2 meta">
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              {artifact.authorImage ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={artifact.authorImage}
+                  alt=""
+                  className="size-4 rounded-full object-cover border border-border shrink-0"
+                />
+              ) : (
+                <span className="size-4 rounded-full bg-surface-2 border border-border-strong text-foreground text-[8px] font-display font-bold flex items-center justify-center shrink-0">
+                  {initials(artifact.authorName ?? artifact.authorEmail)}
+                </span>
+              )}
+              <span className="truncate">
+                {artifact.authorName ?? artifact.authorEmail}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 shrink-0">
               <Eye className="size-3" />
               {artifact.views}
             </span>
-            <span className="inline-flex items-center gap-2">
-              <span>{fmtDate(artifact.createdAt, formatter)}</span>
-              <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
-            </span>
+          </div>
+          <div className="flex items-center justify-end gap-2 meta">
+            <span>{fmtDate(artifact.createdAt, formatter)}</span>
+            <span>{shortRelative(artifact.updatedAt, formatter, t)}</span>
           </div>
         </div>
       </article>

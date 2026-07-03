@@ -29,11 +29,18 @@ export default async function WorkspaceHome({
       snippet: schema.artifactVersions.contentSnippet,
       thumbKey: schema.artifactVersions.thumbKey,
       language: schema.artifactVersions.language,
+      authorName: schema.users.name,
+      authorEmail: schema.users.email,
+      authorImage: schema.users.image,
     })
     .from(schema.artifacts)
     .innerJoin(
       schema.artifactVersions,
       eq(schema.artifactVersions.id, schema.artifacts.currentVersionId),
+    )
+    .innerJoin(
+      schema.users,
+      eq(schema.users.id, schema.artifacts.authorUserId),
     )
     .where(eq(schema.artifacts.workspaceId, workspace.id))
     .orderBy(desc(schema.artifacts.updatedAt));
@@ -85,6 +92,9 @@ export default async function WorkspaceHome({
               views: a.views,
               createdAt: a.createdAt,
               updatedAt: a.updatedAt,
+              authorName: a.authorName,
+              authorEmail: a.authorEmail,
+              authorImage: a.authorImage,
             }}
           />
         ))}
