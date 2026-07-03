@@ -447,6 +447,8 @@
     "usageHint": "In any Claude chat: «save this HTML to Artiline» → Claude calls <code>create_artifact</code>.",
     "advancedTitle": "Advanced · MCP server URL",
     "advancedDesc": "For Claude Code (<code>claude mcp add</code>) or other MCP clients. The OAuth connector in Claude's web app has an open Anthropic bug and is unreliable today — use the extension above for Claude Desktop.",
+    "claudeCodeTitle": "Claude Code",
+    "claudeCodeDesc": "Run this once, replacing <code>artl_…</code> with your token. Then restart Claude Code.",
     "tokensTitle": "Tokens ({count})",
     "noTokens": "No tokens yet.",
     "statusActive": "ACTIVE",
