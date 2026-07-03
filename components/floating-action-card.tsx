@@ -109,6 +109,7 @@ export function FloatingActionCard({
   versionCount,
   backHref,
   reactionsSlot,
+  members = [],
 }: {
   title: string;
   type: "html" | "markdown" | "code";
@@ -130,6 +131,7 @@ export function FloatingActionCard({
   versionCount: number;
   backHref: string;
   reactionsSlot: React.ReactNode;
+  members?: { id: string; name: string | null; email: string }[];
 }) {
   const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -599,6 +601,7 @@ export function FloatingActionCard({
           artifactId={artifactId}
           workspaceSlug={workspaceSlug}
           defaultTitle={title}
+          members={members}
           open={proposeOpen}
           onOpenChange={setProposeOpen}
         />

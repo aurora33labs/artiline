@@ -385,7 +385,9 @@ export async function setReviewStatus(formData: FormData) {
 
   const isAuthor = version.artifact.authorUserId === session.user.id;
   const isManager = role === "owner" || role === "admin";
-  if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
+  const isAssignedReviewer =
+    version.version.assignedReviewerId === session.user.id;
+  if (!isAuthor && !isManager && !isAssignedReviewer) throw new Error("FORBIDDEN");
 
   await db.transaction(async (tx) => {
     await tx

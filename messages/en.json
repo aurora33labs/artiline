@@ -495,7 +495,20 @@
     "statusPaused": "PAUSED",
     "pause": "Pause",
     "activate": "Activate",
-    "delete": "Delete"
+    "delete": "Delete",
+    "formatLegend": "PAYLOAD FORMAT",
+    "formatRaw": "Raw JSON",
+    "formatRawHint": "The event payload as-is.",
+    "formatSlack": "Slack incoming webhook",
+    "formatSlackHint": "Formats the payload as a Slack message — paste a Slack incoming-webhook URL, no app install needed.",
+    "recentDeliveries": "Recent deliveries",
+    "noDeliveries": "No deliveries yet.",
+    "deliveryStatus": {
+      "success": "SUCCESS",
+      "pending": "PENDING",
+      "failed": "FAILED"
+    },
+    "retry": "Retry"
   },
   "notifications": {
     "eyebrow": "YOUR ACTIVITY",
@@ -659,6 +672,9 @@
     "proposeDesc": "Upload the file with your changes. It's sent for review and does NOT go live until the author or an admin approves it.",
     "proposing": "Sending…",
     "proposed": "Proposal sent for review",
+    "assignReviewer": "Assign reviewer (optional)",
+    "anyAdmin": "Any admin",
+    "reviewerBadge": "REVIEWER: {name}",
     "status": {
       "draft": "DRAFT",
       "pending": "PENDING",

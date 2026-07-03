@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { AuthContext } from "@/lib/tenant";
 import {
@@ -31,6 +31,7 @@ export async function proposeVersion(
   ctx: AuthContext,
   artifactId: string,
   input: PublishVersionInput,
+  assignedReviewerId?: string | null,
 ): Promise<{ slug: string; versionNumber: number }> {
   const { workspace, session } = ctx;
 
@@ -45,6 +46,23 @@ export async function proposeVersion(
     .limit(1);
   if (!artifact || artifact.workspaceId !== workspace.id) {
     throw new Error("NOT_FOUND");
+  }
+
+  // A reviewer, if given, must actually be a member of this workspace — never
+  // trust the caller-supplied id past that check.
+  let reviewerId: string | null = null;
+  if (assignedReviewerId) {
+    const [member] = await db
+      .select({ userId: schema.workspaceMembers.userId })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, workspace.id),
+          eq(schema.workspaceMembers.userId, assignedReviewerId),
+        ),
+      )
+      .limit(1);
+    if (member) reviewerId = assignedReviewerId;
   }
 
   const versionId = newVersionId();
@@ -72,6 +90,7 @@ export async function proposeVersion(
       message: input.message ?? null,
       authorUserId: session.user.id,
       reviewStatus: "pending",
+      assignedReviewerId: reviewerId,
     });
     // Deliberately NOT touching artifacts.currentVersionId — a proposal is not
     // live until approved.
@@ -123,6 +142,7 @@ export async function proposeVersion(
     workspaceId: workspace.id,
     actorUserId: session.user.id,
     authorUserId: artifact.authorUserId,
+    assignedReviewerId: reviewerId,
     artifactId: artifact.id,
     payload: {
       actorName: actorName ?? undefined,

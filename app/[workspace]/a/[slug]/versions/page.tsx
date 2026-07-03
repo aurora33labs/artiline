@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { and, desc, eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
@@ -40,15 +41,21 @@ export default async function VersionsListPage({
     role === "owner" ||
     role === "admin";
 
+  const reviewers = alias(schema.users, "reviewers");
   const versions = await db
     .select({
       version: schema.artifactVersions,
       author: { id: schema.users.id, name: schema.users.name, email: schema.users.email },
+      reviewer: { id: reviewers.id, name: reviewers.name, email: reviewers.email },
     })
     .from(schema.artifactVersions)
     .innerJoin(
       schema.users,
       eq(schema.users.id, schema.artifactVersions.authorUserId),
+    )
+    .leftJoin(
+      reviewers,
+      eq(reviewers.id, schema.artifactVersions.assignedReviewerId),
     )
     .where(eq(schema.artifactVersions.artifactId, artifact.id))
     .orderBy(desc(schema.artifactVersions.versionNumber));
@@ -159,7 +166,7 @@ export default async function VersionsListPage({
       )}
 
       <ol className="border border-border bg-surface divide-y divide-border">
-        {versions.map(({ version, author }) => {
+        {versions.map(({ version, author, reviewer }) => {
           const isCurrent = artifact.currentVersionId === version.id;
           return (
             <li
@@ -184,6 +191,11 @@ export default async function VersionsListPage({
                   >
                     {t(`status.${version.reviewStatus}`)}
                   </span>
+                  {version.reviewStatus === "pending" && reviewer && (
+                    <span className="meta text-muted-foreground border border-border px-2 py-0.5">
+                      {t("reviewerBadge", { name: (reviewer.name ?? reviewer.email).toUpperCase() })}
+                    </span>
+                  )}
                 </div>
                 <div className="meta text-muted-foreground">
                   {(author.name ?? author.email).toUpperCase()} ·{" "}
