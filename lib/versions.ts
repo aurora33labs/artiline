@@ -24,6 +24,7 @@ export async function pruneArtifactVersions(
         id: schema.artifactVersions.id,
         contentKey: schema.artifactVersions.contentKey,
         thumbKey: schema.artifactVersions.thumbKey,
+        reviewStatus: schema.artifactVersions.reviewStatus,
       })
       .from(schema.artifactVersions)
       .where(eq(schema.artifactVersions.artifactId, artifactId))
@@ -33,6 +34,12 @@ export async function pruneArtifactVersions(
 
     const keep = new Set(versions.slice(0, cap).map((v) => v.id));
     if (keepVersionId) keep.add(keepVersionId); // never drop the live version
+    // Never evict open proposals — a pending/changes_requested version is
+    // someone's un-reviewed work, not part of the bounded approved history.
+    for (const v of versions) {
+      if (v.reviewStatus === "pending" || v.reviewStatus === "changes_requested")
+        keep.add(v.id);
+    }
     const drop = versions.filter((v) => !keep.has(v.id));
     if (!drop.length) return;
 

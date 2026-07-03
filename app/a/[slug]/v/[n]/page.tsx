@@ -21,7 +21,9 @@ export async function generateMetadata({
     return { title: "Artiline" };
   }
   const resolved = await resolveArtifactVersion(slug, versionNumber);
-  if (!resolved) return { title: "Artiline" };
+  // Don't surface metadata for un-approved (pending/rejected) proposals.
+  if (!resolved || resolved.version.reviewStatus !== "approved")
+    return { title: "Artiline" };
   const isPublic =
     resolved.artifact.visibility === "public" ||
     resolved.artifact.visibility === "public_pw";
@@ -70,7 +72,13 @@ export default async function PinnedVersionView({
 
   const resolved = await resolveArtifactVersion(slug, versionNumber);
   const artifact = resolved?.artifact ?? null;
-  const version = resolved?.version ?? null;
+  // Public deep-links only ever expose the approved history. Pending or
+  // rejected proposals must never leak — even for a public artifact — so an
+  // un-approved version reads as "not found" (falls into the gate below).
+  const version =
+    resolved && resolved.version.reviewStatus === "approved"
+      ? resolved.version
+      : null;
 
   const session = await auth();
   const access = await evaluateAccess(artifact, {

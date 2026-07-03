@@ -200,6 +200,33 @@ export async function GET(
     return new Response("Forbidden", { status: 403 });
   }
 
+  // Un-approved (pending/changes_requested) versions are internal-only: their
+  // raw bytes must never reach a public/anonymous visitor, even for a public
+  // artifact. A workspace member may still view a proposal (this same route
+  // backs the internal deep-link viewer).
+  const isApproved = resolved.version.reviewStatus === "approved";
+  if (!isApproved) {
+    const userId = session?.user?.id;
+    const member = userId
+      ? (
+          await db
+            .select({ userId: schema.workspaceMembers.userId })
+            .from(schema.workspaceMembers)
+            .where(
+              and(
+                eq(
+                  schema.workspaceMembers.workspaceId,
+                  resolved.artifact.workspaceId,
+                ),
+                eq(schema.workspaceMembers.userId, userId),
+              ),
+            )
+            .limit(1)
+        )[0]
+      : null;
+    if (!member) return new Response("Forbidden", { status: 403 });
+  }
+
   const content = await getContent(resolved.version);
   const isHtml = resolved.version.type === "html";
   const isReact = isReactRenderable(
@@ -230,8 +257,10 @@ export async function GET(
   // strictly-public one can be cached hard — new versions get a new URL and bust
   // it. Password-gated (`public_pw`) is never cached long by shared caches, and
   // internal stays uncached.
-  const cache =
-    versionNumber != null && resolved.artifact.visibility === "public"
+  const cache = !isApproved
+    ? // Never let a shared cache hold an un-approved proposal.
+      "private, no-store"
+    : versionNumber != null && resolved.artifact.visibility === "public"
       ? "public, max-age=31536000, immutable"
       : isPublic
         ? "public, max-age=300"
