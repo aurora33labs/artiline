@@ -232,12 +232,14 @@ const handler = createMcpHandler(
         const resolved = await resolveCurrentArtifact(args.slug);
         if (!resolved || resolved.artifact.workspaceId !== ctx.workspace.id)
           return textError("Artifact not found.");
+        if (!args.type && resolved.version.type === "external")
+          return textError("This artifact is an external site — pass an explicit type to publish content to it.");
         try {
           const { versionNumber } = await publishVersion(
             ctx,
             resolved.artifact.id,
             {
-              type: args.type ?? resolved.version.type,
+              type: args.type ?? (resolved.version.type as "html" | "markdown" | "code"),
               title: args.title ?? resolved.version.title,
               content: args.content,
               language: args.language ?? resolved.version.language,

@@ -14,7 +14,9 @@ export type EventType =
   | "member.joined"
   | "member.removed"
   | "invitation.revoked"
-  | "comment.created";
+  | "comment.created"
+  | "external.site_created"
+  | "external.page_changed";
 
 export async function recordEvent({
   workspaceId,

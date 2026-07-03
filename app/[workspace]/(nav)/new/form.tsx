@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -68,6 +69,12 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
           }}
           onClear={() => setFile(null)}
         />
+        <p className="text-sm text-muted-foreground">
+          {t("externalSitePrompt")}{" "}
+          <Link href={`/${workspaceSlug}/new/external`} className="text-primary hover:underline">
+            {t("externalSiteLink")}
+          </Link>
+        </p>
       </div>
     );
   }

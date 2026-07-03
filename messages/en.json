@@ -303,7 +303,30 @@
     "publishing": "Creating…",
     "fileMeta": "{kb} KB · {lines} LINES",
     "firstStepMeta": "NEW · 01 DROP",
-    "quickTitle": "New artifact"
+    "quickTitle": "New artifact",
+    "externalSitePrompt": "Reviewing a site that's too heavy to upload as a file?",
+    "externalSiteLink": "Add an external site instead"
+  },
+  "externalReview": {
+    "title": "External site",
+    "subtitle": "Review a site you don't host on Artiline — install a small snippet, get the same comments/annotations as any artifact.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Client staging site",
+    "urlLabel": "Site URL",
+    "urlPlaceholder": "https://staging.client.com",
+    "create": "Add site",
+    "creating": "Creating…",
+    "snippetTitle": "Install snippet",
+    "snippetBody": "Paste this before </body> on every page you want reviewable.",
+    "copySnippet": "Copy snippet",
+    "snippetCopied": "Snippet copied",
+    "pagesTitle": "Pages seen",
+    "noPages": "No pages reported yet — install the snippet and open the site.",
+    "changedBadge": "CHANGED",
+    "lastSeen": "Last seen",
+    "rotateKey": "Rotate key",
+    "disable": "Disable",
+    "enable": "Enable"
   },
   "dropzone": {
     "label": "DROP ZONE · 01",

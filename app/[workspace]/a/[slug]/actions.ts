@@ -207,6 +207,8 @@ export async function rollbackToVersion(formData: FormData) {
     )
     .limit(1);
   if (!target) throw new Error("NOT_FOUND");
+  // External-site artifacts have no uploadable content — there's nothing to roll back.
+  if (target.type === "external") throw new Error("FORBIDDEN");
 
   // The target's content may live in object storage — read it through getContent
   // and re-store for the new version (re-uploads under the new version's key).

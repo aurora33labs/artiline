@@ -17,6 +17,8 @@ const TYPE_LABEL: Record<string, string> = {
   "member.removed": "MEMBER REMOVED",
   "invitation.revoked": "INVITE REVOKED",
   "comment.created": "COMMENT",
+  "external.site_created": "EXTERNAL SITE ADDED",
+  "external.page_changed": "EXTERNAL PAGE CHANGED",
 };
 
 const TYPE_COLOR: Record<string, string> = {

@@ -129,6 +129,12 @@ export default async function PublicArtifact({
   if (access.kind === "needs_password") {
     return <PasswordPrompt slug={slug} hasAttempt={!!pw} />;
   }
+  // External-site artifacts are never public and have no renderable content.
+  if (version?.type === "external") {
+    return (
+      <Gate Icon={FileX} title={t("notFoundTitle")} message={t("notFoundMsg")} />
+    );
+  }
 
   const reqHeaders = await headers();
   await bumpViewsThrottled(

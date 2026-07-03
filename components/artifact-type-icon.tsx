@@ -1,8 +1,8 @@
-import { Atom, FileCode2, FileText, Globe } from "lucide-react";
+import { Atom, ExternalLink, FileCode2, FileText, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isReactRenderable } from "@/lib/detect-artifact";
 
-export type ArtifactType = "html" | "markdown" | "code";
+export type ArtifactType = "html" | "markdown" | "code" | "external";
 
 const META: Record<
   ArtifactType,
@@ -11,6 +11,7 @@ const META: Record<
   html: { Icon: Globe, label: "HTML" },
   markdown: { Icon: FileText, label: "MD" },
   code: { Icon: FileCode2, label: "Code" },
+  external: { Icon: ExternalLink, label: "EXTERNAL" },
 };
 
 export function ArtifactTypeBadge({

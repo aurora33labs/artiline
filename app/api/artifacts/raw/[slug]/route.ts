@@ -38,6 +38,10 @@ export async function GET(
       ? await resolveArtifactVersion(slug, versionNumber)
       : await resolveCurrentArtifact(slug);
   if (!resolved) return new Response("Not found", { status: 404 });
+  // External-site artifacts have no content of their own to stream.
+  if (resolved.version.type === "external") {
+    return new Response("Not found", { status: 404 });
+  }
 
   const session = await auth();
 

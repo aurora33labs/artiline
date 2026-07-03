@@ -26,6 +26,11 @@ export default async function EmbedView({
   if (resolved.artifact.visibility !== "public") {
     return <EmbedError code="private" />;
   }
+  // External-site artifacts are always internal-only (see above) — this is
+  // belt-and-suspenders in case that ever changes.
+  if (resolved.version.type === "external") {
+    return <EmbedError code="private" />;
+  }
 
   const session = await auth();
   const access = await evaluateAccess(resolved.artifact, {

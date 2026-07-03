@@ -42,7 +42,11 @@ export async function GET(req: Request) {
   if (!slug) return NextResponse.json({ error: "invalid_url" }, { status: 400 });
 
   const resolved = await resolveCurrentArtifact(slug);
-  if (!resolved || resolved.artifact.visibility !== "public") {
+  if (
+    !resolved ||
+    resolved.artifact.visibility !== "public" ||
+    resolved.version.type === "external"
+  ) {
     return NextResponse.json({ error: "not_embeddable" }, { status: 404 });
   }
 

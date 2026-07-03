@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Eye } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { ArtifactThumb } from "@/components/artifact-thumb";
-import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
+import { ArtifactTypeBadge, type ArtifactType } from "@/components/artifact-type-icon";
 import {
   VisibilityBadge,
   type Visibility,
@@ -12,7 +12,7 @@ export type ArtifactCardData = {
   id: string;
   slug: string;
   title: string;
-  type: "html" | "markdown" | "code";
+  type: ArtifactType;
   // Only the snippet (first KBs) reaches the list — never the full content.
   snippet: string | null;
   thumbKey: string | null;

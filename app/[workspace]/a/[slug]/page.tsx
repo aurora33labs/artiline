@@ -14,6 +14,7 @@ import { FloatingActionCard } from "@/components/floating-action-card";
 import { ReactionsBar } from "@/components/reactions-bar";
 import { AnnotationWrapper } from "@/components/annotation-wrapper";
 import type { AnnotationData } from "@/components/annotation-wrapper";
+import { ExternalSitePanel, type ExternalPage } from "@/components/external-site-panel";
 
 export default async function ArtifactInternalView({
   params,
@@ -36,6 +37,17 @@ export default async function ArtifactInternalView({
     artifact.authorUserId === session.user.id ||
     role === "owner" ||
     role === "admin";
+
+  if (version.type === "external") {
+    return (
+      <ExternalArtifactView
+        workspaceSlug={workspace}
+        artifactId={artifact.id}
+        title={version.title}
+        canManage={canEdit}
+      />
+    );
+  }
 
   const reqHeaders = await headers();
   await bumpViewsThrottled(
@@ -235,5 +247,73 @@ export default async function ArtifactInternalView({
         />
       </AnnotationWrapper>
     </main>
+  );
+}
+
+async function ExternalArtifactView({
+  workspaceSlug,
+  artifactId,
+  title,
+  canManage,
+}: {
+  workspaceSlug: string;
+  artifactId: string;
+  title: string;
+  canManage: boolean;
+}) {
+  const [site] = await db
+    .select()
+    .from(schema.externalSites)
+    .where(eq(schema.externalSites.artifactId, artifactId))
+    .limit(1);
+  if (!site) notFound();
+
+  const pageRows = await db
+    .select()
+    .from(schema.externalPages)
+    .where(eq(schema.externalPages.artifactId, artifactId))
+    .orderBy(desc(schema.externalPages.lastSeenAt));
+
+  const countRows = await db
+    .select({
+      pageUrl: schema.comments.pageUrl,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(schema.comments)
+    .where(and(eq(schema.comments.artifactId, artifactId), isNull(schema.comments.parentCommentId)))
+    .groupBy(schema.comments.pageUrl);
+  const countByPage = new Map(countRows.map((r) => [r.pageUrl, r.n]));
+
+  const staleRows = await db
+    .select({ pageUrl: schema.comments.pageUrl })
+    .from(schema.comments)
+    .innerJoin(schema.annotations, eq(schema.annotations.commentId, schema.comments.id))
+    .where(and(eq(schema.comments.artifactId, artifactId), sql`${schema.annotations.staleAt} IS NOT NULL`));
+  const staleByPage = new Set(staleRows.map((r) => r.pageUrl));
+
+  const pages: ExternalPage[] = pageRows.map((p) => ({
+    path: p.path,
+    title: p.title,
+    commentCount: countByPage.get(p.path) ?? 0,
+    stale: staleByPage.has(p.path),
+    lastSeenAt: p.lastSeenAt ? p.lastSeenAt.toISOString() : null,
+  }));
+
+  return (
+    <div className="max-w-3xl mx-auto py-10 px-4 space-y-6">
+      <header className="space-y-1 border-b border-border pb-4">
+        <div className="meta text-muted-foreground">EXTERNAL SITE</div>
+        <h1 className="text-3xl">{title}</h1>
+      </header>
+      <ExternalSitePanel
+        workspaceSlug={workspaceSlug}
+        artifactId={artifactId}
+        origin={site.origin}
+        publicKey={site.publicKey}
+        enabled={site.enabled}
+        canManage={canManage}
+        pages={pages}
+      />
+    </div>
   );
 }

@@ -57,6 +57,15 @@ export async function publishVersion(
     throw new Error("NOT_FOUND");
   }
 
+  // External-site artifacts have no uploadable content — publishing to them
+  // isn't a valid operation regardless of caller/role.
+  const [externalSite] = await db
+    .select({ artifactId: schema.externalSites.artifactId })
+    .from(schema.externalSites)
+    .where(eq(schema.externalSites.artifactId, artifactId))
+    .limit(1);
+  if (externalSite) throw new Error("FORBIDDEN");
+
   const isAuthor = artifact.authorUserId === session.user.id;
   const isManager = role === "owner" || role === "admin";
   if (!isAuthor && !isManager) throw new Error("FORBIDDEN");

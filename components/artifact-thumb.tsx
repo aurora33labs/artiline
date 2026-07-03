@@ -1,10 +1,10 @@
 import { codeToHtml } from "shiki";
-import { FileCode2 } from "lucide-react";
+import { ExternalLink, FileCode2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isReactRenderable } from "@/lib/detect-artifact";
 
 export type ThumbProps = {
-  type: "html" | "markdown" | "code";
+  type: "html" | "markdown" | "code" | "external";
   // First few KB only — the full content is never loaded for the list.
   snippet: string | null;
   thumbKey: string | null;
@@ -17,6 +17,7 @@ export async function ArtifactThumb({
   thumbKey,
   language,
 }: ThumbProps) {
+  if (type === "external") return <ExternalThumb />;
   if (type === "html") return <HtmlThumb thumbKey={thumbKey} />;
   // Renderable React: show the pre-rendered component PNG when we have one;
   // otherwise fall through to the Shiki source snippet (never a blank card).
@@ -24,6 +25,14 @@ export async function ArtifactThumb({
     return <HtmlThumb thumbKey={thumbKey} />;
   if (type === "markdown") return <MarkdownThumb md={snippet ?? ""} />;
   return <CodeThumb code={snippet ?? ""} language={language ?? null} />;
+}
+
+function ExternalThumb() {
+  return (
+    <div className="absolute inset-0 bg-card flex items-center justify-center">
+      <ExternalLink className="size-8 text-muted-foreground/50" />
+    </div>
+  );
 }
 
 /**
