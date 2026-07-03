@@ -22,6 +22,7 @@ import {
   ChevronRight,
   MousePointer2,
   Code2,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -110,6 +111,7 @@ export function FloatingActionCard({
   backHref,
   reactionsSlot,
   members = [],
+  analyticsEnabled = false,
 }: {
   title: string;
   type: "html" | "markdown" | "code";
@@ -132,6 +134,7 @@ export function FloatingActionCard({
   backHref: string;
   reactionsSlot: React.ReactNode;
   members?: { id: string; name: string | null; email: string }[];
+  analyticsEnabled?: boolean;
 }) {
   const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -366,6 +369,16 @@ export function FloatingActionCard({
                           )}
                         </Link>
                       </DropdownMenuItem>
+                      {analyticsEnabled && (
+                        <DropdownMenuItem asChild className={MENU_ROW}>
+                          <Link href={`/${workspaceSlug}/a/${artifactSlug}/analytics`}>
+                            <MenuChip>
+                              <BarChart3 />
+                            </MenuChip>
+                            {t("analytics")}
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
                   {canProposeChanges && !canManage && (

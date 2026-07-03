@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { listWorkspaceMembers } from "@/lib/members";
+import { isFeatureEnabled } from "@/lib/license";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { isReactRenderable } from "@/lib/detect-artifact";
@@ -67,6 +68,9 @@ export default async function ArtifactInternalView({
 
   // Only needed when this viewer can propose (assign-a-reviewer picker).
   const members = !canEdit ? await listWorkspaceMembers(ws.id) : [];
+  const analyticsEnabled = canEdit
+    ? await isFeatureEnabled("tracking_advanced", { workspaceId: ws.id })
+    : false;
 
   // Pending proposals awaiting review — surfaced to author/admin on the card.
   const [{ count: pendingProposals }] = canEdit
@@ -212,6 +216,7 @@ export default async function ArtifactInternalView({
           canPropose={!canEdit}
           pendingProposals={pendingProposals}
           members={members}
+          analyticsEnabled={analyticsEnabled}
           hasPassword={!!artifact.passwordHash}
           workspaceSlug={workspace}
           artifactSlug={artifact.slug}

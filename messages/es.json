@@ -348,6 +348,7 @@
     "actions": "Acciones",
     "moreOptions": "Más opciones",
     "versions": "Versiones",
+    "analytics": "Analíticas",
     "changeAccess": "Cambiar acceso",
     "info": "Info",
     "visibility": "Visibilidad",
@@ -480,6 +481,24 @@
     "used": "usada",
     "never": "nunca",
     "revoke": "Revocar"
+  },
+  "analytics": {
+    "crumb": "ARTIFACT · {slug}",
+    "title": "Analíticas",
+    "subtitle": "Tracking avanzado de los últimos 30 días.",
+    "views30d": "VISTAS (30D)",
+    "uniqueViewers": "VISITANTES ÚNICOS",
+    "sessions": "SESIONES",
+    "avgDwell": "TIEMPO PROMEDIO",
+    "avgDwellShort": "prom.",
+    "dailyViews": "Vistas diarias",
+    "topCountries": "Top países",
+    "scrollDepth": "Profundidad de scroll",
+    "byVersion": "Por versión",
+    "views": "vistas",
+    "topReferrers": "Top referrers",
+    "direct": "Directo",
+    "noData": "Aún no hay datos suficientes."
   },
   "webhooks": {
     "eyebrow": "SETTINGS · WEBHOOKS",
