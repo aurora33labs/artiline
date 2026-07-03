@@ -74,6 +74,17 @@ export async function updateArtifactVisibility(formData: FormData) {
     })
     .where(eq(schema.artifacts.id, artifact.id));
 
+  if (data.visibility !== artifact.visibility) {
+    await recordEvent({
+      workspaceId: workspace.id,
+      actorUserId: session.user.id,
+      type: "visibility.changed",
+      subjectType: "artifact",
+      subjectId: artifact.id,
+      payload: { slug: artifact.slug, from: artifact.visibility, to: data.visibility },
+    }).catch(() => {});
+  }
+
   revalidatePath(`/${workspace.slug}/a/${artifact.slug}`);
   revalidatePath(`/${workspace.slug}`);
   revalidatePath(`/a/${artifact.slug}`);
@@ -154,6 +165,7 @@ const rollbackSchema = z.object({
   artifactId: z.string().min(1),
   versionNumber: z.coerce.number().int().positive(),
   message: z.string().max(500).optional().nullable(),
+  mode: z.enum(["propose", "direct"]).default("propose"),
 });
 
 export async function rollbackToVersion(formData: FormData) {
@@ -162,6 +174,7 @@ export async function rollbackToVersion(formData: FormData) {
     artifactId: formData.get("artifactId"),
     versionNumber: formData.get("versionNumber"),
     message: formData.get("message") || null,
+    mode: formData.get("mode") || "propose",
   });
 
   const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
@@ -174,9 +187,14 @@ export async function rollbackToVersion(formData: FormData) {
   if (!artifact) throw new Error("NOT_FOUND");
   if (artifact.workspaceId !== workspace.id) throw new Error("FORBIDDEN");
 
-  const isAuthor = artifact.authorUserId === session.user.id;
   const isManager = role === "owner" || role === "admin";
-  if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
+  if (data.mode === "direct") {
+    // Direct rollback (publish without going through review) is owner/admin only.
+    if (!isManager) throw new Error("FORBIDDEN");
+  } else {
+    const isAuthor = artifact.authorUserId === session.user.id;
+    if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
+  }
 
   const [target] = await db
     .select()
@@ -195,6 +213,8 @@ export async function rollbackToVersion(formData: FormData) {
   const targetContent = await getContent(target);
   const versionId = newVersionId();
   const prepared = await prepareContent(versionId, targetContent, target.type);
+
+  const isDirect = data.mode === "direct";
 
   await db.transaction(async (tx) => {
     const [{ next }] = await tx
@@ -218,14 +238,36 @@ export async function rollbackToVersion(formData: FormData) {
       message:
         data.message ?? `Rollback to v${data.versionNumber}`,
       authorUserId: session.user.id,
-      reviewStatus: "pending",
+      reviewStatus: isDirect ? "approved" : "pending",
+      ...(isDirect
+        ? { reviewedByUserId: session.user.id, reviewedAt: new Date() }
+        : {}),
     });
 
     await tx
       .update(schema.artifacts)
-      .set({ updatedAt: new Date() })
+      .set({
+        updatedAt: new Date(),
+        ...(isDirect ? { currentVersionId: versionId } : {}),
+      })
       .where(eq(schema.artifacts.id, artifact.id));
   });
+
+  await emitEvent(workspace.id, "version.rolled_back", {
+    artifactId: artifact.id,
+    slug: artifact.slug,
+    fromVersionNumber: data.versionNumber,
+    toVersionId: versionId,
+    direct: isDirect,
+  }).catch(() => {});
+  await recordEvent({
+    workspaceId: workspace.id,
+    actorUserId: session.user.id,
+    type: "version.rolled_back",
+    subjectType: "version",
+    subjectId: artifact.id,
+    payload: { slug: artifact.slug, toVersionNumber: data.versionNumber, direct: isDirect },
+  }).catch(() => {});
 
   // Generate the thumbnail for the new (rolled-back) version — best-effort.
   const reactThumb = isReactRenderable(target.type, target.language);

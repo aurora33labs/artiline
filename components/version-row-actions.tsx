@@ -22,6 +22,7 @@ export function VersionRowActions({
   isCurrent,
   canEdit,
   canDiscard = false,
+  canDirectRollback = false,
 }: {
   workspaceSlug: string;
   artifactId: string;
@@ -31,6 +32,7 @@ export function VersionRowActions({
   isCurrent: boolean;
   canEdit: boolean;
   canDiscard?: boolean;
+  canDirectRollback?: boolean;
 }) {
   const [pending, start] = useTransition();
   const t = useTranslations("versions");
@@ -57,7 +59,7 @@ export function VersionRowActions({
     });
   }
 
-  if (!canEdit && !canDiscard) return null;
+  if (!canEdit && !canDiscard && !canDirectRollback) return null;
 
   const isProposal =
     reviewStatus === "pending" || reviewStatus === "changes_requested";
@@ -74,11 +76,33 @@ export function VersionRowActions({
             fd.set("workspaceSlug", workspaceSlug);
             fd.set("artifactId", artifactId);
             fd.set("versionNumber", String(versionNumber));
+            fd.set("mode", "propose");
             runAction(fd, rollbackToVersion);
           }}
         >
           {pending && <Loader2 className="size-3 animate-spin" />}
           {t("rollback")}
+        </Button>
+      )}
+      {canDirectRollback && !isCurrent && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-warning hover:text-warning"
+          disabled={pending}
+          onClick={() => {
+            if (!window.confirm(t("rollbackDirectConfirm", { version: versionNumber })))
+              return;
+            const fd = new FormData();
+            fd.set("workspaceSlug", workspaceSlug);
+            fd.set("artifactId", artifactId);
+            fd.set("versionNumber", String(versionNumber));
+            fd.set("mode", "direct");
+            runAction(fd, rollbackToVersion);
+          }}
+        >
+          {pending && <Loader2 className="size-3 animate-spin" />}
+          {t("rollbackDirect")}
         </Button>
       )}
       {canEdit && reviewStatus === "pending" && (

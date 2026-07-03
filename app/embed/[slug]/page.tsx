@@ -38,6 +38,7 @@ export default async function EmbedView({
   await recordView({
     artifactId: resolved.artifact.id,
     versionId: resolved.version.id,
+    workspaceId: resolved.artifact.workspaceId,
     ip: extractIp(reqHeaders),
     userAgent: reqHeaders.get("user-agent"),
     referrer: reqHeaders.get("referer"),

@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
-import { getContent } from "@/lib/artifact-content";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,10 @@ export default async function VersionsListPage({
   searchParams,
 }: {
   params: Promise<{ workspace: string; slug: string }>;
-  searchParams: Promise<{ diff?: string }>;
+  searchParams: Promise<{ diff?: string; view?: string }>;
 }) {
   const { workspace, slug } = await params;
-  const { diff } = await searchParams;
+  const { diff, view } = await searchParams;
   const { workspace: ws, session, role } = await requireMemberPage(workspace);
   const t = await getTranslations("versions");
   const fmt = await getFormatter();
@@ -63,9 +64,17 @@ export default async function VersionsListPage({
       )
     : null;
 
-  // Diff needs full content of both versions — resolve from DB or object storage.
+  const isRenderable = (v: typeof schema.artifactVersions.$inferSelect) =>
+    v.type === "html" || isReactRenderable(v.type, v.language);
+  const canRenderVisual =
+    !!focused && !!previous && isRenderable(focused.version) && isRenderable(previous.version);
+  const diffView: "visual" | "text" =
+    view === "text" ? "text" : canRenderVisual ? "visual" : "text";
+
+  // Text diff needs full content of both versions — resolve from DB or object
+  // storage. Skip the fetch entirely when showing the visual (iframe) diff.
   const diffContent =
-    focused && previous
+    focused && previous && diffView === "text"
       ? {
           old: await getContent(previous.version),
           new: await getContent(focused.version),
@@ -82,27 +91,70 @@ export default async function VersionsListPage({
         </p>
       </div>
 
-      {focused && previous && diffContent && (
+      {focused && previous && (
         <section className="space-y-3">
-          <header className="flex items-center justify-between">
+          <header className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
               {t("diffHeading", {
                 from: previous.version.versionNumber,
                 to: focused.version.versionNumber,
               })}
             </h2>
-            <Button asChild variant="ghost" size="sm">
-              <Link href={`/${workspace}/a/${slug}/versions`}>
-                {t("closeDiff")}
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              {canRenderVisual && (
+                <div className="flex border border-border rounded-sm overflow-hidden">
+                  <Button
+                    asChild
+                    variant={diffView === "visual" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual`}>
+                      {t("diffVisual")}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant={diffView === "text" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=text`}>
+                      {t("diffText")}
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/${workspace}/a/${slug}/versions`}>
+                  {t("closeDiff")}
+                </Link>
+              </Button>
+            </div>
           </header>
-          <VersionDiff
-            oldContent={diffContent.old}
-            newContent={diffContent.new}
-            oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
-            newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
-          />
+          {diffView === "visual" && canRenderVisual ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
+              {[previous, focused].map(({ version }) => (
+                <div key={version.id} className="bg-surface">
+                  <div className="meta px-4 py-2 border-b border-border">
+                    V{String(version.versionNumber).padStart(3, "0")} · {version.title}
+                  </div>
+                  <iframe
+                    src={rawContentPath({ slug, versionNumber: version.versionNumber })}
+                    sandbox="allow-scripts"
+                    className="w-full h-[70vh] bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : diffContent ? (
+            <VersionDiff
+              oldContent={diffContent.old}
+              newContent={diffContent.new}
+              oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
+              newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
+            />
+          ) : null}
         </section>
       )}
 
@@ -179,6 +231,7 @@ export default async function VersionsListPage({
                       version.reviewStatus === "changes_requested") &&
                     !isCurrent
                   }
+                  canDirectRollback={role === "owner" || role === "admin"}
                 />
               </div>
             </li>

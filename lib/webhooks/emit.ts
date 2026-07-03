@@ -7,6 +7,7 @@ export type WebhookEvent =
   | "version.proposed"
   | "version.approved"
   | "version.changes_requested"
+  | "version.rolled_back"
   | "comment.created"
   | "artifact.viewed"
   | "artifact.deleted";
@@ -16,6 +17,7 @@ export const ALL_EVENTS: WebhookEvent[] = [
   "version.proposed",
   "version.approved",
   "version.changes_requested",
+  "version.rolled_back",
   "comment.created",
   "artifact.viewed",
   "artifact.deleted",

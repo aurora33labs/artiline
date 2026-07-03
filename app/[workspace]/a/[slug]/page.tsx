@@ -45,6 +45,7 @@ export default async function ArtifactInternalView({
   await recordView({
     artifactId: artifact.id,
     versionId: version.id,
+    workspaceId: artifact.workspaceId,
     ip: extractIp(reqHeaders),
     userAgent: reqHeaders.get("user-agent"),
     referrer: reqHeaders.get("referer"),

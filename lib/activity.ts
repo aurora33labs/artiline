@@ -11,6 +11,7 @@ export type EventType =
   | "version.rolled_back"
   | "visibility.changed"
   | "member.invited"
+  | "member.joined"
   | "member.removed"
   | "invitation.revoked"
   | "comment.created";

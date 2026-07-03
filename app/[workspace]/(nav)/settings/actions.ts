@@ -13,6 +13,7 @@ import {
   requireRolePage,
 } from "@/lib/tenant";
 import { assertCanAddMember } from "@/lib/limits";
+import { recordEvent } from "@/lib/activity";
 import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
 import { parseAllowedDomains } from "@/lib/join-requests";
@@ -58,18 +59,30 @@ export async function inviteMember(formData: FormData) {
     email: formData.get("email"),
     role: formData.get("role") || "member",
   });
-  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
   requireRolePage(role, ["owner", "admin"]);
   await assertCanAddMember(workspace.id);
 
   const token = nanoid(32);
-  await db.insert(schema.invitations).values({
+  const [invitation] = await db
+    .insert(schema.invitations)
+    .values({
+      workspaceId: workspace.id,
+      email: data.email.toLowerCase(),
+      token,
+      role: data.role,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    })
+    .returning({ id: schema.invitations.id });
+
+  await recordEvent({
     workspaceId: workspace.id,
-    email: data.email.toLowerCase(),
-    token,
-    role: data.role,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  });
+    actorUserId: session.user.id,
+    type: "member.invited",
+    subjectType: "invitation",
+    subjectId: invitation.id,
+    payload: { email: data.email.toLowerCase(), role: data.role },
+  }).catch(() => {});
 
   const acceptUrl = `${APP_URL}/invite/${token}`;
   if (KEY) {
@@ -100,7 +113,7 @@ export async function revokeInvitation(formData: FormData) {
     workspaceSlug: formData.get("workspaceSlug"),
     invitationId: formData.get("invitationId"),
   });
-  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
   requireRolePage(role, ["owner", "admin"]);
   await db
     .delete(schema.invitations)
@@ -110,6 +123,14 @@ export async function revokeInvitation(formData: FormData) {
         eq(schema.invitations.workspaceId, workspace.id),
       ),
     );
+  await recordEvent({
+    workspaceId: workspace.id,
+    actorUserId: session.user.id,
+    type: "invitation.revoked",
+    subjectType: "invitation",
+    subjectId: data.invitationId,
+    payload: {},
+  }).catch(() => {});
   revalidatePath(`/${data.workspaceSlug}/settings`);
 }
 
@@ -329,6 +350,14 @@ export async function removeMember(formData: FormData) {
         eq(schema.workspaceMembers.userId, data.userId),
       ),
     );
+  await recordEvent({
+    workspaceId: workspace.id,
+    actorUserId: session.user.id,
+    type: "member.removed",
+    subjectType: "member",
+    subjectId: data.userId,
+    payload: { email: target.email },
+  }).catch(() => {});
   revalidatePath(`/${data.workspaceSlug}/settings`);
 }
 

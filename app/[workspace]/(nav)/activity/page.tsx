@@ -11,6 +11,7 @@ const TYPE_LABEL: Record<string, string> = {
   "version.rolled_back": "ROLLBACK",
   "visibility.changed": "VISIBILITY CHANGED",
   "member.invited": "MEMBER INVITED",
+  "member.joined": "MEMBER JOINED",
   "member.removed": "MEMBER REMOVED",
   "invitation.revoked": "INVITE REVOKED",
   "comment.created": "COMMENT",
