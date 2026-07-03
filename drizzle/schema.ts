@@ -376,13 +376,7 @@ export const artifacts = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
     slug: text("slug").notNull(),
-    // Legacy content fields — kept nullable for backfill safety, will be dropped
-    // in a follow-up migration after Phase 1 lands. Live content lives in
-    // artifact_versions (see currentVersionId).
-    type: artifactTypeEnum("type"),
-    title: text("title"),
-    content: text("content"),
-    language: text("language"),
+    // Live content lives in artifact_versions (see currentVersionId).
     currentVersionId: text("current_version_id"),
     visibility: visibilityEnum("visibility").notNull().default("internal"),
     passwordHash: text("password_hash"),
