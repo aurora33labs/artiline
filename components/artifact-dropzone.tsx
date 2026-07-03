@@ -144,7 +144,7 @@ export function ArtifactDropzone({
 
         {!compact && (
           <div className="flex flex-wrap justify-center gap-1 pt-2">
-            {["HTML", "MD", "TS", "PY", "GO", "RS", "JSON"].map((ext) => (
+            {["HTML", "JSX", "JSON", "MD"].map((ext) => (
               <span
                 key={ext}
                 className="px-2 py-0.5 text-[10px] rounded-xs border border-border bg-surface-2 text-muted-foreground font-display font-medium uppercase tracking-[0.06em]"

@@ -15,15 +15,13 @@ export type LoadedFile = {
 export const MAX_UPLOAD_BYTES = 10_000_000; // 10 MB
 export const MAX_UPLOAD_MB = (MAX_UPLOAD_BYTES / 1_000_000).toFixed(0);
 
-// Full allowlist used by the desktop dropzone. Includes .svg (an image MIME),
-// which is fine on desktop but makes mobile browsers offer the camera/photos.
+// Allowlist for the desktop dropzone: only the supported artifact formats
+// (HTML, JSX, JSON, Markdown). No .svg, so mobile keeps the document picker.
 export const ACCEPT_EXTENSIONS =
-  ".html,.htm,.md,.markdown,.mdx,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.go,.rs,.css,.scss,.json,.sh,.bash,.zsh,.sql,.yml,.yaml,.toml,.xml,.svg,.java,.kt,.swift,.rb,.php,.c,.h,.cpp,.hpp,.cs,.txt";
+  ".html,.htm,.jsx,.json,.md,.markdown";
 
-// Document-only allowlist for the native mobile picker: same set minus .svg so
-// iOS/Android open the Files/document picker instead of the photo library.
-export const ACCEPT_DOCUMENTS =
-  ".html,.htm,.md,.markdown,.mdx,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.go,.rs,.css,.scss,.json,.sh,.bash,.zsh,.sql,.yml,.yaml,.toml,.xml,.java,.kt,.swift,.rb,.php,.c,.h,.cpp,.hpp,.cs,.txt";
+// Document-only allowlist for the native mobile picker — same set.
+export const ACCEPT_DOCUMENTS = ".html,.htm,.jsx,.json,.md,.markdown";
 
 export function looksTexty(file: File): boolean {
   if (!file.type) return true;
