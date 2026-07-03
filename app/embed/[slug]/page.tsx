@@ -56,7 +56,9 @@ export default async function EmbedView({
         artifact={{
           type: resolved.version.type,
           language: resolved.version.language,
-          contentSrc: usesIframe ? rawContentPath({ slug }) : null,
+          contentSrc: usesIframe
+            ? rawContentPath({ slug, versionNumber: resolved.version.versionNumber })
+            : null,
           content,
         }}
         fullscreen

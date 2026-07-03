@@ -166,7 +166,9 @@ export default async function ArtifactInternalView({
   const isHtml = version.type === "html";
   const usesIframe =
     isHtml || isReactRenderable(version.type, version.language);
-  const rawSrc = rawContentPath({ slug });
+  // Version the iframe URL so a new approved version busts the browser/CDN cache
+  // (a stable URL served the old cached HTML until the cache was cleared).
+  const rawSrc = rawContentPath({ slug, versionNumber: version.versionNumber });
   const content = isHtml ? null : await getContent(version);
 
   return (

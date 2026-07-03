@@ -226,9 +226,16 @@ export async function GET(
   const isPublic =
     resolved.artifact.visibility === "public" ||
     resolved.artifact.visibility === "public_pw";
-  const cache = isPublic
-    ? "public, max-age=300"
-    : "private, no-store";
+  // A versioned request (`?v=N`) is immutable content at a unique URL, so a
+  // strictly-public one can be cached hard — new versions get a new URL and bust
+  // it. Password-gated (`public_pw`) is never cached long by shared caches, and
+  // internal stays uncached.
+  const cache =
+    versionNumber != null && resolved.artifact.visibility === "public"
+      ? "public, max-age=31536000, immutable"
+      : isPublic
+        ? "public, max-age=300"
+        : "private, no-store";
 
   const headers: Record<string, string> = {
     "Content-Type": serveAsDocument

@@ -248,7 +248,9 @@ export default async function PublicArtifact({
           artifact={{
             type: version!.type,
             language: version!.language,
-            contentSrc: usesIframe ? rawContentPath({ slug, pw }) : null,
+            contentSrc: usesIframe
+              ? rawContentPath({ slug, pw, versionNumber: version!.versionNumber })
+              : null,
             content,
           }}
         />
