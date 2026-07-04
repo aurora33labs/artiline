@@ -1,0 +1,1 @@
+ALTER TABLE "artifacts" ADD COLUMN "clean_share" boolean DEFAULT false NOT NULL;

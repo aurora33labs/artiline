@@ -33,6 +33,7 @@ export function ArtifactSettingsModal({
   workspaceSlug,
   currentVisibility,
   hasPassword,
+  currentCleanShare = false,
   open: openProp,
   onOpenChange: onOpenChangeProp,
   hideTrigger,
@@ -41,6 +42,7 @@ export function ArtifactSettingsModal({
   workspaceSlug: string;
   currentVisibility: Visibility;
   hasPassword: boolean;
+  currentCleanShare?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
@@ -55,6 +57,7 @@ export function ArtifactSettingsModal({
 
   const [visibility, setVisibility] = useState<Visibility>(currentVisibility);
   const [changePassword, setChangePassword] = useState(false);
+  const [cleanShare, setCleanShare] = useState(currentCleanShare);
   const [pending, start] = useTransition();
 
   const tv = useTranslations("visibility");
@@ -100,6 +103,7 @@ export function ArtifactSettingsModal({
         if (!o) {
           setVisibility(currentVisibility);
           setChangePassword(false);
+          setCleanShare(currentCleanShare);
         }
       }}
     >
@@ -123,6 +127,7 @@ export function ArtifactSettingsModal({
             fd.set("workspaceSlug", workspaceSlug);
             fd.set("artifactId", artifactId);
             fd.set("visibility", visibility);
+            fd.set("cleanShare", cleanShare ? "on" : "");
             start(async () => {
               try {
                 await updateArtifactVisibility(fd);
@@ -160,6 +165,21 @@ export function ArtifactSettingsModal({
               </SelectContent>
             </Select>
           </div>
+
+          {(visibility === "public" || visibility === "public_pw") && (
+            <div className="space-y-1.5 border-t border-border pt-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={cleanShare}
+                  onChange={(e) => setCleanShare(e.target.checked)}
+                  className="size-4 accent-primary"
+                />
+                <span>{tv("cleanShareLabel")}</span>
+              </label>
+              <p className="text-xs text-muted-foreground">{tv("cleanShareHint")}</p>
+            </div>
+          )}
 
           {needsPw && hasPassword && visibility === currentVisibility && (
             <label className="flex items-center gap-2 text-sm">

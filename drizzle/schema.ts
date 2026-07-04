@@ -380,6 +380,12 @@ export const artifacts = pgTable(
     currentVersionId: text("current_version_id"),
     visibility: visibilityEnum("visibility").notNull().default("internal"),
     passwordHash: text("password_hash"),
+    // Server-controlled: when true, the public page (/a/[slug]) always renders
+    // without the floating dock/menu/comments — no query param involved, so
+    // there's no "full" version of that same URL to strip back to. Only
+    // affects the public route; the workspace-internal view always shows the
+    // full menu to members regardless of this flag.
+    cleanShare: boolean("clean_share").notNull().default(false),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     views: integer("views").notNull().default(0),
     createdAt: createdAt(),

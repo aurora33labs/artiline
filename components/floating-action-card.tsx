@@ -23,7 +23,6 @@ import {
   MousePointer2,
   Code2,
   BarChart3,
-  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -113,6 +112,7 @@ export function FloatingActionCard({
   reactionsSlot,
   members = [],
   analyticsEnabled = false,
+  cleanShare = false,
 }: {
   title: string;
   type: "html" | "markdown" | "code";
@@ -136,6 +136,7 @@ export function FloatingActionCard({
   reactionsSlot: React.ReactNode;
   members?: { id: string; name: string | null; email: string }[];
   analyticsEnabled?: boolean;
+  cleanShare?: boolean;
 }) {
   const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -185,17 +186,6 @@ export function FloatingActionCard({
     const snippet = `<iframe src="${url}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
     await navigator.clipboard.writeText(snippet);
     toast.success(tt("embedCopied"));
-  }
-
-  async function copyCleanLink() {
-    // Same public artifact page, just with the dock/menu/comment sidebar
-    // stripped out (?clean=1) — a link meant purely for sharing, not for
-    // inviting the recipient to comment/annotate/manage it.
-    const embedSlug = shareHref.split("/a/")[1];
-    if (!embedSlug) return;
-    const url = new URL(`/a/${embedSlug}?clean=1`, window.location.origin).toString();
-    await navigator.clipboard.writeText(url);
-    toast.success(tt("cleanLinkCopied"));
   }
 
   const te = useTranslations("errors");
@@ -341,17 +331,6 @@ export function FloatingActionCard({
                 </MenuChip>
                 {t("info")}
               </DropdownMenuItem>
-              {isPublic && (
-                <DropdownMenuItem
-                  className={MENU_ROW}
-                  onSelect={() => setTimeout(copyCleanLink)}
-                >
-                  <MenuChip>
-                    <Link2 />
-                  </MenuChip>
-                  {t("copyCleanLink")}
-                </DropdownMenuItem>
-              )}
               {isPublic && (
                 <DropdownMenuItem
                   className={MENU_ROW}
@@ -581,16 +560,6 @@ export function FloatingActionCard({
             />
             {isPublic && (
               <SheetRow
-                icon={<Link2 className="size-4" />}
-                label={t("copyCleanLink")}
-                onClick={() => {
-                  setMoreOpen(false);
-                  void copyCleanLink();
-                }}
-              />
-            )}
-            {isPublic && (
-              <SheetRow
                 icon={<Code2 className="size-4" />}
                 label={t("copyEmbed")}
                 onClick={() => {
@@ -627,6 +596,7 @@ export function FloatingActionCard({
           workspaceSlug={workspaceSlug}
           currentVisibility={visibility}
           hasPassword={hasPassword}
+          currentCleanShare={cleanShare}
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
         />

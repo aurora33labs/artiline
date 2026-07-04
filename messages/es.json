@@ -362,7 +362,6 @@
     "source": "Código",
     "copyPublic": "Copiar link público",
     "share": "Link para compartir",
-    "copyCleanLink": "Copiar link limpio",
     "copyEmbed": "Copiar código de embed",
     "updateVersion": "Actualizar archivo",
     "copied": "¡Copiado!",
@@ -578,6 +577,8 @@
     "changePassword": "Cambiar password actual",
     "keepPassword": "Déjalo vacío para mantener el password actual.",
     "updated": "Visibilidad actualizada",
+    "cleanShareLabel": "Compartir limpio — oculta el menu en el link público",
+    "cleanShareHint": "El link público muestra solo el contenido, sin dock flotante, sin sidebar de comentarios. No afecta la vista interna del workspace — los miembros siguen viendo el menú completo ahí.",
     "options": {
       "internal": "Solo equipo",
       "internalHint": "Miembros del workspace",
@@ -639,7 +640,6 @@
   "toasts": {
     "linkCopied": "Link copiado",
     "embedCopied": "Código de embed copiado",
-    "cleanLinkCopied": "Link limpio copiado",
     "pngGenerated": "PNG generado",
     "pngError": "Error generando PNG",
     "noFileFirst": "Suelta un archivo primero.",

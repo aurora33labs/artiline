@@ -229,6 +229,7 @@ export default async function ArtifactInternalView({
           pendingProposals={pendingProposals}
           members={members}
           analyticsEnabled={analyticsEnabled}
+          cleanShare={artifact.cleanShare}
           hasPassword={!!artifact.passwordHash}
           workspaceSlug={workspace}
           artifactSlug={artifact.slug}

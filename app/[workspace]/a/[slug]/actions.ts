@@ -22,6 +22,7 @@ const inputSchema = z.object({
   visibility: z.enum(["internal_pw", "internal", "public_pw", "public"]),
   password: z.string().optional().nullable(),
   changePassword: z.union([z.literal("on"), z.literal(""), z.null()]).optional(),
+  cleanShare: z.union([z.literal("on"), z.literal(""), z.null()]).optional(),
 });
 
 export async function updateArtifactVisibility(formData: FormData) {
@@ -31,6 +32,7 @@ export async function updateArtifactVisibility(formData: FormData) {
     visibility: formData.get("visibility"),
     password: formData.get("password") || null,
     changePassword: formData.get("changePassword"),
+    cleanShare: formData.get("cleanShare"),
   });
 
   const { session, workspace, role } = await requireMemberPage(data.workspaceSlug);
@@ -65,11 +67,20 @@ export async function updateArtifactVisibility(formData: FormData) {
     }
   }
 
+  // Clean share only makes sense on a public link — force it off for
+  // internal-only visibility so the flag can't linger stale if visibility is
+  // later flipped back to public without the settings form re-touching it.
+  const cleanShare =
+    data.visibility === "public" || data.visibility === "public_pw"
+      ? data.cleanShare === "on"
+      : false;
+
   await db
     .update(schema.artifacts)
     .set({
       visibility: data.visibility,
       passwordHash,
+      cleanShare,
       updatedAt: new Date(),
     })
     .where(eq(schema.artifacts.id, artifact.id));

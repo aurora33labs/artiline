@@ -70,11 +70,10 @@ export default async function PublicArtifact({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ pw?: string; clean?: string }>;
+  searchParams: Promise<{ pw?: string }>;
 }) {
   const { slug } = await params;
-  const { pw, clean } = await searchParams;
-  const isClean = clean === "1";
+  const { pw } = await searchParams;
   const t = await getTranslations("viewer");
 
   const resolved = await resolveCurrentArtifact(slug);
@@ -163,9 +162,11 @@ export default async function PublicArtifact({
 
   // Clean share view: just the content, no dock/menu, no annotation pins or
   // comment sidebar — for when a link is meant to be *just* a share, not an
-  // invitation to collaborate on it. Skips the comment/annotation queries
-  // entirely since nothing here would render them.
-  if (isClean) {
+  // invitation to collaborate on it. Server-controlled (artifact.cleanShare,
+  // set by the owner in settings) — never a client-editable query param, so
+  // there's no "full" version of this same URL to strip back to. Skips the
+  // comment/annotation queries entirely since nothing here would render them.
+  if (artifact!.cleanShare) {
     return (
       <main className="fixed inset-0 bg-background overflow-auto">
         <ArtifactViewer

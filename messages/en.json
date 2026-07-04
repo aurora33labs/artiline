@@ -362,7 +362,6 @@
     "source": "Source",
     "copyPublic": "Copy public link",
     "share": "Link to share",
-    "copyCleanLink": "Copy clean link",
     "copyEmbed": "Copy embed code",
     "updateVersion": "Update file",
     "copied": "Copied!",
@@ -578,6 +577,8 @@
     "changePassword": "Change current password",
     "keepPassword": "Leave empty to keep the current password.",
     "updated": "Visibility updated",
+    "cleanShareLabel": "Clean share — hide menu on the public link",
+    "cleanShareHint": "The public link shows just the content, no floating dock, no comments sidebar. Doesn't affect the workspace-internal view — members still see the full menu there.",
     "options": {
       "internal": "Team only",
       "internalHint": "Workspace members",
@@ -639,7 +640,6 @@
   "toasts": {
     "linkCopied": "Link copied",
     "embedCopied": "Embed code copied",
-    "cleanLinkCopied": "Clean link copied",
     "pngGenerated": "PNG generated",
     "pngError": "Error generating PNG",
     "noFileFirst": "Drop a file first.",
