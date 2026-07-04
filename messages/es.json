@@ -693,6 +693,8 @@
     "diffHeading": "Diff V{from} → V{to}",
     "diffVisual": "Visual",
     "diffText": "Texto",
+    "diffFullscreen": "Pantalla completa",
+    "diffCollapse": "Contraer",
     "closeDiff": "Cerrar diff",
     "currentPill": "ACTUAL",
     "rollback": "Rollback",

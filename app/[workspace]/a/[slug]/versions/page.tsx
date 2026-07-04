@@ -2,6 +2,7 @@ import Link from "next/link";
 import { and, desc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { notFound } from "next/navigation";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
@@ -10,16 +11,17 @@ import { isReactRenderable } from "@/lib/detect-artifact";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function VersionsListPage({
   params,
   searchParams,
 }: {
   params: Promise<{ workspace: string; slug: string }>;
-  searchParams: Promise<{ diff?: string; view?: string }>;
+  searchParams: Promise<{ diff?: string; view?: string; full?: string }>;
 }) {
   const { workspace, slug } = await params;
-  const { diff, view } = await searchParams;
+  const { diff, view, full } = await searchParams;
   const { workspace: ws, session, role } = await requireMemberPage(workspace);
   const t = await getTranslations("versions");
   const fmt = await getFormatter();
@@ -77,6 +79,7 @@ export default async function VersionsListPage({
     !!focused && !!previous && isRenderable(focused.version) && isRenderable(previous.version);
   const diffView: "visual" | "text" =
     view === "text" ? "text" : canRenderVisual ? "visual" : "text";
+  const isFull = full === "1" && diffView === "visual" && canRenderVisual;
 
   // Text diff needs full content of both versions — resolve from DB or object
   // storage. Skip the fetch entirely when showing the visual (iframe) diff.
@@ -132,6 +135,25 @@ export default async function VersionsListPage({
                   </Button>
                 </div>
               )}
+              {diffView === "visual" && canRenderVisual && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link
+                    href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual${isFull ? "" : "&full=1"}`}
+                  >
+                    {isFull ? (
+                      <>
+                        <Minimize2 className="size-4" />
+                        {t("diffCollapse")}
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="size-4" />
+                        {t("diffFullscreen")}
+                      </>
+                    )}
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/${workspace}/a/${slug}/versions`}>
                   {t("closeDiff")}
@@ -140,7 +162,12 @@ export default async function VersionsListPage({
             </div>
           </header>
           {diffView === "visual" && canRenderVisual ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
+            <div
+              className={cn(
+                "grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border",
+                isFull && "w-screen relative left-1/2 right-1/2 -mx-[50vw]",
+              )}
+            >
               {[previous, focused].map(({ version }) => (
                 <div key={version.id} className="bg-surface">
                   <div className="meta px-4 py-2 border-b border-border">
@@ -149,7 +176,10 @@ export default async function VersionsListPage({
                   <iframe
                     src={rawContentPath({ slug, versionNumber: version.versionNumber })}
                     sandbox="allow-scripts"
-                    className="w-full h-[70vh] bg-white"
+                    className={cn(
+                      "w-full bg-white",
+                      isFull ? "h-[calc(100vh-160px)]" : "h-[70vh]",
+                    )}
                   />
                 </div>
               ))}
