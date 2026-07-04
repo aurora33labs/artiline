@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { emitEvent, shouldEmitView } from "@/lib/webhooks/emit";
 
 /** Window during which repeat views from the same viewer don't re-bump the counter. */
 const VIEW_DEDUP_MS = 30 * 60 * 1000;
@@ -111,6 +112,7 @@ export function extractIp(headers: Headers): string | null {
 export async function recordView({
   artifactId,
   versionId,
+  workspaceId,
   ip,
   userAgent,
   referrer,
@@ -118,6 +120,7 @@ export async function recordView({
 }: {
   artifactId: string;
   versionId: string;
+  workspaceId: string;
   ip: string | null;
   userAgent: string | null;
   referrer: string | null;
@@ -132,4 +135,11 @@ export async function recordView({
     userId,
     referrer,
   });
+
+  if (await shouldEmitView(workspaceId, artifactId, viewerHash)) {
+    await emitEvent(workspaceId, "artifact.viewed", {
+      artifactId,
+      versionId,
+    }).catch(() => {});
+  }
 }

@@ -162,6 +162,20 @@
       "when": 1783022766163,
       "tag": "0022_marvelous_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1783121217813,
+      "tag": "0023_external_reviews_and_wireup",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1783122845795,
+      "tag": "0024_drop_legacy_artifact_fields",
+      "breakpoints": true
     }
   ]
 }

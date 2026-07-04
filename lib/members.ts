@@ -52,3 +52,25 @@ export async function listAddableUsers(
     .filter((r) => !exclude.has(r.id))
     .sort((a, b) => a.email.localeCompare(b.email));
 }
+
+export type WorkspaceMember = {
+  id: string;
+  email: string;
+  name: string | null;
+};
+
+/** All members of a workspace, for pickers (e.g. assigning a version reviewer). */
+export async function listWorkspaceMembers(
+  workspaceId: string,
+): Promise<WorkspaceMember[]> {
+  const rows = await db
+    .select({
+      id: schema.users.id,
+      email: schema.users.email,
+      name: schema.users.name,
+    })
+    .from(schema.workspaceMembers)
+    .innerJoin(schema.users, eq(schema.users.id, schema.workspaceMembers.userId))
+    .where(eq(schema.workspaceMembers.workspaceId, workspaceId));
+  return rows.sort((a, b) => a.email.localeCompare(b.email));
+}

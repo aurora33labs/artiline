@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { and, desc, eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
-import { getContent } from "@/lib/artifact-content";
+import { getContent, rawContentPath } from "@/lib/artifact-content";
+import { isReactRenderable } from "@/lib/detect-artifact";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
@@ -14,10 +16,10 @@ export default async function VersionsListPage({
   searchParams,
 }: {
   params: Promise<{ workspace: string; slug: string }>;
-  searchParams: Promise<{ diff?: string }>;
+  searchParams: Promise<{ diff?: string; view?: string }>;
 }) {
   const { workspace, slug } = await params;
-  const { diff } = await searchParams;
+  const { diff, view } = await searchParams;
   const { workspace: ws, session, role } = await requireMemberPage(workspace);
   const t = await getTranslations("versions");
   const fmt = await getFormatter();
@@ -39,15 +41,21 @@ export default async function VersionsListPage({
     role === "owner" ||
     role === "admin";
 
+  const reviewers = alias(schema.users, "reviewers");
   const versions = await db
     .select({
       version: schema.artifactVersions,
       author: { id: schema.users.id, name: schema.users.name, email: schema.users.email },
+      reviewer: { id: reviewers.id, name: reviewers.name, email: reviewers.email },
     })
     .from(schema.artifactVersions)
     .innerJoin(
       schema.users,
       eq(schema.users.id, schema.artifactVersions.authorUserId),
+    )
+    .leftJoin(
+      reviewers,
+      eq(reviewers.id, schema.artifactVersions.assignedReviewerId),
     )
     .where(eq(schema.artifactVersions.artifactId, artifact.id))
     .orderBy(desc(schema.artifactVersions.versionNumber));
@@ -63,9 +71,17 @@ export default async function VersionsListPage({
       )
     : null;
 
-  // Diff needs full content of both versions — resolve from DB or object storage.
+  const isRenderable = (v: typeof schema.artifactVersions.$inferSelect) =>
+    v.type === "html" || isReactRenderable(v.type, v.language);
+  const canRenderVisual =
+    !!focused && !!previous && isRenderable(focused.version) && isRenderable(previous.version);
+  const diffView: "visual" | "text" =
+    view === "text" ? "text" : canRenderVisual ? "visual" : "text";
+
+  // Text diff needs full content of both versions — resolve from DB or object
+  // storage. Skip the fetch entirely when showing the visual (iframe) diff.
   const diffContent =
-    focused && previous
+    focused && previous && diffView === "text"
       ? {
           old: await getContent(previous.version),
           new: await getContent(focused.version),
@@ -82,32 +98,75 @@ export default async function VersionsListPage({
         </p>
       </div>
 
-      {focused && previous && diffContent && (
+      {focused && previous && (
         <section className="space-y-3">
-          <header className="flex items-center justify-between">
+          <header className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
               {t("diffHeading", {
                 from: previous.version.versionNumber,
                 to: focused.version.versionNumber,
               })}
             </h2>
-            <Button asChild variant="ghost" size="sm">
-              <Link href={`/${workspace}/a/${slug}/versions`}>
-                {t("closeDiff")}
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              {canRenderVisual && (
+                <div className="flex border border-border rounded-sm overflow-hidden">
+                  <Button
+                    asChild
+                    variant={diffView === "visual" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual`}>
+                      {t("diffVisual")}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant={diffView === "text" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=text`}>
+                      {t("diffText")}
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/${workspace}/a/${slug}/versions`}>
+                  {t("closeDiff")}
+                </Link>
+              </Button>
+            </div>
           </header>
-          <VersionDiff
-            oldContent={diffContent.old}
-            newContent={diffContent.new}
-            oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
-            newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
-          />
+          {diffView === "visual" && canRenderVisual ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
+              {[previous, focused].map(({ version }) => (
+                <div key={version.id} className="bg-surface">
+                  <div className="meta px-4 py-2 border-b border-border">
+                    V{String(version.versionNumber).padStart(3, "0")} · {version.title}
+                  </div>
+                  <iframe
+                    src={rawContentPath({ slug, versionNumber: version.versionNumber })}
+                    sandbox="allow-scripts"
+                    className="w-full h-[70vh] bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : diffContent ? (
+            <VersionDiff
+              oldContent={diffContent.old}
+              newContent={diffContent.new}
+              oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
+              newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
+            />
+          ) : null}
         </section>
       )}
 
       <ol className="border border-border bg-surface divide-y divide-border">
-        {versions.map(({ version, author }) => {
+        {versions.map(({ version, author, reviewer }) => {
           const isCurrent = artifact.currentVersionId === version.id;
           return (
             <li
@@ -132,6 +191,11 @@ export default async function VersionsListPage({
                   >
                     {t(`status.${version.reviewStatus}`)}
                   </span>
+                  {version.reviewStatus === "pending" && reviewer && (
+                    <span className="meta text-muted-foreground border border-border px-2 py-0.5">
+                      {t("reviewerBadge", { name: (reviewer.name ?? reviewer.email).toUpperCase() })}
+                    </span>
+                  )}
                 </div>
                 <div className="meta text-muted-foreground">
                   {(author.name ?? author.email).toUpperCase()} ·{" "}
@@ -179,6 +243,7 @@ export default async function VersionsListPage({
                       version.reviewStatus === "changes_requested") &&
                     !isCurrent
                   }
+                  canDirectRollback={role === "owner" || role === "admin"}
                 />
               </div>
             </li>

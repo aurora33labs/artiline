@@ -21,6 +21,8 @@ import {
   MoreHorizontal,
   ChevronRight,
   MousePointer2,
+  Code2,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -108,6 +110,8 @@ export function FloatingActionCard({
   versionCount,
   backHref,
   reactionsSlot,
+  members = [],
+  analyticsEnabled = false,
 }: {
   title: string;
   type: "html" | "markdown" | "code";
@@ -129,6 +133,8 @@ export function FloatingActionCard({
   versionCount: number;
   backHref: string;
   reactionsSlot: React.ReactNode;
+  members?: { id: string; name: string | null; email: string }[];
+  analyticsEnabled?: boolean;
 }) {
   const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -165,6 +171,19 @@ export function FloatingActionCard({
     setCopied(true);
     toast.success(tt("linkCopied"));
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  const isPublic = visibility === "public" || visibility === "public_pw";
+
+  async function copyEmbed() {
+    // shareHref is always `.../a/{slug}` (workspace-scoped or public) — the
+    // embed route mirrors the same slug regardless of which page linked here.
+    const embedSlug = shareHref.split("/a/")[1];
+    if (!embedSlug) return;
+    const url = new URL(`/embed/${embedSlug}`, window.location.origin).toString();
+    const snippet = `<iframe src="${url}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
+    await navigator.clipboard.writeText(snippet);
+    toast.success(tt("embedCopied"));
   }
 
   const te = useTranslations("errors");
@@ -310,6 +329,17 @@ export function FloatingActionCard({
                 </MenuChip>
                 {t("info")}
               </DropdownMenuItem>
+              {isPublic && (
+                <DropdownMenuItem
+                  className={MENU_ROW}
+                  onSelect={() => setTimeout(copyEmbed)}
+                >
+                  <MenuChip>
+                    <Code2 />
+                  </MenuChip>
+                  {t("copyEmbed")}
+                </DropdownMenuItem>
+              )}
 
               {hasEditorItems && (
                 <>
@@ -339,6 +369,16 @@ export function FloatingActionCard({
                           )}
                         </Link>
                       </DropdownMenuItem>
+                      {analyticsEnabled && (
+                        <DropdownMenuItem asChild className={MENU_ROW}>
+                          <Link href={`/${workspaceSlug}/a/${artifactSlug}/analytics`}>
+                            <MenuChip>
+                              <BarChart3 />
+                            </MenuChip>
+                            {t("analytics")}
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
                   {canProposeChanges && !canManage && (
@@ -516,6 +556,16 @@ export function FloatingActionCard({
                 setInfoOpen(true);
               }}
             />
+            {isPublic && (
+              <SheetRow
+                icon={<Code2 className="size-4" />}
+                label={t("copyEmbed")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  void copyEmbed();
+                }}
+              />
+            )}
           </div>
 
           {canDelete && workspaceSlug && (
@@ -564,6 +614,7 @@ export function FloatingActionCard({
           artifactId={artifactId}
           workspaceSlug={workspaceSlug}
           defaultTitle={title}
+          members={members}
           open={proposeOpen}
           onOpenChange={setProposeOpen}
         />

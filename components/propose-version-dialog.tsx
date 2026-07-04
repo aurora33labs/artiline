@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -32,18 +39,21 @@ export function ProposeVersionDialog({
   artifactId,
   workspaceSlug,
   defaultTitle,
+  members = [],
   open,
   onOpenChange,
 }: {
   artifactId: string;
   workspaceSlug: string;
   defaultTitle: string;
+  members?: { id: string; name: string | null; email: string }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [title, setTitle] = useState(defaultTitle);
   const [message, setMessage] = useState("");
+  const [assignedReviewerId, setAssignedReviewerId] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -69,6 +79,7 @@ export function ProposeVersionDialog({
     if (file.detected.language) fd.set("language", file.detected.language);
     fd.set("title", title.trim() || file.baseName);
     if (message.trim()) fd.set("message", message.trim());
+    if (assignedReviewerId) fd.set("assignedReviewerId", assignedReviewerId);
     start(async () => {
       try {
         const res = await fetch(`/api/artifacts/${artifactId}/proposals`, {
@@ -156,6 +167,30 @@ export function ProposeVersionDialog({
               placeholder={t("messagePlaceholder")}
             />
           </div>
+
+          {members.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="propose-reviewer">{t("assignReviewer")}</Label>
+              <Select
+                value={assignedReviewerId || "__any__"}
+                onValueChange={(v) =>
+                  setAssignedReviewerId(v === "__any__" ? "" : v)
+                }
+              >
+                <SelectTrigger id="propose-reviewer" className="h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__any__">{t("anyAdmin")}</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name ?? m.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <DialogFooter>
             <Button

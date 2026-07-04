@@ -19,6 +19,8 @@ export default async function WorkspacePinnedVersionView({
   const resolved = await resolveArtifactVersion(slug, versionNumber);
   if (!resolved || resolved.artifact.workspaceId !== ws.id) notFound();
   const { artifact, version } = resolved;
+  // External-site artifacts have no renderable content — no versioned deep link.
+  if (version.type === "external") notFound();
   const isHtml = version.type === "html";
   const usesIframe =
     isHtml || isReactRenderable(version.type, version.language);

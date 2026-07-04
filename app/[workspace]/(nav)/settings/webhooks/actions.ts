@@ -12,6 +12,7 @@ const createSchema = z.object({
   workspaceSlug: z.string().min(1),
   url: z.url().max(500),
   events: z.array(z.string()).min(1),
+  format: z.enum(["raw", "slack"]).default("raw"),
 });
 
 export async function createWebhook(formData: FormData) {
@@ -21,6 +22,7 @@ export async function createWebhook(formData: FormData) {
     workspaceSlug: formData.get("workspaceSlug"),
     url,
     events,
+    format: formData.get("format") || "raw",
   });
 
   const { workspace, role } = await requireMemberPage(data.workspaceSlug);
@@ -37,6 +39,7 @@ export async function createWebhook(formData: FormData) {
     secret: randomBytes(32).toString("hex"),
     events: validEvents,
     enabled: true,
+    format: data.format,
   });
 
   revalidatePath(`/${data.workspaceSlug}/settings/webhooks`);
@@ -93,6 +96,52 @@ export async function deleteWebhook(formData: FormData) {
         eq(schema.webhooks.workspaceId, workspace.id),
       ),
     );
+
+  revalidatePath(`/${data.workspaceSlug}/settings/webhooks`);
+}
+
+const retrySchema = z.object({
+  workspaceSlug: z.string().min(1),
+  deliveryId: z.string().min(1),
+});
+
+/** Owner/admin: reset a failed delivery to pending so the cron picks it up again. */
+export async function retryDelivery(formData: FormData) {
+  const data = retrySchema.parse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    deliveryId: formData.get("deliveryId"),
+  });
+
+  const { workspace, role } = await requireMemberPage(data.workspaceSlug);
+  requireRolePage(role, ["owner", "admin"]);
+
+  // Ownership check via join — a delivery id from another workspace 404s
+  // silently rather than being reset.
+  const [row] = await db
+    .select({ id: schema.webhookDeliveries.id })
+    .from(schema.webhookDeliveries)
+    .innerJoin(
+      schema.webhooks,
+      eq(schema.webhooks.id, schema.webhookDeliveries.webhookId),
+    )
+    .where(
+      and(
+        eq(schema.webhookDeliveries.id, data.deliveryId),
+        eq(schema.webhooks.workspaceId, workspace.id),
+      ),
+    )
+    .limit(1);
+  if (!row) throw new Error("NOT_FOUND");
+
+  await db
+    .update(schema.webhookDeliveries)
+    .set({
+      status: "pending",
+      attempts: 0,
+      nextAttemptAt: new Date(),
+      lastError: null,
+    })
+    .where(eq(schema.webhookDeliveries.id, data.deliveryId));
 
   revalidatePath(`/${data.workspaceSlug}/settings/webhooks`);
 }

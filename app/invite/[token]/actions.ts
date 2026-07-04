@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { createUserSession, setSessionCookie } from "@/lib/auth-session";
+import { recordEvent } from "@/lib/activity";
 import {
   type Bucket,
   clearAttempts,
@@ -132,6 +133,15 @@ export async function acceptInvite(formData: FormData) {
     .update(schema.invitations)
     .set({ acceptedAt: new Date() })
     .where(eq(schema.invitations.id, invitation.id));
+
+  await recordEvent({
+    workspaceId: invitation.workspaceId,
+    actorUserId: userId,
+    type: "member.joined",
+    subjectType: "member",
+    subjectId: userId,
+    payload: { email: invitation.email, role: invitation.role },
+  }).catch(() => {});
 
   const { sessionToken, expires } = await createUserSession(userId);
   await setSessionCookie(sessionToken, expires);

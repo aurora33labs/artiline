@@ -11,9 +11,12 @@ export type EventType =
   | "version.rolled_back"
   | "visibility.changed"
   | "member.invited"
+  | "member.joined"
   | "member.removed"
   | "invitation.revoked"
-  | "comment.created";
+  | "comment.created"
+  | "external.site_created"
+  | "external.page_changed";
 
 export async function recordEvent({
   workspaceId,

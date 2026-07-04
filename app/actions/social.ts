@@ -7,6 +7,7 @@ import { db, schema } from "@/lib/db";
 import { auth } from "@/auth";
 import { evaluateAccess } from "@/lib/visibility";
 import { emitEvent } from "@/lib/webhooks/emit";
+import { recordEvent } from "@/lib/activity";
 
 async function loadArtifactWithAccess(artifactId: string, password?: string) {
   const session = await auth();
@@ -113,6 +114,14 @@ export async function addComment(formData: FormData) {
     userId: session?.user?.id ?? null,
     authorName: data.authorName ?? null,
     body: data.body,
+  }).catch(() => {});
+  await recordEvent({
+    workspaceId: artifact.workspaceId,
+    actorUserId: session?.user?.id ?? null,
+    type: "comment.created",
+    subjectType: "comment",
+    subjectId: comment.id,
+    payload: { slug: data.slug ?? null, authorName: session?.user?.id ? null : (data.authorName ?? "Anónimo") },
   }).catch(() => {});
 
   if (data.workspaceSlug && data.slug) {

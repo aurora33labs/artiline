@@ -25,6 +25,7 @@ export const artifactTypeEnum = pgEnum("artifact_type", [
   "html",
   "markdown",
   "code",
+  "external",
 ]);
 export const visibilityEnum = pgEnum("artifact_visibility", [
   "internal_pw",
@@ -46,6 +47,7 @@ export const annotationTargetTypeEnum = pgEnum("annotation_target_type", [
   "text",
   "element",
 ]);
+export const webhookFormatEnum = pgEnum("webhook_format", ["raw", "slack"]);
 
 export const users = pgTable("users", {
   id: id(),
@@ -374,13 +376,7 @@ export const artifacts = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
     slug: text("slug").notNull(),
-    // Legacy content fields — kept nullable for backfill safety, will be dropped
-    // in a follow-up migration after Phase 1 lands. Live content lives in
-    // artifact_versions (see currentVersionId).
-    type: artifactTypeEnum("type"),
-    title: text("title"),
-    content: text("content"),
-    language: text("language"),
+    // Live content lives in artifact_versions (see currentVersionId).
     currentVersionId: text("current_version_id"),
     visibility: visibilityEnum("visibility").notNull().default("internal"),
     passwordHash: text("password_hash"),
@@ -428,6 +424,11 @@ export const artifactVersions = pgTable(
       onDelete: "set null",
     }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    // Optional reviewer routing for a proposal: when set, only this member (plus
+    // owner/admin) is notified and may decide it, instead of every workspace manager.
+    assignedReviewerId: text("assigned_reviewer_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -464,12 +465,17 @@ export const comments = pgTable(
       { onDelete: "cascade" },
     ),
     resolved: boolean("resolved").notNull().default(false),
+    // Set only for comments left via the External Reviews widget — the pathname
+    // (no query/hash) of the external page the comment was left on. Null for
+    // ordinary artifact comments.
+    pageUrl: text("page_url"),
     createdAt: createdAt(),
   },
   (t) => [
     index("comments_artifact_idx").on(t.artifactId),
     index("comments_version_idx").on(t.versionId),
     index("comments_parent_idx").on(t.parentCommentId),
+    index("comments_page_idx").on(t.artifactId, t.pageUrl),
   ],
 );
 
@@ -492,6 +498,10 @@ export const annotations = pgTable(
     anchorOffset: integer("anchor_offset"),
     anchorEndXPath: text("anchor_end_xpath"),
     anchorEndOffset: integer("anchor_end_offset"),
+    // Set when the external page this annotation anchors to has been reported as
+    // changed since the comment was made (see external_pages.lastHash) — surfaces
+    // a "possibly outdated" signal without deleting the annotation.
+    staleAt: timestamp("stale_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -656,6 +666,9 @@ export const webhooks = pgTable(
     secret: text("secret").notNull(),
     events: jsonb("events").notNull().$type<string[]>(),
     enabled: boolean("enabled").notNull().default(true),
+    // "slack" reformats the payload as a Slack incoming-webhook message
+    // (lib/webhooks/slack-format.ts) instead of sending raw JSON.
+    format: webhookFormatEnum("format").notNull().default("raw"),
     createdAt: createdAt(),
   },
   (t) => [index("webhooks_workspace_idx").on(t.workspaceId)],
@@ -673,6 +686,7 @@ export const webhookDeliveries = pgTable(
     status: text("status").notNull(),
     attempts: integer("attempts").notNull().default(0),
     lastError: text("last_error"),
+    responseCode: integer("response_code"),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     createdAt: createdAt(),
@@ -681,6 +695,47 @@ export const webhookDeliveries = pgTable(
     index("webhook_deliveries_webhook_idx").on(t.webhookId),
     index("webhook_deliveries_status_idx").on(t.status, t.nextAttemptAt),
   ],
+);
+
+// External Reviews: an artifact of type "external" points at a site the team
+// doesn't host on Artiline (too heavy a stack to upload as an artifact). The
+// team installs a JS snippet (see lib/review-widget) on their site; visitors
+// there can comment/annotate through the same comments/annotations tables used
+// by ordinary artifacts. 1:1 with the artifact — metadata only, so the hot
+// artifacts table stays lean for artifacts that don't use this feature.
+export const externalSites = pgTable("external_sites", {
+  artifactId: text("artifact_id")
+    .primaryKey()
+    .references(() => artifacts.id, { onDelete: "cascade" }),
+  // scheme+host[:port] the widget is allowed to call the review API from,
+  // e.g. "https://cliente.com" — checked verbatim against the Origin header.
+  origin: text("origin").notNull(),
+  // Public identifier embedded in the client's HTML (`data-key="arev_..."`).
+  // It's meant to be public — see lib/external-reviews.ts for what it can and
+  // can't do — but is still rotatable/disable-able if it leaks somewhere unwanted.
+  publicKey: text("public_key").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("external_sites_key_idx").on(t.publicKey)]);
+
+// One row per distinct pathname seen on an external site. Tracks the last
+// content hash the widget reported, so a later mismatch can flag existing
+// annotations on that page as possibly stale (annotations.staleAt).
+export const externalPages = pgTable(
+  "external_pages",
+  {
+    id: id(),
+    artifactId: text("artifact_id")
+      .notNull()
+      .references(() => artifacts.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    title: text("title"),
+    lastHash: text("last_hash"),
+    lastChangedAt: timestamp("last_changed_at", { withTimezone: true }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("external_pages_unique").on(t.artifactId, t.path)],
 );
 
 export const authAccounts = pgTable(

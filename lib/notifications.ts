@@ -57,18 +57,23 @@ async function workspaceManagers(workspaceId: string): Promise<string[]> {
 }
 
 /**
- * A member proposed a new version → notify the artifact author plus every
- * owner/admin (deduped; the actor is filtered out inside `notify`).
+ * A member proposed a new version → notify the artifact author plus, normally,
+ * every owner/admin (deduped; the actor is filtered out inside `notify`). When
+ * the proposal has an assigned reviewer, notify only the author + that reviewer
+ * instead of the whole manager list — the assignment is routing, not a lock;
+ * any owner/admin can still decide it.
  */
 export async function notifyProposal(args: {
   workspaceId: string;
   actorUserId: string;
   authorUserId: string;
+  assignedReviewerId?: string | null;
   artifactId: string;
   payload: NotificationPayload;
 }): Promise<void> {
-  const managers = await workspaceManagers(args.workspaceId);
-  const recipients = new Set<string>([args.authorUserId, ...managers]);
+  const recipients = args.assignedReviewerId
+    ? new Set<string>([args.authorUserId, args.assignedReviewerId])
+    : new Set<string>([args.authorUserId, ...(await workspaceManagers(args.workspaceId))]);
   await notify(
     [...recipients].map((recipientUserId) => ({
       workspaceId: args.workspaceId,

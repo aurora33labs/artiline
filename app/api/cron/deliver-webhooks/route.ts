@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, lte, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { signPayload } from "@/lib/webhooks/sign";
+import { toSlackPayload } from "@/lib/webhooks/slack-format";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -49,7 +50,13 @@ export async function POST(req: Request) {
 
   for (const { delivery, webhook } of pending) {
     const attempt = delivery.attempts + 1;
-    const body = JSON.stringify(delivery.payload);
+    const rawPayload = delivery.payload as Record<string, unknown>;
+    const body =
+      webhook.format === "slack"
+        ? JSON.stringify(toSlackPayload(delivery.event, rawPayload))
+        : JSON.stringify(rawPayload);
+    // Slack ignores headers it doesn't recognize, so the signature is safe to
+    // send either way — useful if the endpoint is later swapped for a real one.
     const signature = signPayload(webhook.secret, body);
 
     try {
@@ -71,6 +78,7 @@ export async function POST(req: Request) {
           .set({
             status: "success",
             attempts: attempt,
+            responseCode: res.status,
             deliveredAt: new Date(),
             lastError: null,
           })
@@ -78,8 +86,27 @@ export async function POST(req: Request) {
         success += 1;
         continue;
       }
-      throw new Error(`HTTP ${res.status}`);
+      const lastError = `HTTP ${res.status}`;
+      if (attempt >= MAX_ATTEMPTS) {
+        await db
+          .update(schema.webhookDeliveries)
+          .set({ status: "failed", attempts: attempt, responseCode: res.status, lastError })
+          .where(eq(schema.webhookDeliveries.id, delivery.id));
+      } else {
+        const delayMin = BACKOFF_MINUTES[attempt - 1] ?? 720;
+        await db
+          .update(schema.webhookDeliveries)
+          .set({
+            attempts: attempt,
+            responseCode: res.status,
+            lastError,
+            nextAttemptAt: new Date(Date.now() + delayMin * 60 * 1000),
+          })
+          .where(eq(schema.webhookDeliveries.id, delivery.id));
+      }
+      failed += 1;
     } catch (err) {
+      // Network error / timeout — no HTTP response to record a status code for.
       const lastError = (err as Error).message.slice(0, 500);
       if (attempt >= MAX_ATTEMPTS) {
         await db
@@ -87,6 +114,7 @@ export async function POST(req: Request) {
           .set({
             status: "failed",
             attempts: attempt,
+            responseCode: null,
             lastError,
           })
           .where(eq(schema.webhookDeliveries.id, delivery.id));
@@ -96,6 +124,7 @@ export async function POST(req: Request) {
           .update(schema.webhookDeliveries)
           .set({
             attempts: attempt,
+            responseCode: null,
             lastError,
             nextAttemptAt: new Date(Date.now() + delayMin * 60 * 1000),
           })

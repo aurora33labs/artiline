@@ -72,7 +72,13 @@ export const FEATURES: Record<Feature, FeatureDef> = {
   tracking_advanced: { core: false, minTier: "agency" },
   sso_saml: { core: false, minTier: "agency_plus" },
   audit_retention_extended: { core: false, minTier: "agency_plus" },
+  // Recent-deliveries history + manual retry shipped as core (webhooks_basic) —
+  // this flag is reserved for what's actually agency-tier: extended retention
+  // and failure alerting (email/Slack ping when an endpoint keeps failing).
   webhooks_monitored: { core: false, minTier: "agency" },
+  // Raw webhooks can already post to a Slack incoming-webhook URL (core,
+  // lib/webhooks/slack-format.ts) with zero setup. This flag is reserved for a
+  // real Slack App (OAuth install, slash commands) — not built yet.
   slack_app: { core: false, minTier: "agency" },
   linear_app: { core: false, minTier: "agency" },
   branded_export: { core: false, minTier: "agency" },

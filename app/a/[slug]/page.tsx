@@ -33,10 +33,24 @@ export async function generateMetadata({
   const isPublic =
     resolved.artifact.visibility === "public" ||
     resolved.artifact.visibility === "public_pw";
+
+  let oembedTypes: Metadata["alternates"] = undefined;
+  if (isPublic) {
+    const h = await headers();
+    const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+    const pageUrl = `${origin}/a/${slug}`;
+    oembedTypes = {
+      types: {
+        "application/json+oembed": `${origin}/api/embed/oembed?url=${encodeURIComponent(pageUrl)}&format=json`,
+      },
+    };
+  }
+
   return {
     title: `${resolved.version.title} — Artiline`,
     description: resolved.version.message ?? undefined,
     robots: isPublic ? undefined : { index: false, follow: false },
+    alternates: oembedTypes,
     openGraph: {
       title: resolved.version.title,
       description: resolved.version.message ?? undefined,
@@ -115,6 +129,12 @@ export default async function PublicArtifact({
   if (access.kind === "needs_password") {
     return <PasswordPrompt slug={slug} hasAttempt={!!pw} />;
   }
+  // External-site artifacts are never public and have no renderable content.
+  if (version?.type === "external") {
+    return (
+      <Gate Icon={FileX} title={t("notFoundTitle")} message={t("notFoundMsg")} />
+    );
+  }
 
   const reqHeaders = await headers();
   await bumpViewsThrottled(
@@ -126,6 +146,7 @@ export default async function PublicArtifact({
   await recordView({
     artifactId: artifact!.id,
     versionId: version!.id,
+    workspaceId: artifact!.workspaceId,
     ip: extractIp(reqHeaders),
     userAgent: reqHeaders.get("user-agent"),
     referrer: reqHeaders.get("referer"),

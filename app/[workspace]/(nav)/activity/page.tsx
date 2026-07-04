@@ -1,7 +1,9 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { getFormatter } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
+import { listWorkspaceMembers } from "@/lib/members";
+import { Button } from "@/components/ui/button";
 
 const TYPE_LABEL: Record<string, string> = {
   "artifact.created": "ARTIFACT CREATED",
@@ -11,9 +13,12 @@ const TYPE_LABEL: Record<string, string> = {
   "version.rolled_back": "ROLLBACK",
   "visibility.changed": "VISIBILITY CHANGED",
   "member.invited": "MEMBER INVITED",
+  "member.joined": "MEMBER JOINED",
   "member.removed": "MEMBER REMOVED",
   "invitation.revoked": "INVITE REVOKED",
   "comment.created": "COMMENT",
+  "external.site_created": "EXTERNAL SITE ADDED",
+  "external.page_changed": "EXTERNAL PAGE CHANGED",
 };
 
 const TYPE_COLOR: Record<string, string> = {
@@ -27,12 +32,27 @@ const TYPE_COLOR: Record<string, string> = {
 
 export default async function ActivityPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspace: string }>;
+  searchParams: Promise<{
+    type?: string;
+    actor?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const { workspace: slug } = await params;
+  const { type, actor, from, to } = await searchParams;
   const { workspace } = await requireMemberPage(slug);
   const fmt = await getFormatter();
+  const members = await listWorkspaceMembers(workspace.id);
+
+  const conditions = [eq(schema.events.workspaceId, workspace.id)];
+  if (type && type in TYPE_LABEL) conditions.push(eq(schema.events.type, type));
+  if (actor) conditions.push(eq(schema.events.actorUserId, actor));
+  if (from) conditions.push(gte(schema.events.createdAt, new Date(`${from}T00:00:00.000Z`)));
+  if (to) conditions.push(lte(schema.events.createdAt, new Date(`${to}T23:59:59.999Z`)));
 
   const rows = await db
     .select({
@@ -45,7 +65,7 @@ export default async function ActivityPage({
     })
     .from(schema.events)
     .leftJoin(schema.users, eq(schema.users.id, schema.events.actorUserId))
-    .where(eq(schema.events.workspaceId, workspace.id))
+    .where(and(...conditions))
     .orderBy(desc(schema.events.createdAt))
     .limit(200);
 
@@ -58,6 +78,48 @@ export default async function ActivityPage({
           Últimos 200 eventos del workspace.
         </p>
       </header>
+
+      <form method="get" className="flex flex-wrap gap-2">
+        <select
+          name="type"
+          defaultValue={type ?? ""}
+          className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
+        >
+          <option value="">Tipo: todos</option>
+          {Object.keys(TYPE_LABEL).map((t) => (
+            <option key={t} value={t}>
+              {TYPE_LABEL[t]}
+            </option>
+          ))}
+        </select>
+        <select
+          name="actor"
+          defaultValue={actor ?? ""}
+          className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
+        >
+          <option value="">Actor: todos</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name ?? m.email}
+            </option>
+          ))}
+        </select>
+        <input
+          type="date"
+          name="from"
+          defaultValue={from ?? ""}
+          className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
+        />
+        <input
+          type="date"
+          name="to"
+          defaultValue={to ?? ""}
+          className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
+        />
+        <Button type="submit" size="sm" variant="outline">
+          Filtrar
+        </Button>
+      </form>
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">Sin actividad aún.</p>

@@ -75,10 +75,15 @@ export default async function PinnedVersionView({
   // Public deep-links only ever expose the approved history. Pending or
   // rejected proposals must never leak — even for a public artifact — so an
   // un-approved version reads as "not found" (falls into the gate below).
-  const version =
-    resolved && resolved.version.reviewStatus === "approved"
-      ? resolved.version
-      : null;
+  // External-site artifacts are never public and have no renderable content —
+  // a versioned deep link to one always reads as not-found.
+  const version = (() => {
+    if (!resolved) return null;
+    const v = resolved.version;
+    if (v.reviewStatus !== "approved") return null;
+    if (v.type === "external") return null;
+    return v;
+  })();
 
   const session = await auth();
   const access = await evaluateAccess(artifact, {
@@ -128,6 +133,7 @@ export default async function PinnedVersionView({
   await recordView({
     artifactId: artifact!.id,
     versionId: version.id,
+    workspaceId: artifact!.workspaceId,
     ip: extractIp(reqHeaders),
     userAgent: reqHeaders.get("user-agent"),
     referrer: reqHeaders.get("referer"),
@@ -146,7 +152,8 @@ export default async function PinnedVersionView({
       <link rel="canonical" href={`/a/${artifact!.slug}`} />
       <ArtifactViewer
         artifact={{
-          type: version.type,
+          // Guaranteed non-"external" by the `version` guard above.
+          type: version.type as "html" | "markdown" | "code",
           language: version.language,
           contentSrc: usesIframe ? rawContentPath({ slug, versionNumber, pw }) : null,
           content,

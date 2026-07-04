@@ -19,6 +19,7 @@ const proposalSchema = z.object({
   content: z.string().min(1),
   language: z.string().max(50).optional().nullable(),
   message: z.string().max(500).optional().nullable(),
+  assignedReviewerId: z.string().min(1).optional().nullable(),
 });
 
 export async function POST(
@@ -35,6 +36,7 @@ export async function POST(
       content: form.get("content"),
       language: form.get("language") || null,
       message: form.get("message") || null,
+      assignedReviewerId: form.get("assignedReviewerId") || null,
     });
 
     const auth = await requireMemberOrToken(
@@ -42,13 +44,18 @@ export async function POST(
       req.headers.get("authorization"),
     );
 
-    const { slug, versionNumber } = await proposeVersion(auth, id, {
-      type: data.type,
-      title: data.title,
-      content: data.content,
-      language: data.language,
-      message: data.message,
-    });
+    const { slug, versionNumber } = await proposeVersion(
+      auth,
+      id,
+      {
+        type: data.type,
+        title: data.title,
+        content: data.content,
+        language: data.language,
+        message: data.message,
+      },
+      data.assignedReviewerId,
+    );
 
     return NextResponse.json({ versionNumber, slug });
   } catch (e) {
