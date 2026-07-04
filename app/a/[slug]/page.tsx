@@ -70,10 +70,11 @@ export default async function PublicArtifact({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ pw?: string }>;
+  searchParams: Promise<{ pw?: string; clean?: string }>;
 }) {
   const { slug } = await params;
-  const { pw } = await searchParams;
+  const { pw, clean } = await searchParams;
+  const isClean = clean === "1";
   const t = await getTranslations("viewer");
 
   const resolved = await resolveCurrentArtifact(slug);
@@ -154,6 +155,33 @@ export default async function PublicArtifact({
   }).catch(() => {
     /* tracking failures should never block render */
   });
+
+  const isHtml = version!.type === "html";
+  const usesIframe =
+    isHtml || isReactRenderable(version!.type, version!.language);
+  const content = isHtml ? null : await getContent(version!);
+
+  // Clean share view: just the content, no dock/menu, no annotation pins or
+  // comment sidebar — for when a link is meant to be *just* a share, not an
+  // invitation to collaborate on it. Skips the comment/annotation queries
+  // entirely since nothing here would render them.
+  if (isClean) {
+    return (
+      <main className="fixed inset-0 bg-background overflow-auto">
+        <ArtifactViewer
+          artifact={{
+            type: version!.type,
+            language: version!.language,
+            contentSrc: usesIframe
+              ? rawContentPath({ slug, pw, versionNumber: version!.versionNumber })
+              : null,
+            content,
+          }}
+        />
+        <PublicFooter />
+      </main>
+    );
+  }
 
   const [{ count: commentsCount }] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -250,11 +278,6 @@ export default async function PublicArtifact({
           createdAt: rr.createdAt.toISOString(),
         })),
     }));
-
-  const isHtml = version!.type === "html";
-  const usesIframe =
-    isHtml || isReactRenderable(version!.type, version!.language);
-  const content = isHtml ? null : await getContent(version!);
 
   return (
     <main className="fixed inset-0 bg-background overflow-auto">

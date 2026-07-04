@@ -362,6 +362,7 @@
     "source": "Código",
     "copyPublic": "Copiar link público",
     "share": "Link para compartir",
+    "copyCleanLink": "Copiar link limpio",
     "copyEmbed": "Copiar código de embed",
     "updateVersion": "Actualizar archivo",
     "copied": "¡Copiado!",
@@ -638,6 +639,7 @@
   "toasts": {
     "linkCopied": "Link copiado",
     "embedCopied": "Código de embed copiado",
+    "cleanLinkCopied": "Link limpio copiado",
     "pngGenerated": "PNG generado",
     "pngError": "Error generando PNG",
     "noFileFirst": "Suelta un archivo primero.",
