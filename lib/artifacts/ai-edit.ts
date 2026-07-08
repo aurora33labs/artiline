@@ -64,8 +64,14 @@ export async function aiEditArtifact(
       instruction: input.instruction,
     });
   } catch (e) {
-    if (e instanceof AiEditError) throw new Error(e.message);
-    throw new Error("ERR_UPSTREAM");
+    const code = e instanceof AiEditError ? e.message : "ERR_UPSTREAM";
+    console.error("[ai-edit] generation failed", {
+      artifactId,
+      model: input.model,
+      code,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    throw new Error(code);
   }
 
   return publishVersion(ctx, artifactId, {

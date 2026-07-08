@@ -96,19 +96,45 @@ export async function generateArtifactEdit(opts: {
         ],
       }),
     });
-  } catch {
+  } catch (err) {
+    console.error("[ai-edit] OpenRouter fetch failed", {
+      model: opts.model,
+      error: err instanceof Error ? err.message : String(err),
+    });
     throw new AiEditError("ERR_UPSTREAM");
   }
 
   if (!res.ok) {
+    const bodyText = await res.text().catch(() => "");
+    console.error("[ai-edit] OpenRouter returned an error status", {
+      model: opts.model,
+      status: res.status,
+      body: bodyText.slice(0, 2000),
+    });
     throw new AiEditError(res.status === 429 ? "ERR_RATE_LIMITED" : "ERR_UPSTREAM");
   }
 
   const data = (await res.json().catch(() => null)) as {
     choices?: { message?: { content?: string } }[];
+    error?: { message?: string; code?: string | number };
   } | null;
+
+  if (data?.error) {
+    console.error("[ai-edit] OpenRouter returned an error payload", {
+      model: opts.model,
+      error: data.error,
+    });
+    throw new AiEditError("ERR_UPSTREAM");
+  }
+
   const raw = data?.choices?.[0]?.message?.content;
-  if (!raw || !raw.trim()) throw new AiEditError("ERR_EMPTY_RESPONSE");
+  if (!raw || !raw.trim()) {
+    console.error("[ai-edit] OpenRouter returned no content", {
+      model: opts.model,
+      data,
+    });
+    throw new AiEditError("ERR_EMPTY_RESPONSE");
+  }
   if (raw.length > MAX_OUTPUT_CHARS) throw new AiEditError("ERR_CONTENT_TOO_LARGE");
 
   return unwrapFence(raw);
