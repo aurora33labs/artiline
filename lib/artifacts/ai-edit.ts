@@ -19,16 +19,15 @@ export type AiEditError_ =
  * Edit an artifact's current version with an LLM instruction, then publish the
  * result as a new live version — mirrors `publishVersion` in every way except
  * the content comes from OpenRouter instead of a re-uploaded file. Restricted
- * to the same callers as publish (author or workspace manager): unlike
- * `proposeVersion`, this goes live immediately, so it's not opened to any
- * member.
+ * to workspace managers (owner/admin) only, not the artifact's author —
+ * narrower than `publishVersion` on purpose while the feature is new.
  */
 export async function aiEditArtifact(
   ctx: AuthContext,
   artifactId: string,
   input: { instruction: string; model: string },
 ): Promise<{ slug: string; versionNumber: number }> {
-  const { workspace, session, role } = ctx;
+  const { workspace, role } = ctx;
 
   const [artifact] = await db
     .select()
@@ -39,9 +38,8 @@ export async function aiEditArtifact(
     throw new Error("NOT_FOUND");
   }
 
-  const isAuthor = artifact.authorUserId === session.user.id;
   const isManager = role === "owner" || role === "admin";
-  if (!isAuthor && !isManager) throw new Error("FORBIDDEN");
+  if (!isManager) throw new Error("FORBIDDEN");
 
   if (!artifact.currentVersionId) throw new Error("NOT_FOUND");
   const [version] = await db
