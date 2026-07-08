@@ -29,6 +29,7 @@ const createSchema = z.object({
   language: z.string().max(50).optional().nullable(),
   visibility: z.enum(["internal_pw", "internal", "public_pw", "public"]),
   password: z.string().optional().nullable(),
+  cleanShare: z.string().optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
       language: form.get("language") || null,
       visibility: form.get("visibility"),
       password: form.get("password") || null,
+      cleanShare: form.get("cleanShare") || null,
     });
 
     const ctx = await requireMemberOrToken(
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
       language: data.language,
       visibility: data.visibility,
       password: data.password,
+      cleanShare: !!data.cleanShare,
     });
 
     return NextResponse.json({ slug });

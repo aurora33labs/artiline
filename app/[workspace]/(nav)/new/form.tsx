@@ -10,40 +10,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ArtifactDropzone,
   type LoadedFile,
 } from "@/components/artifact-dropzone";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
-
-type Visibility = "internal_pw" | "internal" | "public_pw" | "public";
+import { VisibilityPicker } from "@/components/visibility-picker";
+import type { Visibility } from "@/components/visibility-badge";
 
 export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("internal");
+  const [cleanShare, setCleanShare] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
   const needsPw = visibility === "internal_pw" || visibility === "public_pw";
 
   const t = useTranslations("new");
-  const tv = useTranslations("visibility.options");
   const te = useTranslations("errors");
   const tt = useTranslations("toasts");
   const tc = useTranslations("common");
-
-  const VIS_OPTIONS: { value: Visibility; label: string; hint: string }[] = [
-    { value: "internal", label: tv("internal"), hint: tv("internalHint") },
-    { value: "internal_pw", label: tv("internalPwForm"), hint: tv("internalPwHintShort") },
-    { value: "public", label: tv("publicOpen"), hint: tv("publicHint") },
-    { value: "public_pw", label: tv("publicPw"), hint: tv("publicPwHint") },
-  ];
 
   function translateError(code: string): string {
     try {
@@ -93,6 +79,7 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
         fd.set("content", file.content);
         if (file.detected.language) fd.set("language", file.detected.language);
         fd.set("visibility", visibility);
+        fd.set("cleanShare", cleanShare ? "1" : "");
         start(async () => {
           // Upload via the API route (not a server action): /api isn't rewritten
           // by the proxy and isn't capped by serverActions.bodySizeLimit, so large
@@ -174,26 +161,13 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
 
         <div className="space-y-2">
           <Label>{t("visibility")}</Label>
-          <Select
+          <VisibilityPicker
+            name="visibility"
             value={visibility}
-            onValueChange={(v) => setVisibility(v as Visibility)}
-          >
-            <SelectTrigger className="h-11">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {VIS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <div className="flex flex-col">
-                    <span>{opt.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {opt.hint}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={setVisibility}
+            cleanShare={cleanShare}
+            onCleanShareChange={setCleanShare}
+          />
         </div>
 
         {needsPw && (

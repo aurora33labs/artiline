@@ -24,6 +24,7 @@ export type CreateArtifactInput = {
   language?: string | null;
   visibility: Visibility;
   password?: string | null;
+  cleanShare?: boolean;
 };
 
 /**
@@ -75,6 +76,7 @@ export async function createArtifact(
         slug: nanoid(10),
         visibility: input.visibility,
         passwordHash,
+        cleanShare: input.cleanShare ?? false,
       })
       .returning();
 

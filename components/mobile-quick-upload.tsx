@@ -8,23 +8,16 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
+import { VisibilityPicker } from "@/components/visibility-picker";
+import type { Visibility } from "@/components/visibility-badge";
 import {
   loadFile,
   ACCEPT_DOCUMENTS,
   MAX_UPLOAD_MB,
   type LoadedFile,
 } from "@/lib/artifact-upload";
-
-type Visibility = "internal_pw" | "internal" | "public_pw" | "public";
 
 /**
  * Mobile "New" tab. Instead of routing to /workspace/new (high exit friction on
@@ -37,27 +30,16 @@ export function MobileQuickUpload({ workspaceSlug }: { workspaceSlug: string }) 
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("internal");
+  const [cleanShare, setCleanShare] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
   const needsPw = visibility === "internal_pw" || visibility === "public_pw";
 
   const t = useTranslations("new");
-  const tv = useTranslations("visibility.options");
   const te = useTranslations("errors");
   const tt = useTranslations("toasts");
   const tc = useTranslations("common");
   const tn = useTranslations("navTop");
-
-  const VIS_OPTIONS: { value: Visibility; label: string; hint: string }[] = [
-    { value: "internal", label: tv("internal"), hint: tv("internalHint") },
-    {
-      value: "internal_pw",
-      label: tv("internalPwForm"),
-      hint: tv("internalPwHintShort"),
-    },
-    { value: "public", label: tv("publicOpen"), hint: tv("publicHint") },
-    { value: "public_pw", label: tv("publicPw"), hint: tv("publicPwHint") },
-  ];
 
   function translateError(code: string): string {
     return te.has(code) ? te(code) : tt("generic");
@@ -71,6 +53,7 @@ export function MobileQuickUpload({ workspaceSlug }: { workspaceSlug: string }) 
       const loaded = await loadFile(picked);
       setTitle(loaded.baseName);
       setVisibility("internal");
+      setCleanShare(false);
       setFile(loaded);
     } catch (err) {
       const code = (err as Error).message;
@@ -91,6 +74,7 @@ export function MobileQuickUpload({ workspaceSlug }: { workspaceSlug: string }) 
     fd.set("content", file.content);
     if (file.detected.language) fd.set("language", file.detected.language);
     fd.set("visibility", visibility);
+    fd.set("cleanShare", cleanShare ? "1" : "");
     start(async () => {
       try {
         const res = await fetch("/api/artifacts", { method: "POST", body: fd });
@@ -173,26 +157,13 @@ export function MobileQuickUpload({ workspaceSlug }: { workspaceSlug: string }) 
 
             <div className="space-y-2">
               <Label>{t("visibility")}</Label>
-              <Select
+              <VisibilityPicker
+                name="visibility"
                 value={visibility}
-                onValueChange={(v) => setVisibility(v as Visibility)}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {VIS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex flex-col">
-                        <span>{opt.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {opt.hint}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={setVisibility}
+                cleanShare={cleanShare}
+                onCleanShareChange={setCleanShare}
+              />
             </div>
 
             {needsPw && (

@@ -4,12 +4,16 @@ import { cn } from "@/lib/utils";
 
 export type Visibility = "internal" | "internal_pw" | "public" | "public_pw";
 
-const ICONS: Record<Visibility, React.ComponentType<{ className?: string }>> = {
+export const VISIBILITY_ICONS: Record<
+  Visibility,
+  React.ComponentType<{ className?: string }>
+> = {
   internal: Users,
   internal_pw: KeyRound,
   public: Globe2,
   public_pw: Lock,
 };
+const ICONS = VISIBILITY_ICONS;
 
 const TONES: Record<Visibility, string> = {
   internal: "border-border text-muted-foreground",
