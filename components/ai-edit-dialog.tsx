@@ -62,9 +62,10 @@ async function readAiEditStream(
 
 /**
  * Rewrite the artifact's current content via an OpenRouter model and publish
- * the result as a new live version. Only shown to canEdit users (author/
- * owner/admin) — same authority as PublishVersionDialog. Model choices come
- * from the operator's ARTILINE_AI_MODEL_1/2/3 env vars.
+ * the result as a new live version. Only shown to workspace managers (owner/
+ * admin) — narrower than PublishVersionDialog, which the artifact's author can
+ * also use. Model choices come from the operator's ARTILINE_AI_MODEL_1/2/3 env
+ * vars.
  */
 export function AiEditDialog({
   artifactId,

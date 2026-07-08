@@ -230,7 +230,9 @@ export default async function ArtifactInternalView({
           pendingProposals={pendingProposals}
           members={members}
           analyticsEnabled={analyticsEnabled}
-          aiEditModels={canEdit ? getAiEditModels() : []}
+          aiEditModels={
+            role === "owner" || role === "admin" ? getAiEditModels() : []
+          }
           cleanShare={artifact.cleanShare}
           hasPassword={!!artifact.passwordHash}
           workspaceSlug={workspace}
