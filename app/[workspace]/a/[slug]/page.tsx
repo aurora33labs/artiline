@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
 import { listWorkspaceMembers } from "@/lib/members";
 import { isFeatureEnabled } from "@/lib/license";
+import { getAiEditModels } from "@/lib/ai/openrouter";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
 import { getContent, rawContentPath } from "@/lib/artifact-content";
 import { isReactRenderable } from "@/lib/detect-artifact";
@@ -229,6 +230,7 @@ export default async function ArtifactInternalView({
           pendingProposals={pendingProposals}
           members={members}
           analyticsEnabled={analyticsEnabled}
+          aiEditModels={canEdit ? getAiEditModels() : []}
           cleanShare={artifact.cleanShare}
           hasPassword={!!artifact.passwordHash}
           workspaceSlug={workspace}

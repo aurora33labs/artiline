@@ -364,6 +364,7 @@
     "share": "Link para compartir",
     "copyEmbed": "Copiar código de embed",
     "updateVersion": "Actualizar archivo",
+    "editWithAi": "Editar con IA",
     "copied": "¡Copiado!",
     "exportPng": "Exportar PNG",
     "download": "Descargar",
@@ -659,6 +660,11 @@
     "ERR_EXPORT_HTML_ONLY": "Solo HTML soporta export PNG",
     "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage no configurado. Avisa al admin.",
     "ERR_EXPORT_RENDER_FAILED": "No se pudo renderizar el componente.",
+    "ERR_INVALID_MODEL": "Modelo desconocido. Recarga la página e intenta de nuevo.",
+    "NOT_CONFIGURED": "Edición con IA no está configurada en este servidor.",
+    "ERR_UPSTREAM": "El proveedor del modelo falló. Intenta de nuevo.",
+    "ERR_RATE_LIMITED": "Límite de uso del proveedor. Intenta en unos momentos.",
+    "ERR_EMPTY_RESPONSE": "El modelo devolvió una respuesta vacía. Reformula la instrucción.",
     "LIMIT_ARTIFACTS": "Límite de artifacts alcanzado. Mejora tu plan para crear más.",
     "LIMIT_MEMBERS": "Límite de miembros alcanzado. Mejora tu plan para invitar más.",
     "UNAUTH": "No autenticado",
@@ -727,6 +733,17 @@
       "approved": "APROBADA",
       "changes_requested": "CAMBIOS PEDIDOS"
     }
+  },
+  "aiEdit": {
+    "title": "Editar con IA",
+    "description": "Describe el cambio. El modelo reescribe el archivo completo y lo publica como nueva versión.",
+    "modelLabel": "Modelo",
+    "instructionLabel": "Instrucción",
+    "instructionPlaceholder": "ej. Haz el header sticky y cambia el color de acento a morado",
+    "generate": "Generar y publicar",
+    "generating": "Generando…",
+    "success": "Edición con IA publicada",
+    "noInstruction": "Escribe una instrucción primero"
   },
   "emails": {
     "magicLink": {
