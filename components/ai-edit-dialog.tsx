@@ -24,6 +24,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type AiEditEvent =
+  | { type: "tick" }
+  | { type: "result"; slug: string; versionNumber: number }
+  | { type: "error"; error: string };
+type AiEditFinalEvent = Extract<AiEditEvent, { type: "result" | "error" }>;
+
+/** Read the ai-edit route's newline-delimited JSON stream to its final event. */
+async function readAiEditStream(
+  res: Response,
+): Promise<AiEditFinalEvent | undefined> {
+  const reader = res.body?.getReader();
+  if (!reader) return undefined;
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let final: AiEditFinalEvent | undefined;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let newlineIndex: number;
+    while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+      if (!line) continue;
+      try {
+        const event = JSON.parse(line) as AiEditEvent;
+        if (event.type === "result" || event.type === "error") final = event;
+      } catch {
+        /* ignore a malformed line — the stream may still recover */
+      }
+    }
+  }
+  return final;
+}
+
 /**
  * Rewrite the artifact's current content via an OpenRouter model and publish
  * the result as a new live version. Only shown to canEdit users (author/
@@ -73,17 +109,30 @@ export function AiEditDialog({
             model,
           }),
         });
-        if (res.ok) {
+        if (!res.ok) {
+          // Pre-stream validation failures (bad model, auth, not found) —
+          // still a plain JSON body.
+          const { error } = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          toast.error(translateError(error || "generic"));
+          return;
+        }
+
+        // 200 means the response is a newline-delimited JSON stream: periodic
+        // `{"type":"tick"}` heartbeats while the model runs, then one final
+        // result/error line. Streaming keeps the connection alive for
+        // long-running generations that would otherwise idle-timeout behind
+        // a proxy.
+        const outcome = await readAiEditStream(res);
+        if (outcome?.type === "result") {
           toast.success(t("success"));
           onOpenChange(false);
           setInstruction("");
           router.refresh();
           return;
         }
-        const { error } = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        toast.error(translateError(error || "generic"));
+        toast.error(translateError(outcome?.error || "generic"));
       } catch {
         toast.error(translateError("generic"));
       }
