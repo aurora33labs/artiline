@@ -11,7 +11,6 @@ import { isReactRenderable } from "@/lib/detect-artifact";
 import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default async function VersionsListPage({
   params,
@@ -91,6 +90,41 @@ export default async function VersionsListPage({
         }
       : null;
 
+  if (isFull && focused && previous) {
+    return (
+      <div className="hidden sm:flex fixed inset-0 z-50 bg-background flex-col">
+        <header className="flex items-center justify-between gap-3 px-4 h-14 border-b border-border shrink-0">
+          <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
+            {t("diffHeading", {
+              from: previous.version.versionNumber,
+              to: focused.version.versionNumber,
+            })}
+          </h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual`}>
+              <Minimize2 className="size-4" />
+              {t("diffCollapse")}
+            </Link>
+          </Button>
+        </header>
+        <div className="grid grid-cols-2 gap-px bg-border flex-1 min-h-0">
+          {[previous, focused].map(({ version }) => (
+            <div key={version.id} className="bg-surface flex flex-col min-h-0">
+              <div className="meta px-4 py-2 border-b border-border shrink-0">
+                V{String(version.versionNumber).padStart(3, "0")} · {version.title}
+              </div>
+              <iframe
+                src={rawContentPath({ slug, versionNumber: version.versionNumber })}
+                sandbox="allow-scripts"
+                className="w-full flex-1 bg-white"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-5xl">
       <div className="space-y-2 border-b border-border pb-6">
@@ -102,7 +136,7 @@ export default async function VersionsListPage({
       </div>
 
       {focused && previous && (
-        <section className="space-y-3">
+        <section className="hidden sm:block space-y-3">
           <header className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
               {t("diffHeading", {
@@ -138,19 +172,10 @@ export default async function VersionsListPage({
               {diffView === "visual" && canRenderVisual && (
                 <Button asChild variant="ghost" size="sm">
                   <Link
-                    href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual${isFull ? "" : "&full=1"}`}
+                    href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual&full=1`}
                   >
-                    {isFull ? (
-                      <>
-                        <Minimize2 className="size-4" />
-                        {t("diffCollapse")}
-                      </>
-                    ) : (
-                      <>
-                        <Maximize2 className="size-4" />
-                        {t("diffFullscreen")}
-                      </>
-                    )}
+                    <Maximize2 className="size-4" />
+                    {t("diffFullscreen")}
                   </Link>
                 </Button>
               )}
@@ -162,12 +187,7 @@ export default async function VersionsListPage({
             </div>
           </header>
           {diffView === "visual" && canRenderVisual ? (
-            <div
-              className={cn(
-                "grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border",
-                isFull && "w-screen relative left-1/2 right-1/2 -mx-[50vw]",
-              )}
-            >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
               {[previous, focused].map(({ version }) => (
                 <div key={version.id} className="bg-surface">
                   <div className="meta px-4 py-2 border-b border-border">
@@ -176,10 +196,7 @@ export default async function VersionsListPage({
                   <iframe
                     src={rawContentPath({ slug, versionNumber: version.versionNumber })}
                     sandbox="allow-scripts"
-                    className={cn(
-                      "w-full bg-white",
-                      isFull ? "h-[calc(100vh-160px)]" : "h-[70vh]",
-                    )}
+                    className="w-full bg-white h-[70vh]"
                   />
                 </div>
               ))}
@@ -250,7 +267,7 @@ export default async function VersionsListPage({
                   </Link>
                 </Button>
                 {version.versionNumber > 1 && (
-                  <Button asChild variant="ghost" size="sm">
+                  <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                     <Link
                       href={`/${workspace}/a/${slug}/versions?diff=${version.versionNumber}`}
                     >
