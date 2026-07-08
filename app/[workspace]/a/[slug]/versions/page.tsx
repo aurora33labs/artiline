@@ -12,15 +12,26 @@ import { VersionDiff } from "@/components/version-diff";
 import { VersionRowActions } from "@/components/version-row-actions";
 import { Button } from "@/components/ui/button";
 
+type VersionRow = {
+  version: typeof schema.artifactVersions.$inferSelect;
+  author: { id: string; name: string | null; email: string };
+  reviewer: { id: string; name: string | null; email: string } | null;
+};
+
 export default async function VersionsListPage({
   params,
   searchParams,
 }: {
   params: Promise<{ workspace: string; slug: string }>;
-  searchParams: Promise<{ diff?: string; view?: string; full?: string }>;
+  searchParams: Promise<{
+    diff?: string;
+    against?: string;
+    view?: string;
+    full?: string;
+  }>;
 }) {
   const { workspace, slug } = await params;
-  const { diff, view, full } = await searchParams;
+  const { diff, against: againstParam, view, full } = await searchParams;
   const { workspace: ws, session, role } = await requireMemberPage(workspace);
   const t = await getTranslations("versions");
   const fmt = await getFormatter();
@@ -43,7 +54,7 @@ export default async function VersionsListPage({
     role === "admin";
 
   const reviewers = alias(schema.users, "reviewers");
-  const versions = await db
+  const versions: VersionRow[] = await db
     .select({
       version: schema.artifactVersions,
       author: { id: schema.users.id, name: schema.users.name, email: schema.users.email },
@@ -66,16 +77,73 @@ export default async function VersionsListPage({
     diffTarget && Number.isFinite(diffTarget)
       ? versions.find((v) => v.version.versionNumber === diffTarget)
       : null;
-  const previous = focused
+
+  // Two possible comparison partners for the focused version: the one right
+  // before it by number (changelog-style, "what did this step change") or the
+  // live version (review/rollback-style, "how does this differ from what's
+  // published now"). "Current" isn't a valid target when focused IS current
+  // (nothing to compare against itself); "previous" isn't valid for V1.
+  const previousByNumber = focused
     ? versions.find(
         (v) => v.version.versionNumber === focused.version.versionNumber - 1,
       )
     : null;
+  const currentRow =
+    versions.find((v) => v.version.id === artifact.currentVersionId) ?? null;
+  const focusedIsCurrent = focused?.version.id === artifact.currentVersionId;
+
+  const canDiffVsCurrent = !!focused && !focusedIsCurrent && !!currentRow;
+  const canDiffVsPrevious = !!previousByNumber;
+  const showAgainstToggle = canDiffVsCurrent && canDiffVsPrevious;
+
+  // Default to "current" (the common case: review a proposal or check drift
+  // from what's live) unless it isn't valid for this row, or the caller
+  // explicitly asked for "previous".
+  const against: "current" | "previous" =
+    againstParam === "previous" && canDiffVsPrevious
+      ? "previous"
+      : canDiffVsCurrent
+        ? "current"
+        : "previous";
+
+  const compareTarget = against === "current" ? currentRow : previousByNumber;
+
+  // Chronological order for display — independent of which one is "focused"
+  // vs "compareTarget". Diffing an old row against current (e.g. V1 vs
+  // current V3) must still read "V1 → V3", not backwards.
+  const olderRow =
+    focused && compareTarget
+      ? focused.version.versionNumber <= compareTarget.version.versionNumber
+        ? focused
+        : compareTarget
+      : null;
+  const newerRow =
+    focused && compareTarget
+      ? focused.version.versionNumber <= compareTarget.version.versionNumber
+        ? compareTarget
+        : focused
+      : null;
+
+  function diffHref(overrides: {
+    against?: "current" | "previous";
+    view?: "visual" | "text";
+    full?: boolean;
+  } = {}): string {
+    const params = new URLSearchParams();
+    params.set("diff", String(diff));
+    params.set("against", overrides.against ?? against);
+    params.set("view", overrides.view ?? diffView);
+    if (overrides.full) params.set("full", "1");
+    return `/${workspace}/a/${slug}/versions?${params.toString()}`;
+  }
 
   const isRenderable = (v: typeof schema.artifactVersions.$inferSelect) =>
     v.type === "html" || isReactRenderable(v.type, v.language);
   const canRenderVisual =
-    !!focused && !!previous && isRenderable(focused.version) && isRenderable(previous.version);
+    !!focused &&
+    !!compareTarget &&
+    isRenderable(focused.version) &&
+    isRenderable(compareTarget.version);
   const diffView: "visual" | "text" =
     view === "text" ? "text" : canRenderVisual ? "visual" : "text";
   const isFull = full === "1" && diffView === "visual" && canRenderVisual;
@@ -83,32 +151,32 @@ export default async function VersionsListPage({
   // Text diff needs full content of both versions — resolve from DB or object
   // storage. Skip the fetch entirely when showing the visual (iframe) diff.
   const diffContent =
-    focused && previous && diffView === "text"
+    olderRow && newerRow && diffView === "text"
       ? {
-          old: await getContent(previous.version),
-          new: await getContent(focused.version),
+          old: await getContent(olderRow.version),
+          new: await getContent(newerRow.version),
         }
       : null;
 
-  if (isFull && focused && previous) {
+  if (isFull && olderRow && newerRow) {
     return (
       <div className="hidden sm:flex fixed inset-0 z-50 bg-background flex-col">
         <header className="flex items-center justify-between gap-3 px-4 h-14 border-b border-border shrink-0">
           <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
             {t("diffHeading", {
-              from: previous.version.versionNumber,
-              to: focused.version.versionNumber,
+              from: olderRow.version.versionNumber,
+              to: newerRow.version.versionNumber,
             })}
           </h2>
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual`}>
+            <Link href={diffHref({ view: "visual" })}>
               <Minimize2 className="size-4" />
               {t("diffCollapse")}
             </Link>
           </Button>
         </header>
         <div className="grid grid-cols-2 gap-px bg-border flex-1 min-h-0">
-          {[previous, focused].map(({ version }) => (
+          {[olderRow, newerRow].map(({ version }) => (
             <div key={version.id} className="bg-surface flex flex-col min-h-0">
               <div className="meta px-4 py-2 border-b border-border shrink-0">
                 V{String(version.versionNumber).padStart(3, "0")} · {version.title}
@@ -135,16 +203,40 @@ export default async function VersionsListPage({
         </p>
       </div>
 
-      {focused && previous && (
+      {olderRow && newerRow && (
         <section className="hidden sm:block space-y-3">
           <header className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
               {t("diffHeading", {
-                from: previous.version.versionNumber,
-                to: focused.version.versionNumber,
+                from: olderRow.version.versionNumber,
+                to: newerRow.version.versionNumber,
               })}
             </h2>
             <div className="flex items-center gap-2">
+              {showAgainstToggle && (
+                <div className="flex border border-border rounded-sm overflow-hidden">
+                  <Button
+                    asChild
+                    variant={against === "current" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={diffHref({ against: "current" })}>
+                      {t("diffAgainstCurrent")}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant={against === "previous" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none"
+                  >
+                    <Link href={diffHref({ against: "previous" })}>
+                      {t("diffAgainstPrevious")}
+                    </Link>
+                  </Button>
+                </div>
+              )}
               {canRenderVisual && (
                 <div className="flex border border-border rounded-sm overflow-hidden">
                   <Button
@@ -153,7 +245,7 @@ export default async function VersionsListPage({
                     size="sm"
                     className="rounded-none"
                   >
-                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual`}>
+                    <Link href={diffHref({ view: "visual" })}>
                       {t("diffVisual")}
                     </Link>
                   </Button>
@@ -163,7 +255,7 @@ export default async function VersionsListPage({
                     size="sm"
                     className="rounded-none"
                   >
-                    <Link href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=text`}>
+                    <Link href={diffHref({ view: "text" })}>
                       {t("diffText")}
                     </Link>
                   </Button>
@@ -171,9 +263,7 @@ export default async function VersionsListPage({
               )}
               {diffView === "visual" && canRenderVisual && (
                 <Button asChild variant="ghost" size="sm">
-                  <Link
-                    href={`/${workspace}/a/${slug}/versions?diff=${diff}&view=visual&full=1`}
-                  >
+                  <Link href={diffHref({ view: "visual", full: true })}>
                     <Maximize2 className="size-4" />
                     {t("diffFullscreen")}
                   </Link>
@@ -188,7 +278,7 @@ export default async function VersionsListPage({
           </header>
           {diffView === "visual" && canRenderVisual ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
-              {[previous, focused].map(({ version }) => (
+              {[olderRow, newerRow].map(({ version }) => (
                 <div key={version.id} className="bg-surface">
                   <div className="meta px-4 py-2 border-b border-border">
                     V{String(version.versionNumber).padStart(3, "0")} · {version.title}
@@ -205,8 +295,8 @@ export default async function VersionsListPage({
             <VersionDiff
               oldContent={diffContent.old}
               newContent={diffContent.new}
-              oldLabel={`V${previous.version.versionNumber} · ${previous.version.title}`}
-              newLabel={`V${focused.version.versionNumber} · ${focused.version.title}`}
+              oldLabel={`V${olderRow.version.versionNumber} · ${olderRow.version.title}`}
+              newLabel={`V${newerRow.version.versionNumber} · ${newerRow.version.title}`}
             />
           ) : null}
         </section>
@@ -215,13 +305,16 @@ export default async function VersionsListPage({
       <ol className="border border-border bg-surface divide-y divide-border">
         {versions.map(({ version, author, reviewer }) => {
           const isCurrent = artifact.currentVersionId === version.id;
+          // A version has something to diff against unless it's the only one
+          // in the artifact's history (current AND the sole version).
+          const hasDiffTarget = versions.length > 1;
           return (
             <li
               key={version.id}
               className="px-6 py-4 flex flex-wrap items-center justify-between gap-3"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="font-display font-bold tracking-[0.06em]">
                     V{String(version.versionNumber).padStart(3, "0")}
                   </span>
@@ -244,7 +337,7 @@ export default async function VersionsListPage({
                     </span>
                   )}
                 </div>
-                <div className="meta text-muted-foreground">
+                <div className="meta text-muted-foreground line-clamp-2">
                   {(author.name ?? author.email).toUpperCase()} ·{" "}
                   {fmt
                     .dateTime(version.createdAt, {
@@ -258,7 +351,7 @@ export default async function VersionsListPage({
                   {version.message && ` · ${version.message}`}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-auto shrink-0">
                 <Button asChild variant="outline" size="sm">
                   <Link
                     href={`/${workspace}/a/${slug}/v/${version.versionNumber}`}
@@ -266,7 +359,7 @@ export default async function VersionsListPage({
                     {t("view")}
                   </Link>
                 </Button>
-                {version.versionNumber > 1 && (
+                {hasDiffTarget && (
                   <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                     <Link
                       href={`/${workspace}/a/${slug}/versions?diff=${version.versionNumber}`}

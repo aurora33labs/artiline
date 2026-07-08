@@ -699,6 +699,8 @@
     "view": "Ver",
     "diff": "Diff",
     "diffHeading": "Diff V{from} → V{to}",
+    "diffAgainstCurrent": "Actual",
+    "diffAgainstPrevious": "Anterior",
     "diffVisual": "Visual",
     "diffText": "Texto",
     "diffFullscreen": "Pantalla completa",
