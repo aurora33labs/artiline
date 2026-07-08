@@ -250,6 +250,7 @@ async function PasswordPrompt({
           </form>
         </div>
       </div>
+      <PublicFooter />
     </main>
   );
 }
