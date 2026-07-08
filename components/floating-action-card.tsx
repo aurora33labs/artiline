@@ -23,6 +23,7 @@ import {
   MousePointer2,
   Code2,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "next-intl";
@@ -55,6 +56,7 @@ import { ReactionsModal } from "@/components/reactions-modal";
 import { ArtifactSettingsModal } from "@/components/artifact-settings-modal";
 import { PublishVersionDialog } from "@/components/publish-version-dialog";
 import { ProposeVersionDialog } from "@/components/propose-version-dialog";
+import { AiEditDialog } from "@/components/ai-edit-dialog";
 
 // Shared so the "Edit" dropdown trigger matches the dock buttons exactly.
 const DOCK_BASE =
@@ -113,6 +115,7 @@ export function FloatingActionCard({
   members = [],
   analyticsEnabled = false,
   cleanShare = false,
+  aiEditModels = [],
 }: {
   title: string;
   type: "html" | "markdown" | "code";
@@ -137,6 +140,7 @@ export function FloatingActionCard({
   members?: { id: string; name: string | null; email: string }[];
   analyticsEnabled?: boolean;
   cleanShare?: boolean;
+  aiEditModels?: { id: string; label: string }[];
 }) {
   const { annotations, sidebarOpen, setSidebarOpen, setIsPlacing, isInspecting, setIsInspecting } = useAnnotations();
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -144,6 +148,7 @@ export function FloatingActionCard({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [proposeOpen, setProposeOpen] = useState(false);
+  const [aiEditOpen, setAiEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -160,6 +165,7 @@ export function FloatingActionCard({
     format.dateTime(d, { day: "numeric", month: "short", year: "numeric" });
   const hasUpdates = versionCount > 1;
   const canManage = !!canEdit && !!workspaceSlug && !!artifactSlug;
+  const canUseAiEdit = canManage && aiEditModels.length > 0;
   const canChangeAccess = !!canEdit && !!workspaceSlug;
   const canRemove = !!canDelete && !!workspaceSlug;
   // A member who isn't an editor may propose a version (review flow).
@@ -356,6 +362,17 @@ export function FloatingActionCard({
                         </MenuChip>
                         {t("updateVersion")}
                       </DropdownMenuItem>
+                      {canUseAiEdit && (
+                        <DropdownMenuItem
+                          className={MENU_ROW}
+                          onSelect={() => setTimeout(() => setAiEditOpen(true))}
+                        >
+                          <MenuChip>
+                            <Sparkles />
+                          </MenuChip>
+                          {t("editWithAi")}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild className={MENU_ROW}>
                         <Link
                           href={`/${workspaceSlug}/a/${artifactSlug}/versions`}
@@ -516,6 +533,16 @@ export function FloatingActionCard({
                 }}
               />
             )}
+            {canUseAiEdit && (
+              <SheetRow
+                icon={<Sparkles className="size-4" />}
+                label={t("editWithAi")}
+                onClick={() => {
+                  setMoreOpen(false);
+                  setAiEditOpen(true);
+                }}
+              />
+            )}
             {canProposeChanges && !canManage && (
               <SheetRow
                 icon={<GitPullRequestArrow className="size-4" />}
@@ -609,6 +636,16 @@ export function FloatingActionCard({
           defaultTitle={title}
           open={publishOpen}
           onOpenChange={setPublishOpen}
+        />
+      )}
+
+      {canUseAiEdit && workspaceSlug && (
+        <AiEditDialog
+          artifactId={artifactId}
+          workspaceSlug={workspaceSlug}
+          models={aiEditModels}
+          open={aiEditOpen}
+          onOpenChange={setAiEditOpen}
         />
       )}
 

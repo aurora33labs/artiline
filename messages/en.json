@@ -364,6 +364,7 @@
     "share": "Link to share",
     "copyEmbed": "Copy embed code",
     "updateVersion": "Update file",
+    "editWithAi": "Edit with AI",
     "copied": "Copied!",
     "exportPng": "Export PNG",
     "download": "Download",
@@ -659,6 +660,11 @@
     "ERR_EXPORT_HTML_ONLY": "Only HTML supports PNG export",
     "ERR_EXPORT_R2_NOT_CONFIGURED": "Storage not configured. Contact your admin.",
     "ERR_EXPORT_RENDER_FAILED": "Could not render the component.",
+    "ERR_INVALID_MODEL": "Unknown model. Refresh the page and try again.",
+    "NOT_CONFIGURED": "AI edit isn't configured on this server.",
+    "ERR_UPSTREAM": "The model provider failed. Try again.",
+    "ERR_RATE_LIMITED": "Rate limited by the model provider. Try again shortly.",
+    "ERR_EMPTY_RESPONSE": "The model returned an empty response. Try rephrasing.",
     "LIMIT_ARTIFACTS": "Artifact limit reached. Upgrade your plan to create more.",
     "LIMIT_MEMBERS": "Member limit reached. Upgrade your plan to invite more.",
     "UNAUTH": "Not authenticated",
@@ -727,6 +733,17 @@
       "approved": "APPROVED",
       "changes_requested": "CHANGES REQUESTED"
     }
+  },
+  "aiEdit": {
+    "title": "Edit with AI",
+    "description": "Describe the change. The model rewrites the whole file and publishes it as a new version.",
+    "modelLabel": "Model",
+    "instructionLabel": "Instruction",
+    "instructionPlaceholder": "e.g. Make the header sticky and switch the accent color to purple",
+    "generate": "Generate & publish",
+    "generating": "Generating…",
+    "success": "AI edit published",
+    "noInstruction": "Write an instruction first"
   },
   "emails": {
     "magicLink": {

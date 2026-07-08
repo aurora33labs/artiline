@@ -36,6 +36,7 @@ export type Feature =
   | "embed_oembed"
   | "activity_log"
   | "search"
+  | "ai_edit"
   | "custom_domain"
   | "white_label"
   | "tracking_advanced"
@@ -62,6 +63,10 @@ export const FEATURES: Record<Feature, FeatureDef> = {
   embed_oembed: { core: true, minTier: "oss" },
   activity_log: { core: true, minTier: "oss" },
   search: { core: true, minTier: "oss" },
+  // Always on; actually usable once the operator sets OPENROUTER_API_KEY +
+  // ARTILINE_AI_MODEL_1/2/3 (lib/ai/openrouter.ts). Not gated by tier — the
+  // operator brings and pays for their own OpenRouter key either way.
+  ai_edit: { core: true, minTier: "oss" },
 
   custom_domain: {
     core: false,
