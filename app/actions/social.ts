@@ -110,6 +110,7 @@ export async function addComment(formData: FormData) {
 
   await emitEvent(artifact.workspaceId, "comment.created", {
     artifactId: artifact.id,
+    slug: data.slug ?? artifact.slug,
     versionId,
     userId: session?.user?.id ?? null,
     authorName: data.authorName ?? null,

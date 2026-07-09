@@ -157,6 +157,7 @@ export async function deleteArtifact(formData: FormData) {
     artifactId: artifact.id,
     slug: artifact.slug,
     actorUserId: session.user.id,
+    actorName: session.user.name ?? session.user.email ?? null,
   }).catch(() => {});
   await recordEvent({
     workspaceId: workspace.id,
@@ -229,7 +230,7 @@ export async function rollbackToVersion(formData: FormData) {
 
   const isDirect = data.mode === "direct";
 
-  await db.transaction(async (tx) => {
+  const toVersionNumber = await db.transaction(async (tx) => {
     const [{ next }] = await tx
       .select({
         next: sql<number>`coalesce(max(${schema.artifactVersions.versionNumber}), 0) + 1`,
@@ -264,6 +265,8 @@ export async function rollbackToVersion(formData: FormData) {
         ...(isDirect ? { currentVersionId: versionId } : {}),
       })
       .where(eq(schema.artifacts.id, artifact.id));
+
+    return Number(next);
   });
 
   await emitEvent(workspace.id, "version.rolled_back", {
@@ -271,7 +274,9 @@ export async function rollbackToVersion(formData: FormData) {
     slug: artifact.slug,
     fromVersionNumber: data.versionNumber,
     toVersionId: versionId,
+    toVersionNumber,
     direct: isDirect,
+    actorName: session.user.name ?? session.user.email ?? null,
   }).catch(() => {});
   await recordEvent({
     workspaceId: workspace.id,
@@ -437,6 +442,7 @@ export async function setReviewStatus(formData: FormData) {
       versionNumber: version.version.versionNumber,
       title: version.version.title,
       reviewedByUserId: session.user.id,
+      actorName: session.user.name ?? session.user.email ?? null,
     }).catch(() => {});
     await recordEvent({
       workspaceId: workspace.id,

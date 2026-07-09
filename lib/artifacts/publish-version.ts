@@ -122,6 +122,14 @@ export async function publishVersion(
       .catch(() => {});
   }
 
+  // AuthContext.session.user only carries `id` (may be a token) — resolve the
+  // display name for the webhook payload from the users table.
+  const [actor] = await db
+    .select({ name: schema.users.name, email: schema.users.email })
+    .from(schema.users)
+    .where(eq(schema.users.id, session.user.id))
+    .limit(1);
+
   await emitEvent(workspace.id, "version.published", {
     artifactId: artifact.id,
     slug: artifact.slug,
@@ -129,6 +137,7 @@ export async function publishVersion(
     title: input.title,
     message: input.message ?? null,
     authorUserId: session.user.id,
+    actorName: actor?.name ?? actor?.email ?? null,
   }).catch(() => {});
   await recordEvent({
     workspaceId: workspace.id,

@@ -3,6 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 
 export type WebhookEvent =
+  | "artifact.created"
   | "version.published"
   | "version.proposed"
   | "version.approved"
@@ -13,6 +14,7 @@ export type WebhookEvent =
   | "artifact.deleted";
 
 export const ALL_EVENTS: WebhookEvent[] = [
+  "artifact.created",
   "version.published",
   "version.proposed",
   "version.approved",

@@ -86,6 +86,7 @@ export async function POST(req: Request) {
 
   await emitEvent(ctx.artifact.workspaceId, "comment.created", {
     artifactId: ctx.artifact.id,
+    slug: ctx.artifact.slug,
     authorName: data.authorName,
     body: data.body,
     path: data.path,

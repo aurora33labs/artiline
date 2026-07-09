@@ -13,6 +13,7 @@ import {
 import { generateThumbnail } from "@/lib/artifact-thumb-gen";
 import { isReactRenderable } from "@/lib/detect-artifact";
 import { recordEvent } from "@/lib/activity";
+import { emitEvent } from "@/lib/webhooks/emit";
 
 export type ArtifactType = "html" | "markdown" | "code";
 export type Visibility = "internal_pw" | "internal" | "public_pw" | "public";
@@ -113,6 +114,23 @@ export async function createArtifact(
     subjectType: "artifact",
     subjectId: created.id,
     payload: { slug: created.slug, title: input.title, type: input.type },
+  }).catch(() => {});
+
+  // AuthContext.session.user only carries `id` (may be a token) — resolve the
+  // display name for the webhook payload from the users table.
+  const [actor] = await db
+    .select({ name: schema.users.name, email: schema.users.email })
+    .from(schema.users)
+    .where(eq(schema.users.id, session.user.id))
+    .limit(1);
+
+  await emitEvent(workspace.id, "artifact.created", {
+    artifactId: created.id,
+    slug: created.slug,
+    title: input.title,
+    type: input.type,
+    visibility: input.visibility,
+    actorName: actor?.name ?? actor?.email ?? null,
   }).catch(() => {});
 
   // Fire-and-forget thumbnail (HTML + renderable React, best-effort). The

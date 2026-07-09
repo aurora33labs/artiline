@@ -551,7 +551,18 @@
       "pending": "PENDIENTE",
       "failed": "FALLIDA"
     },
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "eventInfo": {
+      "artifact_created": { "label": "Artifact creado", "desc": "Cuando se crea un nuevo artifact" },
+      "version_published": { "label": "Versión publicada", "desc": "Cuando una versión se publica en vivo" },
+      "version_proposed": { "label": "Cambio propuesto", "desc": "Alguien propone una versión para revisión" },
+      "version_approved": { "label": "Propuesta aprobada", "desc": "Un revisor aprueba una propuesta" },
+      "version_changes_requested": { "label": "Cambios solicitados", "desc": "Un revisor pide ajustes a una propuesta" },
+      "version_rolled_back": { "label": "Reversión de versión", "desc": "Se revierte a una versión anterior" },
+      "comment_created": { "label": "Nuevo comentario", "desc": "Alguien comenta en un artifact" },
+      "artifact_viewed": { "label": "Artifact visto", "desc": "Un visitante abre el artifact (máx 1/hora)" },
+      "artifact_deleted": { "label": "Artifact eliminado", "desc": "Un artifact se borra" }
+    }
   },
   "notifications": {
     "eyebrow": "TU ACTIVIDAD",

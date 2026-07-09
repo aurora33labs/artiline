@@ -134,6 +134,7 @@ export async function proposeVersion(
     versionNumber: nextNumber,
     title: input.title,
     authorUserId: session.user.id,
+    actorName,
   }).catch(() => {});
   await recordEvent({
     workspaceId: workspace.id,

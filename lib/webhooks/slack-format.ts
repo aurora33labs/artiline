@@ -22,27 +22,36 @@ function slackText(event: string, p: Record<string, unknown>): string {
   const title = str(p.title) ?? str(p.slug) ?? "artifact";
   const slug = str(p.slug);
   const versionNumber = p.versionNumber != null ? `v${p.versionNumber}` : null;
+  const actor = str(p.actorName) ?? str(p.authorName);
+  const actorLine = actor ? `\nBy: ${actor}` : "";
+  const url =
+    slug && process.env.AUTH_URL
+      ? `${process.env.AUTH_URL}/a/${slug}`
+      : null;
+  const linkLine = url ? `\n<${url}|View artifact →>` : "";
 
   switch (event) {
+    case "artifact.created":
+      return `*Artifact created* — ${title}${actorLine}${linkLine}`;
     case "version.published":
-      return `*Version published* — ${title}${versionNumber ? ` ${versionNumber}` : ""}`;
+      return `*Version published* — ${title}${versionNumber ? ` ${versionNumber}` : ""}${actorLine}${linkLine}`;
     case "version.proposed":
-      return `*Version proposed* — ${title}${versionNumber ? ` ${versionNumber}` : ""}`;
+      return `*Version proposed* — ${title}${versionNumber ? ` ${versionNumber}` : ""}${actorLine}${linkLine}`;
     case "version.approved":
-      return `*Version approved* — ${title}${versionNumber ? ` ${versionNumber}` : ""}`;
+      return `*Version approved* — ${title}${versionNumber ? ` ${versionNumber}` : ""}${actorLine}${linkLine}`;
     case "version.changes_requested":
-      return `*Changes requested* — ${title}${versionNumber ? ` ${versionNumber}` : ""}`;
+      return `*Changes requested* — ${title}${versionNumber ? ` ${versionNumber}` : ""}${actorLine}${linkLine}`;
     case "version.rolled_back":
-      return `*Rolled back* — ${title}${p.toVersionNumber != null ? ` to v${p.toVersionNumber}` : ""}`;
+      return `*Rolled back* — ${title}${p.toVersionNumber != null ? ` to v${p.toVersionNumber}` : ""}${actorLine}${linkLine}`;
     case "comment.created": {
       const author = str(p.authorName) ?? "Someone";
       const body = str(p.body);
-      return `*${author} commented*${slug ? ` on ${slug}` : ""}${body ? `: ${truncate(body, 200)}` : ""}`;
+      return `*${author} commented*${slug ? ` on ${slug}` : ""}${body ? `: ${truncate(body, 200)}` : ""}${linkLine}`;
     }
     case "artifact.viewed":
       return `*Artifact viewed* — ${title}`;
     case "artifact.deleted":
-      return `*Artifact deleted* — ${title}`;
+      return `*Artifact deleted* — ${title}${actorLine}`;
     default:
       return `*${event}*\n${Object.entries(p)
         .filter(([k]) => k !== "event" && k !== "ts")

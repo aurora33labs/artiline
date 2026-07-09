@@ -10,6 +10,7 @@ import { requireMemberPage } from "@/lib/tenant";
 import { assertCanCreateArtifact } from "@/lib/limits";
 import { newVersionId } from "@/lib/artifact-content";
 import { recordEvent } from "@/lib/activity";
+import { emitEvent } from "@/lib/webhooks/emit";
 
 const createSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -82,6 +83,15 @@ export async function createExternalSite(formData: FormData) {
     subjectType: "artifact",
     subjectId: artifact.id,
     payload: { slug: artifact.slug, name: data.name, origin },
+  }).catch(() => {});
+
+  await emitEvent(workspace.id, "artifact.created", {
+    artifactId: artifact.id,
+    slug: artifact.slug,
+    title: data.name,
+    type: "external",
+    visibility: "internal",
+    actorName: session.user.name ?? session.user.email,
   }).catch(() => {});
 
   redirect(`/${data.workspaceSlug}/a/${artifact.slug}`);

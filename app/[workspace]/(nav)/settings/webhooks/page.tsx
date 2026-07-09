@@ -15,6 +15,9 @@ import {
 
 const RECENT_DELIVERIES_PER_WEBHOOK = 25;
 
+/** next-intl uses "." as a namespace separator, so keys use "_" instead. */
+const evKey = (ev: string) => ev.replaceAll(".", "_");
+
 export default async function WebhooksPage({
   params,
 }: {
@@ -82,18 +85,22 @@ export default async function WebhooksPage({
             <legend className="meta">{t("eventsLegend")}</legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ALL_EVENTS.map((ev) => (
-                <label
-                  key={ev}
-                  className="flex items-center gap-2 text-sm font-mono"
-                >
+                <label key={ev} className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
                     name="events"
                     value={ev}
                     defaultChecked
-                    className="size-4 accent-primary"
+                    className="size-4 accent-primary mt-0.5"
                   />
-                  {ev}
+                  <span>
+                    <span className="font-medium">
+                      {t(`eventInfo.${evKey(ev)}.label`)}
+                    </span>
+                    <span className="block text-muted-foreground text-xs">
+                      {t(`eventInfo.${evKey(ev)}.desc`)}
+                    </span>
+                  </span>
                 </label>
               ))}
             </div>
@@ -167,7 +174,10 @@ export default async function WebhooksPage({
                       <span className="font-mono text-sm truncate">{w.url}</span>
                     </div>
                     <div className="meta">
-                      {w.events.join(" · ")} · SECRET{" "}
+                      {w.events
+                        .map((ev) => t(`eventInfo.${evKey(ev)}.label`))
+                        .join(" · ")}{" "}
+                      · SECRET{" "}
                       <code className="font-mono">{w.secret.slice(0, 8)}…</code>
                     </div>
                   </div>
@@ -220,7 +230,7 @@ export default async function WebhooksPage({
                           >
                             {t(`deliveryStatus.${d.status as "success" | "pending" | "failed"}`)}
                           </span>
-                          <span className="font-mono">{d.event}</span>
+                          <span>{t(`eventInfo.${evKey(d.event)}.label`)}</span>
                           {d.responseCode != null && (
                             <span className="text-muted-foreground">
                               HTTP {d.responseCode}
