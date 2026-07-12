@@ -126,9 +126,11 @@ export async function createArtifact(
 
   await emitEvent(workspace.id, "artifact.created", {
     artifactId: created.id,
+    workspaceSlug: workspace.slug,
     slug: created.slug,
     title: input.title,
     type: input.type,
+    versionNumber: 1,
     visibility: input.visibility,
     actorName: actor?.name ?? actor?.email ?? null,
   }).catch(() => {});

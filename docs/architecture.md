@@ -101,3 +101,22 @@ email domain is allowlisted.
 - `/api/sso/[workspace]/{login,callback,metadata}` — SAML SSO
 - `/api/cron/{deliver-webhooks,prune-audit}` — scheduled jobs
 - `/api/auth/[...nextauth]` — Auth.js handler
+- `/api/artifacts/[id]/content` — token-authenticated content read (`Bearer artl_...`),
+  for integrations without a session (e.g. webhook-driven ingesters); optional
+  `?v=<versionNumber>` reads a pinned version instead of the current one
+
+### Webhooks
+
+`webhooks` + `webhook_deliveries` (HMAC-signed, cron-delivered, retried on
+non-2xx). Events: `artifact.created`, `version.published`, `version.proposed`,
+`version.approved`, `version.changes_requested`, `version.rolled_back`,
+`comment.created`, `artifact.viewed`, `artifact.deleted` (`lib/webhooks/emit.ts`).
+Signature: header `t=<unix-seconds>,v1=<hex>`, HMAC-SHA256 of `${t}.${rawBody}`
+with the webhook's secret (`lib/webhooks/sign.ts`) — receivers must recompute
+over that exact string, not the raw body alone.
+
+`artifact.created` and `version.published` payloads carry `workspaceSlug`,
+`slug`, `type`, and `versionNumber` — enough for a receiver to resolve the
+workspace and pick a content converter, then fetch the actual bytes via
+`GET /api/artifacts/[id]/content` (content itself never rides in the payload;
+artifacts run up to `MAX_CONTENT_BYTES`).

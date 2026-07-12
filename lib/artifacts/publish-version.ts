@@ -132,7 +132,9 @@ export async function publishVersion(
 
   await emitEvent(workspace.id, "version.published", {
     artifactId: artifact.id,
+    workspaceSlug: workspace.slug,
     slug: artifact.slug,
+    type: input.type,
     versionNumber: nextNumber,
     title: input.title,
     message: input.message ?? null,
