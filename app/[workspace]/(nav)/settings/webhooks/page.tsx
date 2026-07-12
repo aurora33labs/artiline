@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { requireMemberPage, requireRolePage } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
 import { WebhookCreateForm } from "@/components/settings/webhook-create-form";
+import { ALL_EVENTS } from "@/lib/webhooks/emit";
 import {
   toggleWebhook,
   deleteWebhook,
@@ -65,7 +66,7 @@ export default async function WebhooksPage({
         <h2 className="text-base font-sans font-semibold normal-case tracking-normal">
           {t("newWebhook")}
         </h2>
-        <WebhookCreateForm workspaceSlug={slug} />
+        <WebhookCreateForm workspaceSlug={slug} events={ALL_EVENTS} />
       </section>
 
       <section className="space-y-3">

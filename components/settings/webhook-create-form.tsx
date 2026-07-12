@@ -7,13 +7,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ALL_EVENTS } from "@/lib/webhooks/emit";
 import { createWebhook, type CreateWebhookState } from "@/app/[workspace]/(nav)/settings/webhooks/actions";
 
 /** next-intl uses "." as a namespace separator, so keys use "_" instead. */
 const evKey = (ev: string) => ev.replaceAll(".", "_");
 
-export function WebhookCreateForm({ workspaceSlug }: { workspaceSlug: string }) {
+// events viene del server component (page.tsx): ALL_EVENTS vive en lib/webhooks/emit.ts,
+// que importa "server-only" (arrastra el driver pg) — no se puede importar desde un client
+// component sin romper el bundle del navegador.
+export function WebhookCreateForm({ workspaceSlug, events }: { workspaceSlug: string; events: readonly string[] }) {
   const t = useTranslations("webhooks");
   const tCommon = useTranslations("mcp"); // banner "cópialo ahora" genérico, ya usado por API keys
   const [state, action, pending] = useActionState<CreateWebhookState, FormData>(
@@ -40,7 +42,7 @@ export function WebhookCreateForm({ workspaceSlug }: { workspaceSlug: string }) 
         <fieldset className="space-y-2">
           <legend className="meta">{t("eventsLegend")}</legend>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {ALL_EVENTS.map((ev) => (
+            {events.map((ev) => (
               <label key={ev} className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"
