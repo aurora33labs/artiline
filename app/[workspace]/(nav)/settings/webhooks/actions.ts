@@ -15,7 +15,21 @@ const createSchema = z.object({
   format: z.enum(["raw", "slack"]).default("raw"),
 });
 
-export async function createWebhook(formData: FormData) {
+export type CreateWebhookState =
+  | { ok: true; secret: string }
+  | { ok: false; error: string }
+  | null;
+
+/**
+ * Mint a webhook. The raw HMAC secret is returned exactly once in the action
+ * state so the page can show a copy-once banner (same pattern as API keys);
+ * afterwards only the row (with its full secret, used server-side to sign
+ * deliveries) lives in the DB — nothing re-reveals it in the UI.
+ */
+export async function createWebhook(
+  _prev: CreateWebhookState,
+  formData: FormData,
+): Promise<CreateWebhookState> {
   const url = formData.get("url");
   const events = formData.getAll("events").map(String);
   const data = createSchema.parse({
@@ -31,18 +45,22 @@ export async function createWebhook(formData: FormData) {
   const validEvents = data.events.filter((e) =>
     (ALL_EVENTS as readonly string[]).includes(e),
   );
-  if (validEvents.length === 0) throw new Error("ERR_NO_VALID_EVENTS");
+  if (validEvents.length === 0) {
+    return { ok: false, error: "ERR_NO_VALID_EVENTS" };
+  }
 
+  const secret = randomBytes(32).toString("hex");
   await db.insert(schema.webhooks).values({
     workspaceId: workspace.id,
     url: data.url,
-    secret: randomBytes(32).toString("hex"),
+    secret,
     events: validEvents,
     enabled: true,
     format: data.format,
   });
 
   revalidatePath(`/${data.workspaceSlug}/settings/webhooks`);
+  return { ok: true, secret };
 }
 
 const toggleSchema = z.object({
