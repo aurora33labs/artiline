@@ -1,14 +1,82 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   requireMemberOrToken,
   requireRole,
+  requireApiKey,
+  bearerToken,
   guardErrorResponse,
 } from "@/lib/tenant";
+import { db, schema } from "@/lib/db";
 import { MAX_CONTENT_BYTES } from "@/lib/artifact-content";
 import { createArtifact } from "@/lib/artifacts/create";
 
 export const runtime = "nodejs";
+
+const LIST_PAGE_SIZE = 50;
+
+/**
+ * Listado estructurado (JSON) de artifacts de un workspace, token-auth
+ * `artl_...` — para integraciones externas que necesitan enumerar TODO
+ * (ej. reconciliación de Regenta), a diferencia del tool MCP `list_artifacts`
+ * (texto para humanos, tope de 100, sin id). Cursor por (updatedAt, id) desc
+ * — id es nanoid, no ordenable por sí solo, sirve como desempate estable.
+ */
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const workspaceSlug = url.searchParams.get("workspaceSlug");
+    if (!workspaceSlug) {
+      return NextResponse.json({ error: "ERR_INVALID" }, { status: 400 });
+    }
+    const auth = await requireApiKey(workspaceSlug, bearerToken(req.headers.get("authorization")) ?? "");
+
+    const cursorUpdatedAt = url.searchParams.get("cursorUpdatedAt");
+    const cursorId = url.searchParams.get("cursorId");
+    const cursorCondition =
+      cursorUpdatedAt && cursorId
+        ? sql`(${schema.artifacts.updatedAt}, ${schema.artifacts.id}) < (${new Date(cursorUpdatedAt)}, ${cursorId})`
+        : undefined;
+
+    const rows = await db
+      .select({
+        id: schema.artifacts.id,
+        slug: schema.artifacts.slug,
+        updatedAt: schema.artifacts.updatedAt,
+        type: schema.artifactVersions.type,
+        currentVersionNumber: schema.artifactVersions.versionNumber,
+      })
+      .from(schema.artifacts)
+      .leftJoin(schema.artifactVersions, eq(schema.artifactVersions.id, schema.artifacts.currentVersionId))
+      .where(
+        cursorCondition
+          ? and(eq(schema.artifacts.workspaceId, auth.workspace.id), cursorCondition)
+          : eq(schema.artifacts.workspaceId, auth.workspace.id),
+      )
+      .orderBy(desc(schema.artifacts.updatedAt), desc(schema.artifacts.id))
+      .limit(LIST_PAGE_SIZE + 1);
+
+    const hasMore = rows.length > LIST_PAGE_SIZE;
+    const page = rows.slice(0, LIST_PAGE_SIZE);
+    const last = page[page.length - 1];
+
+    return NextResponse.json({
+      artifacts: page.map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        type: r.type,
+        currentVersionNumber: r.currentVersionNumber,
+        updatedAt: r.updatedAt,
+      })),
+      nextCursor: hasMore && last ? { cursorUpdatedAt: last.updatedAt.toISOString(), cursorId: last.id } : null,
+    });
+  } catch (e) {
+    const guard = guardErrorResponse(e);
+    if (guard) return guard;
+    return NextResponse.json({ error: "ERR_INTERNAL" }, { status: 500 });
+  }
+}
 
 /**
  * Create an artifact. This is a Route Handler (not a Server Action) on purpose:

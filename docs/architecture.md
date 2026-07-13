@@ -104,6 +104,11 @@ email domain is allowlisted.
 - `/api/artifacts/[id]/content` — token-authenticated content read (`Bearer artl_...`),
   for integrations without a session (e.g. webhook-driven ingesters); optional
   `?v=<versionNumber>` reads a pinned version instead of the current one
+- `/api/artifacts?workspaceSlug=&cursor...` and `/api/artifacts/[id]/versions?workspaceSlug=` —
+  token-authenticated structured (JSON) listing, for external reconciliation (enumerate
+  everything in a workspace to backfill missed webhooks). Same auth as `.../content`;
+  distinct from the MCP tools `list_artifacts`/`list_versions`, which return
+  human-readable text and cap `list_artifacts` at 100 with no pagination
 
 ### Webhooks
 
