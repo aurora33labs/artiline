@@ -155,6 +155,7 @@ export async function deleteArtifact(formData: FormData) {
 
   await emitEvent(workspace.id, "artifact.deleted", {
     artifactId: artifact.id,
+    workspaceSlug: workspace.slug,
     slug: artifact.slug,
     actorUserId: session.user.id,
     actorName: session.user.name ?? session.user.email ?? null,
