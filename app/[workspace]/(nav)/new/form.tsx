@@ -17,7 +17,13 @@ import { ArtifactTypeBadge } from "@/components/artifact-type-icon";
 import { VisibilityPicker } from "@/components/visibility-picker";
 import type { Visibility } from "@/components/visibility-badge";
 
-export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
+export function NewArtifactForm({
+  workspaceSlug,
+  externalReviews,
+}: {
+  workspaceSlug: string;
+  externalReviews: boolean;
+}) {
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("internal");
@@ -55,12 +61,14 @@ export function NewArtifactForm({ workspaceSlug }: { workspaceSlug: string }) {
           }}
           onClear={() => setFile(null)}
         />
-        <p className="text-sm text-muted-foreground">
-          {t("externalSitePrompt")}{" "}
-          <Link href={`/${workspaceSlug}/new/external`} className="text-primary hover:underline">
-            {t("externalSiteLink")}
-          </Link>
-        </p>
+        {externalReviews && (
+          <p className="text-sm text-muted-foreground">
+            {t("externalSitePrompt")}{" "}
+            <Link href={`/${workspaceSlug}/new/external`} className="text-primary hover:underline">
+              {t("externalSiteLink")}
+            </Link>
+          </p>
+        )}
       </div>
     );
   }

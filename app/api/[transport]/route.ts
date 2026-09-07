@@ -8,7 +8,7 @@ import {
   resolveApiKey,
   type AuthContext,
 } from "@/lib/tenant";
-import { ACCESS_TOKEN_PREFIX } from "@/lib/oauth";
+import { ACCESS_TOKEN_PREFIX, OAUTH_SCOPES, type OAuthScope } from "@/lib/oauth";
 import { createArtifact } from "@/lib/artifacts/create";
 import { publishVersion } from "@/lib/artifacts/publish-version";
 import { resolveCurrentArtifact } from "@/lib/artifact-resolve";
@@ -41,6 +41,30 @@ function textError(text: string): ToolText {
 }
 function ctxOf(extra: { authInfo?: { extra?: { ctx?: unknown } } }): AuthContext | undefined {
   return extra.authInfo?.extra?.ctx as AuthContext | undefined;
+}
+
+/**
+ * Enforce the scopes the grant was actually issued with. `verifyToken` has
+ * always populated `authInfo.scopes`, but no tool read them, so an
+ * `artifacts:write` grant silently also granted reads — and a narrower grant
+ * would have been ignored just the same. A tool passes every scope that may
+ * satisfy it: `artifacts:write` implies read, so read tools accept either.
+ */
+function hasScope(
+  extra: { authInfo?: { scopes?: string[] } },
+  ...accepted: OAuthScope[]
+): boolean {
+  const granted = extra.authInfo?.scopes ?? [];
+  return accepted.some((s) => granted.includes(s));
+}
+
+const READ: OAuthScope[] = ["artifacts:read", "artifacts:write"];
+const WRITE: OAuthScope[] = ["artifacts:write"];
+
+function scopeError(...accepted: OAuthScope[]): ToolText {
+  return textError(
+    `Insufficient scope. This tool requires one of: ${accepted.join(", ")}.`,
+  );
 }
 
 const handler = createMcpHandler(
@@ -76,13 +100,9 @@ const handler = createMcpHandler(
         },
       },
       async (args, extra) => {
-        const ctx = extra.authInfo?.extra?.ctx as AuthContext | undefined;
-        if (!ctx) {
-          return {
-            isError: true,
-            content: [{ type: "text", text: "Not authenticated." }],
-          };
-        }
+        const ctx = ctxOf(extra);
+        if (!ctx) return textError("Not authenticated.");
+        if (!hasScope(extra, ...WRITE)) return scopeError(...WRITE);
         try {
           const { slug } = await createArtifact(ctx, {
             type: args.type,
@@ -137,6 +157,7 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const ctx = ctxOf(extra);
         if (!ctx) return textError("Not authenticated.");
+        if (!hasScope(extra, ...READ)) return scopeError(...READ);
         const rows = await db
           .select({
             slug: schema.artifacts.slug,
@@ -183,6 +204,7 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const ctx = ctxOf(extra);
         if (!ctx) return textError("Not authenticated.");
+        if (!hasScope(extra, ...READ)) return scopeError(...READ);
         const resolved = await resolveCurrentArtifact(args.slug);
         if (!resolved || resolved.artifact.workspaceId !== ctx.workspace.id)
           return textError("Artifact not found.");
@@ -229,6 +251,7 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const ctx = ctxOf(extra);
         if (!ctx) return textError("Not authenticated.");
+        if (!hasScope(extra, ...WRITE)) return scopeError(...WRITE);
         const resolved = await resolveCurrentArtifact(args.slug);
         if (!resolved || resolved.artifact.workspaceId !== ctx.workspace.id)
           return textError("Artifact not found.");
@@ -276,6 +299,7 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const ctx = ctxOf(extra);
         if (!ctx) return textError("Not authenticated.");
+        if (!hasScope(extra, ...READ)) return scopeError(...READ);
         const resolved = await resolveCurrentArtifact(args.slug);
         if (!resolved || resolved.artifact.workspaceId !== ctx.workspace.id)
           return textError("Artifact not found.");
@@ -328,11 +352,14 @@ const verifyToken = async (
         },
       };
     }
-    // Static API key (`artl_`, Claude Desktop via mcp-remote).
+    // Static API key (`artl_`, Claude Desktop via mcp-remote). Unlike an OAuth
+    // grant it carries no per-scope consent — it's a full workspace credential
+    // minted by a member in settings — so it gets every scope. Leaving this at
+    // `[]` would make the scope checks above reject every API-key call.
     const ctx = await resolveApiKey(bearerToken);
     return {
       token: bearerToken,
-      scopes: [],
+      scopes: [...OAUTH_SCOPES],
       clientId: ctx.workspace.id,
       extra: { ctx },
     };

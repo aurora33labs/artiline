@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPublicUrl } from "mcp-handler";
 import { OAuthMetadataSchema } from "@modelcontextprotocol/sdk/shared/auth.js";
-import { OAUTH_SCOPES } from "@/lib/oauth";
+import { dcrEnabled, OAUTH_SCOPES } from "@/lib/oauth";
 
 export const runtime = "nodejs";
 
@@ -27,7 +27,11 @@ export function GET(req: Request) {
     issuer: origin,
     authorization_endpoint: `${origin}/api/oauth/authorize`,
     token_endpoint: `${origin}/api/oauth/token`,
-    registration_endpoint: `${origin}/api/oauth/register`,
+    // Advertised only when registration is actually open, so a discovering
+    // client isn't sent to an endpoint that answers 404.
+    ...(dcrEnabled()
+      ? { registration_endpoint: `${origin}/api/oauth/register` }
+      : {}),
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code", "refresh_token"],
     code_challenge_methods_supported: ["S256"],

@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { getClientIp, isRateLimited, recordFailure } from "@/lib/rate-limit";
 import {
   CLIENT_SECRET_PREFIX,
+  dcrEnabled,
   displayPrefix,
   isAllowedRedirectUri,
   newSecret,
@@ -13,7 +14,12 @@ import { corsHeaders, corsPreflight } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+/** 404 (not 403) while registration is off — don't confirm the route exists. */
+const disabled = () =>
+  NextResponse.json({ error: "not_found" }, { status: 404, headers: corsHeaders() });
+
 export function OPTIONS() {
+  if (!dcrEnabled()) return disabled();
   return corsPreflight();
 }
 
@@ -22,6 +28,12 @@ export function OPTIONS() {
  * here before the authorization flow. Public per spec (no auth), but bounded:
  * IP rate limit, redirect_uri scheme/count validation. Claude registers a public
  * client (`token_endpoint_auth_method: "none"`) and proves itself with PKCE.
+ *
+ * OFF BY DEFAULT (`ARTILINE_OAUTH_DCR=1` to enable). "No auth" means a stranger
+ * can register a client called anything, pointing anywhere, and then send a
+ * workspace member a genuine authorize link for it — the registration is the
+ * first half of a consent phish. Deployments that don't need a self-registering
+ * connector shouldn't carry that.
  */
 const registerSchema = z.object({
   client_name: z.string().max(200).optional(),
@@ -33,6 +45,8 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!dcrEnabled()) return disabled();
+
   const ip = await getClientIp();
   const buckets = ip
     ? [{ key: ip, kind: "oauth-register-ip", limit: 10, windowMin: 60 }]

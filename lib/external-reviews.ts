@@ -9,10 +9,28 @@ export type ExternalSiteContext = {
   artifact: typeof schema.artifacts.$inferSelect;
 };
 
-/** Resolve a widget's public key to its site + parent artifact, if enabled. */
+/**
+ * External Reviews is off unless the operator opts in.
+ *
+ * The feature accepts comments from unauthenticated visitors (see `checkOrigin`
+ * below for why that boundary is weaker than it looks), so a deployment that
+ * never asked for it must not expose the endpoints at all. Read straight from
+ * the environment: `lib/features.ts` gates by licence tier, not by operator
+ * configuration.
+ */
+export function externalReviewsEnabled(): boolean {
+  return process.env.ARTILINE_EXTERNAL_REVIEWS === "1";
+}
+
+/**
+ * Resolve a widget's public key to its site + parent artifact, if enabled.
+ * Returns null while the feature is switched off, so every caller — including
+ * any added later — fails closed without repeating the check.
+ */
 export async function resolveSiteByKey(
   key: string,
 ): Promise<ExternalSiteContext | null> {
+  if (!externalReviewsEnabled()) return null;
   const [row] = await db
     .select({ site: schema.externalSites, artifact: schema.artifacts })
     .from(schema.externalSites)
@@ -23,10 +41,16 @@ export async function resolveSiteByKey(
 }
 
 /**
- * The widget's public key travels in the client's HTML, so it can't gate on
- * secrecy alone — the registered Origin is the actual boundary. An exact
- * string match against `site.origin` (scheme+host[+port], no path) rejects
- * every other origin, including subdomains and http/https mismatches.
+ * Exact match of the request's `Origin` against the site's registered origin
+ * (scheme+host[+port], no path), rejecting subdomains and http/https mismatches.
+ *
+ * NOT AN AUTHENTICATION BOUNDARY. `Origin` is only meaningful inside a browser,
+ * where the user agent sets it and a page cannot forge it. Any other client —
+ * curl, a script, a proxy — chooses the value freely, so this check keeps a
+ * third-party *web page* from using someone else's key and nothing more. It is
+ * defence in depth layered on a public identifier, never a substitute for
+ * authenticating the writer. An earlier version of this comment claimed the
+ * opposite and that claim is what let anonymous comments reach a workspace.
  */
 export function checkOrigin(req: Request, site: { origin: string }): boolean {
   const origin = req.headers.get("origin");
