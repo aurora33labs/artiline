@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { db, schema } from "@/lib/db";
-import { requireSession } from "@/lib/tenant";
+import { requireRole, requireSession } from "@/lib/tenant";
 import {
   validateAuthorize,
   errorRedirectUrl,
@@ -14,10 +14,10 @@ import { AUTH_CODE_PREFIX, AUTH_CODE_TTL_MS, newSecret, sha256 } from "@/lib/oau
 
 /**
  * Consent decision handler. Re-validates the OAuth request (defense in depth),
- * verifies the user is a member of the chosen workspace, and — on approval —
- * mints a single-use authorization code bound to {client, user, workspace, role,
- * PKCE challenge, redirect_uri, scope}. Any member may grant; the token role is
- * the member's live role (create_artifact only needs member).
+ * verifies the user is an owner or admin of the chosen workspace, and — on
+ * approval — mints a single-use authorization code bound to {client, user,
+ * workspace, role, PKCE challenge, redirect_uri, scope}. The token role is the
+ * member's live role, so it can never exceed what they hold today.
  */
 async function originFromHeaders(): Promise<string> {
   const h = await headers();
@@ -71,6 +71,15 @@ export async function authorizeDecision(formData: FormData) {
     )
     .limit(1);
   if (!membership) {
+    redirect(errorRedirectUrl(v.value.redirectUri, "access_denied", v.value.state));
+  }
+
+  // Connecting an application is a workspace-wide decision, so it belongs to
+  // owners and admins. The consent page hides everyone else's workspaces from
+  // the picker; this is the half that a hand-crafted form submission still hits.
+  try {
+    requireRole(membership.role, ["owner", "admin"]);
+  } catch {
     redirect(errorRedirectUrl(v.value.redirectUri, "access_denied", v.value.state));
   }
 

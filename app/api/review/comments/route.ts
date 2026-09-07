@@ -7,6 +7,7 @@ import { extractIp } from "@/lib/tracking";
 import {
   checkOrigin,
   checkReviewRateLimit,
+  externalReviewsEnabled,
   recordPageHash,
   resolveSiteByKey,
   reviewCorsHeaders,
@@ -14,7 +15,11 @@ import {
 
 export const runtime = "nodejs";
 
+/** 404 (not 403) while the feature is off — don't confirm the route exists. */
+const disabled = () => Response.json({ error: "NOT_FOUND" }, { status: 404 });
+
 export async function OPTIONS(req: Request) {
+  if (!externalReviewsEnabled()) return disabled();
   const origin = req.headers.get("origin");
   if (!origin) return new Response(null, { status: 204 });
   return new Response(null, { status: 204, headers: reviewCorsHeaders(origin) });
@@ -33,6 +38,7 @@ const postSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!externalReviewsEnabled()) return disabled();
   let data: z.infer<typeof postSchema>;
   try {
     data = postSchema.parse(await req.json());
@@ -109,6 +115,7 @@ const getSchema = z.object({
 });
 
 export async function GET(req: Request) {
+  if (!externalReviewsEnabled()) return disabled();
   const url = new URL(req.url);
   let data: z.infer<typeof getSchema>;
   try {

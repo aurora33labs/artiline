@@ -7,7 +7,19 @@ import { createHash, randomBytes } from "node:crypto";
  * sha256 hash is stored, and the MCP resolver branches on the prefix.
  */
 
-export const OAUTH_SCOPES = ["artifacts:write"] as const;
+/**
+ * Dynamic Client Registration (RFC 7591) is off unless the operator opts in.
+ *
+ * The endpoint is unauthenticated by specification: anyone who can reach the
+ * deployment can mint a client with an arbitrary display name and redirect_uri,
+ * which is exactly what a consent-screen phishing chain needs. Only deployments
+ * that actually want a self-registering connector should expose it.
+ */
+export function dcrEnabled(): boolean {
+  return process.env.ARTILINE_OAUTH_DCR === "1";
+}
+
+export const OAUTH_SCOPES = ["artifacts:read", "artifacts:write"] as const;
 export type OAuthScope = (typeof OAUTH_SCOPES)[number];
 export const DEFAULT_SCOPE: OAuthScope = "artifacts:write";
 

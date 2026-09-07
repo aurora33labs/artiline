@@ -1,4 +1,6 @@
+import { notFound } from "next/navigation";
 import { requireMemberPage } from "@/lib/tenant";
+import { externalReviewsEnabled } from "@/lib/external-reviews";
 import { getTranslations } from "next-intl/server";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +13,7 @@ export default async function NewExternalSitePage({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace: slug } = await params;
+  if (!externalReviewsEnabled()) notFound();
   await requireMemberPage(slug);
   const t = await getTranslations("externalReview");
 

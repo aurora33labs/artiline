@@ -506,6 +506,23 @@
     "never": "never",
     "revoke": "Revoke"
   },
+  "oauth": {
+    "invalidTitle": "Invalid request",
+    "invalidSubtitle": "This connection request could not be validated.",
+    "unnamedApp": "an external application",
+    "connectTitle": "Connect {app}",
+    "subtitle": "Check where your credentials will be sent before you authorize.",
+    "noAdminWorkspaces": "Only an owner or admin can connect an application to a workspace.",
+    "destinationLabel": "If you authorize, your access code will be sent to",
+    "destinationOffsite": "This destination does not belong to Artiline. Only authorize if you recognize the site and were expecting this connection.",
+    "registered": "Application registered {when}.",
+    "registeredRecently": "registered just now",
+    "workspaceLabel": "Workspace",
+    "permissionLabel": "Requested permission:",
+    "permissionDetail": "read and create artifacts in the workspace you choose.",
+    "authorize": "Authorize",
+    "deny": "Deny"
+  },
   "analytics": {
     "crumb": "ARTIFACT · {slug}",
     "title": "Analytics",

@@ -7,10 +7,20 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireMemberPage } from "@/lib/tenant";
+import { externalReviewsEnabled } from "@/lib/external-reviews";
 import { assertCanCreateArtifact } from "@/lib/limits";
 import { newVersionId } from "@/lib/artifact-content";
 import { recordEvent } from "@/lib/activity";
 import { emitEvent } from "@/lib/webhooks/emit";
+
+/**
+ * Server-action half of the External Reviews gate. The API routes and the page
+ * already fail closed; this keeps the layer that actually mutates state from
+ * being reachable by a direct action invocation.
+ */
+function assertEnabled(): void {
+  if (!externalReviewsEnabled()) throw new Error("FEATURE_DISABLED");
+}
 
 const createSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -25,6 +35,7 @@ const createSchema = z.object({
  * so every list/join that expects `currentVersionId` keeps working unchanged.
  */
 export async function createExternalSite(formData: FormData) {
+  assertEnabled();
   const data = createSchema.parse({
     workspaceSlug: formData.get("workspaceSlug"),
     name: formData.get("name"),
@@ -103,6 +114,7 @@ const rotateSchema = z.object({
 });
 
 export async function rotateExternalKey(formData: FormData) {
+  assertEnabled();
   const data = rotateSchema.parse({
     workspaceSlug: formData.get("workspaceSlug"),
     artifactId: formData.get("artifactId"),
@@ -131,6 +143,7 @@ const toggleSchema = z.object({
 });
 
 export async function toggleExternalSite(formData: FormData) {
+  assertEnabled();
   const data = toggleSchema.parse({
     workspaceSlug: formData.get("workspaceSlug"),
     artifactId: formData.get("artifactId"),
