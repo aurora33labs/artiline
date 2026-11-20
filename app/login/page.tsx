@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { sanitizeCallbackUrl } from "@/lib/safe-redirect";
+import { RESEND_API_KEY } from "@/lib/email-config";
 import { signInWithPassword } from "./actions";
 
 export default async function LoginPage({
@@ -19,7 +20,7 @@ export default async function LoginPage({
   const tc = await getTranslations("common");
   // Magic link only works when an email provider is configured. On self-host
   // without Resend, hide it so password stays the single working path.
-  const resendEnabled = !!process.env.RESEND_API_KEY;
+  const resendEnabled = !!RESEND_API_KEY;
   return (
     <AuthShell
       title={t("loginTitle")}

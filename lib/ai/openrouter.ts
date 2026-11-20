@@ -83,7 +83,7 @@ export async function generateArtifactEdit(opts: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.NEXT_PUBLIC_ARTILINE_HOST
-          ? `https://${process.env.NEXT_PUBLIC_ARTILINE_HOST}`
+          ? `https://${process.env.NEXT_PUBLIC_ARTILINE_HOST.replace(/^https?:\/\//i, "")}`
           : "https://artiline.app",
         "X-Title": "Artiline",
       },

@@ -9,3 +9,15 @@ allowBuilds:
   unrs-resolver: true
   "@parcel/watcher": false
   msw: false
+
+# mcp-handler@1.1.0 pins its SDK peer to exactly 1.26.0, which carries known
+# advisories. 1.32.x is API-compatible within the 1.x line; mcp-handler 2.x
+# moves to @modelcontextprotocol/server v2 (separate migration).
+peerDependencyRules:
+  allowedVersions:
+    "mcp-handler>@modelcontextprotocol/sdk": "1.32.2"
+
+# Security overrides for transitive deps whose parents haven't bumped yet.
+overrides:
+  "@esbuild-kit/core-utils>esbuild": "^0.25.0"
+  "@ts-morph/common>minimatch": "^11.0.1"

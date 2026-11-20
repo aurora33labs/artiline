@@ -5,9 +5,10 @@ import { Resend as ResendSDK } from "resend";
 import { getTranslations } from "next-intl/server";
 import { db, schema } from "@/lib/db";
 import { defaultLocale } from "@/i18n/routing";
+import { RESEND_API_KEY, RESEND_FROM } from "@/lib/email-config";
 
-const FROM = process.env.RESEND_FROM ?? "onboarding@resend.dev";
-const RESEND_KEY = process.env.RESEND_API_KEY;
+const FROM = RESEND_FROM;
+const RESEND_KEY = RESEND_API_KEY;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
