@@ -36,7 +36,10 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
-EXPOSE 3000
+# Railway injects PORT (8080 by default); keep the image default in sync so
+# custom domains pointed at 8080 work the same locally and on the platform.
+ENV PORT=8080
+EXPOSE 8080
 # Invoke binaries directly (no pnpm wrapper): avoids pnpm 11's
 # verify-deps-before-run install check at startup, and `next start` binds to
 # the PORT env var that the platform provides (Railway sets PORT).
