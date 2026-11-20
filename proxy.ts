@@ -13,9 +13,16 @@ import { NextResponse, type NextRequest } from "next/server";
  * avoid importing the full Drizzle bundle into the edge runtime.
  */
 
+// Accept either a bare host or a full URL (the Railway template sets
+// NEXT_PUBLIC_ARTILINE_HOST to "https://<domain>"): keep only host[:port].
+function toHost(value: string | undefined): string | undefined {
+  const host = value?.trim().replace(/^https?:\/\//i, "").split("/")[0];
+  return host ? host : undefined;
+}
+
 const APP_HOST =
-  process.env.NEXT_PUBLIC_ARTILINE_HOST ??
-  process.env.AUTH_URL?.replace(/^https?:\/\//, "") ??
+  toHost(process.env.NEXT_PUBLIC_ARTILINE_HOST) ??
+  toHost(process.env.AUTH_URL) ??
   "localhost:1355";
 
 function isAppHost(host: string): boolean {
