@@ -18,6 +18,7 @@ import { MAX_MAX_VERSIONS, MIN_MAX_VERSIONS } from "@/lib/versions";
 import { defaultLocale } from "@/i18n/routing";
 import { parseAllowedDomains } from "@/lib/join-requests";
 import { listAddableUsers } from "@/lib/members";
+import { RESEND_API_KEY, RESEND_FROM } from "@/lib/email-config";
 
 const maxVersionsSchema = z.object({
   workspaceSlug: z.string().min(1),
@@ -43,8 +44,8 @@ export async function updateMaxVersions(formData: FormData) {
   revalidatePath(`/${data.workspaceSlug}/settings`);
 }
 
-const FROM = process.env.RESEND_FROM ?? "onboarding@resend.dev";
-const KEY = process.env.RESEND_API_KEY;
+const FROM = RESEND_FROM;
+const KEY = RESEND_API_KEY;
 const APP_URL = process.env.AUTH_URL ?? "http://localhost:3000";
 
 const inviteSchema = z.object({
